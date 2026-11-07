@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 import { validatePack } from "@dunialab/content";
-import { createMissionSession } from "../src/index.js";
+import { createMissionSession, uuid } from "../src/index.js";
 
 const require = createRequire(import.meta.url);
 const pack = validatePack(JSON.parse(readFileSync(require.resolve("@dunialab/content/packs/kenya-explorer.json"), "utf8"))).pack!;
@@ -68,6 +68,18 @@ describe("MissionSession", () => {
     s.answerChoice(["a"]);
     expect(s.events().at(-1)).toMatchObject({ kind: "follow-up", taskId: "m1-t4-followup", skillId: "map.elements" });
     expect(s.state()).toMatchObject({ phase: "done", task: null });
+  });
+
+  it("generates v4 UUIDs even where crypto.randomUUID is unavailable (plain-HTTP LAN testing)", () => {
+    const original = globalThis.crypto.randomUUID;
+    try {
+      Object.defineProperty(globalThis.crypto, "randomUUID", { value: undefined, configurable: true });
+      const ids = new Set(Array.from({ length: 50 }, () => uuid()));
+      expect(ids.size).toBe(50);
+      for (const id of ids) expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    } finally {
+      Object.defineProperty(globalThis.crypto, "randomUUID", { value: original, configurable: true });
+    }
   });
 
   it("supports review context for spaced-review sessions", () => {

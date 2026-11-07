@@ -1,0 +1,79 @@
+/**
+ * Product definition:
+ *   "Several child profiles live on the parent's phone, each opened with a simple picture PIN."
+ * Review finding (PR #1, security): the device queue re-attributed EVERY unsynced event to
+ * whichever child was selected, so one sibling's progress could be uploaded as another's.
+ * Rule now: an event's owner never changes once it belongs to a child. Only unowned guest
+ * events (played before a parent linked the device) can be adopted, once.
+ */
+import { expect } from "vitest";
+import type { AttemptEvent } from "@dunialab/mastery";
+import { EventQueue, type KeyValueStorage } from "../../../apps/web/src/lib/queue.js";
+import { feature, scenario } from "../support/gherkin.js";
+
+const PACK = "ke.g5.sst.kenya-explorer";
+const memory = (): KeyValueStorage => {
+  const m = new Map<string, string>();
+  return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) };
+};
+let n = 0;
+const play = (profileId: string): AttemptEvent => ({
+  eventId: `e-${++n}`,
+  profileId,
+  skillId: "map.elements",
+  taskId: "m1-t1-title",
+  kind: "choice",
+  correct: true,
+  occurredAt: "2027-01-11T06:00:00Z",
+  context: "mission",
+});
+
+feature("Siblings sharing one phone keep their own progress", () => {
+  scenario("selecting the second child does not move the first child's unsynced events", async ({ given, when, then, and }) => {
+    const q = new EventQueue(memory());
+    await given("Amani and Baraka each played offline on their mother's phone", () => {
+      q.add(PACK, [play("amani"), play("amani")]);
+      q.add(PACK, [play("baraka")]);
+    });
+    let barakaBatch: AttemptEvent[] = [];
+    await when("their mother selects Baraka and syncs", () => {
+      barakaBatch = q.unsynced(PACK, "baraka");
+      q.markSynced(barakaBatch.map((e) => e.eventId));
+    });
+    await then("only Baraka's event is sent", () => expect(barakaBatch.map((e) => e.profileId)).toEqual(["baraka"]));
+    await and("Amani's two events are still hers and still waiting to sync", () => {
+      expect(q.unsynced(PACK, "amani")).toHaveLength(2);
+      expect(q.all(PACK, "baraka")).toHaveLength(1);
+    });
+  });
+
+  scenario("guest play before sign-in is adopted by the first child it is linked to, once", async ({ given, when, then, and }) => {
+    const q = new EventQueue(memory());
+    await given("a child played as a guest before any parent signed in", () => q.add(PACK, [play("guest-1"), play("guest-1")]));
+    let adopted = 0;
+    await when("the parent links the phone to Amani", () => {
+      adopted = q.adoptGuestEvents("guest-1", "amani");
+    });
+    await then("the guest events now belong to Amani", () => {
+      expect(adopted).toBe(2);
+      expect(q.unsynced(PACK, "amani")).toHaveLength(2);
+    });
+    await and("linking to Baraka later cannot take them away", () => {
+      expect(q.adoptGuestEvents("guest-1", "baraka")).toBe(0);
+      expect(q.unsynced(PACK, "baraka")).toHaveLength(0);
+    });
+  });
+
+  scenario("after sign-out, a new family cannot adopt the previous family's guest play", async ({ given, when, then }) => {
+    const q = new EventQueue(memory());
+    await given("guest events from the previous session's guest id remain on the device", () => q.add(PACK, [play("guest-old")]));
+    let adopted = -1;
+    await when("a new family signs in and links the phone using the new session's guest id", () => {
+      adopted = q.adoptGuestEvents("guest-new", "wanjiru");
+    });
+    await then("nothing is adopted", () => {
+      expect(adopted).toBe(0);
+      expect(q.unsynced(PACK, "wanjiru")).toEqual([]);
+    });
+  });
+});

@@ -2,6 +2,10 @@
  * Offline-first event queue (Tier C). Mirrors what the Unity app does on the phone:
  * every AttemptEvent is written locally first; sync later sends the unsynced ones.
  * Synced events are kept so progress still shows offline.
+ *
+ * Ownership (shared family phone, PR #1 review): an event's profileId never changes once
+ * it belongs to a child. Only GUEST events (played before a parent linked the device, under
+ * the current session's guest id) can be adopted, once, by the first child they are linked to.
  */
 import type { AttemptEvent } from "@dunialab/mastery";
 
@@ -44,13 +48,18 @@ export class EventQueue {
     this.write(items);
   }
 
-  /** All events for a pack (synced or not): used to show progress offline. */
-  all(packId: string): AttemptEvent[] {
-    return this.read().filter((i) => i.packId === packId).map((i) => i.event);
+  /** All events of one learner for a pack (synced or not): used to show progress offline. */
+  all(packId: string, profileId: string): AttemptEvent[] {
+    return this.read()
+      .filter((i) => i.packId === packId && i.event.profileId === profileId)
+      .map((i) => i.event);
   }
 
-  unsynced(packId: string): AttemptEvent[] {
-    return this.read().filter((i) => i.packId === packId && !i.synced).map((i) => i.event);
+  /** Events of one learner still waiting to sync. Never another child's. */
+  unsynced(packId: string, profileId: string): AttemptEvent[] {
+    return this.read()
+      .filter((i) => i.packId === packId && !i.synced && i.event.profileId === profileId)
+      .map((i) => i.event);
   }
 
   markSynced(eventIds: string[]) {
@@ -59,11 +68,20 @@ export class EventQueue {
   }
 
   /**
-   * Events are recorded against a local profile id while offline; when a parent links the
-   * device to a server profile, they are re-attributed before the first sync.
+   * Give unsynced guest events (recorded under `guestId`) to a child profile.
+   * Events that already belong to a child are never touched.
+   * @returns how many events were adopted.
    */
-  reassignProfile(profileId: string) {
-    this.write(this.read().map((i) => (i.synced ? i : { ...i, event: { ...i.event, profileId } })));
+  adoptGuestEvents(guestId: string, profileId: string): number {
+    let adopted = 0;
+    this.write(
+      this.read().map((i) => {
+        if (i.synced || i.event.profileId !== guestId) return i;
+        adopted++;
+        return { ...i, event: { ...i.event, profileId } };
+      }),
+    );
+    return adopted;
   }
 }
 

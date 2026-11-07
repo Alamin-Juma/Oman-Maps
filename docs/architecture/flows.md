@@ -21,8 +21,10 @@ sequenceDiagram
   App->>Q: Append AttemptEvent per task (offline, instant)
   Child->>App: Write explanation
   alt online
-    App->>API: POST /v1/explanations/check {packId, taskId, answer, locale, attempt}
-    API->>AI: task + rubric + hint ids + answer (no child identity)
+    App->>API: POST /v1/explanations/check {packId, taskId, answer, locale, attempt} (client timeout 6 s)
+    API->>API: parent consented to current policy? (else offline checker, nothing leaves)
+    API->>API: redactIdentifiers(answer): phones, emails, links
+    API->>AI: task + rubric + hint ids + redacted answer (no child identity)
     AI-->>API: {verdict, criteriaMet, hintId, confidence, unsafe}
     API->>API: decideFeedback(): threshold, approved ids only, unsafe => flag
     API-->>App: accepted | hint(id) | choice-follow-up
@@ -55,6 +57,11 @@ sequenceDiagram
 ```
 
 Retries are safe: re-sent events become `duplicates`, never double counted.
+
+**Ownership on a shared phone.** The device queue is per learner. An event's `profileId` never changes once it
+belongs to a child; sync sends only the selected child's events. Events played before a parent links the device
+carry a per-session **guest id** and are adopted once by the first child linked. Sign-out issues a new guest id, so
+the next family can never adopt this family's guest play.
 
 ## 3. Weekly parent report
 

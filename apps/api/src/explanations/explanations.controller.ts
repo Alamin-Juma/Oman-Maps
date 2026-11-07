@@ -3,11 +3,13 @@ import { z } from "zod";
 import { checkExplanationLocally, type ExplanationFeedback } from "@dunialab/content";
 import type { AppConfig } from "../config.js";
 import { parse } from "../common/zod.js";
-import { ParentAuthGuard } from "../auth/auth.guard.js";
+import { Parent, ParentAuthGuard, type AuthedParent } from "../auth/auth.guard.js";
 import type { ContentRegistry } from "../content/content-registry.js";
-import { CONFIG, CONTENT, AI_GRADER } from "../tokens.js";
+import type { Store } from "../store/store.js";
+import { CONFIG, CONTENT, AI_GRADER, STORE } from "../tokens.js";
 import type { AiGrader } from "./ai-grader.js";
 import { decideFeedback } from "./decide.js";
+import { redactIdentifiers } from "./redact.js";
 
 const CheckBody = z
   .object({
@@ -38,11 +40,12 @@ export class ExplanationsController {
     @Inject(CONTENT) private readonly content: ContentRegistry,
     @Inject(AI_GRADER) private readonly grader: AiGrader | null,
     @Inject(CONFIG) private readonly config: AppConfig,
+    @Inject(STORE) private readonly store: Store,
   ) {}
 
   @Post("check")
   @HttpCode(200)
-  async check(@Body() body: unknown): Promise<ExplanationFeedback> {
+  async check(@Parent() parent: AuthedParent, @Body() body: unknown): Promise<ExplanationFeedback> {
     const input = parse(CheckBody, body);
     const ref = this.content.get(input.packId)?.tasks.get(input.taskId);
     if (!ref || ref.task.type !== "explain") throw new NotFoundException("explanation task not found");
@@ -50,10 +53,13 @@ export class ExplanationsController {
 
     const local = () => checkExplanationLocally(task, input.answer, input.locale, input.attempt);
     if (!this.grader || input.answer.trim().length === 0) return local();
+    // Egress gate: a child's words only go to an external provider after the parent
+    // has consented to the current policy. Otherwise the offline checker answers.
+    if (!(await this.store.hasConsent(parent.parentId, this.config.consentPolicyVersion))) return local();
 
     try {
       const grade = await withTimeout(
-        this.grader.grade({ task, locale: input.locale, answer: input.answer }),
+        this.grader.grade({ task, locale: input.locale, answer: redactIdentifiers(input.answer) }),
         this.config.aiTimeoutMs,
       );
       return decideFeedback(task, grade, input.attempt, this.config.aiConfidenceThreshold);

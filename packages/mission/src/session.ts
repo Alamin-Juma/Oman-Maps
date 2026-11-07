@@ -178,11 +178,26 @@ function sameSet(a: string[], b: string[]): boolean {
   return sa.size === new Set(b).size && b.every((x) => sa.has(x));
 }
 
+/**
+ * RFC 4122 v4 UUID. `crypto.randomUUID` exists only in secure contexts (HTTPS/localhost);
+ * a phone opening the dev server by LAN IP over plain HTTP lacks it, so fall back to
+ * `crypto.getRandomValues`, which is available everywhere and equally secure.
+ */
+export function uuid(): string {
+  const c = globalThis.crypto;
+  if (typeof c.randomUUID === "function") return c.randomUUID();
+  const b = c.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6]! & 0x0f) | 0x40; // version 4
+  b[8] = (b[8]! & 0x3f) | 0x80; // variant 10
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 export function createMissionSession(opts: SessionOptions): MissionSession {
   return new MissionSession({
     context: "mission",
     now: () => new Date().toISOString(),
-    newId: () => globalThis.crypto.randomUUID(),
+    newId: uuid,
     ...opts,
   });
 }

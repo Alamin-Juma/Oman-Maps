@@ -21,6 +21,11 @@
 5. **Offline fallback everywhere.** No key, timeout (8 s), refusal or error → the deterministic on-device rubric checker, with the same three outcomes.
 6. **Model:** `claude-opus-5-5` at `effort: low` by default (configurable via `AI_MODEL`). Cost per check is to be measured in the pilot against the "< 10% of revenue per learner" target. Trying a smaller model is a pricing decision for the founder, made with eval data.
 
+## Amendment (2026-11-07, PR #1 review)
+- **Consent gate:** the online check runs only for parents who accepted the current consent policy; otherwise the offline checker answers and nothing is sent.
+- **Egress redaction:** phone-like digit runs (7+ digits), emails and links are replaced with `[removed]` before the answer leaves our API. The model's `unsafe` flag remains a *feedback* control; redaction is the *egress* control. Names cannot be detected reliably, which is why explanation text is not stored and the prompt contains no identity.
+- **Client timeout:** the web client aborts the check after 6 s so the offline checker takes over.
+
 ## Consequences
 - Swapping provider = new adapter. Changing the threshold = config.
 - Explanation text is not stored in the MVP; building the 50+ answer teacher-marked eval set needs a separate consented dataset.

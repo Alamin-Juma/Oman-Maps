@@ -85,6 +85,17 @@ describe.skipIf(!reachable)("E2E (browser): Tier C two-day mastery, then parent 
     await page.getByRole("button", { name: "Weekly report" }).click();
     const line = page.locator(".report .skills li", { hasText: "Knows the parts of a map" });
     await expect.poll(() => line.textContent()).toContain("★ mastered");
+
+    // Shared device: after sign-out, the next parent must give consent fresh, and sees none of
+    // the previous family's progress.
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await page.getByPlaceholder("email").fill(`web-e2e-2-${now}@example.com`);
+    await page.getByPlaceholder("password (10+ characters)").fill("another long password");
+    await page.getByRole("button", { name: "Create account" }).click();
+    await page.getByPlaceholder("Child's nickname").waitFor();
+    expect(await page.getByRole("checkbox").isChecked()).toBe(false);
+    expect(await page.getByRole("button", { name: "Add child" }).isDisabled()).toBe(true);
+    expect(await page.locator(".side .skills li", { hasText: "Knows the parts of a map" }).first().textContent()).toContain("Not started");
   });
 
   it("a locate task is answered by tapping the feature on the 2D map", async () => {

@@ -17,11 +17,15 @@ interface Props {
   locale: Locale;
   token: string | null;
   setToken: (t: string | null) => void;
+  /** Clears the session in App (token, profile, new guest id). */
+  onSignOut: () => void;
+  /** Current session's guest id: its events are adopted by the first linked child. */
+  guestId: string;
   profile: Profile | null;
   setProfile: (p: Profile | null) => void;
 }
 
-export function FamilyPanel({ api, queue, pack, locale, token, setToken, profile, setProfile }: Props) {
+export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignOut, guestId, profile, setProfile }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [consented, setConsented] = useState(false);
@@ -90,8 +94,8 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, profile
                 await api.consent(POLICY_VERSION);
                 const p = await api.addProfile(nickname, pack.grade, pin);
                 setProfiles([p]);
+                queue.adoptGuestEvents(guestId, p.id);
                 setProfile(p);
-                queue.reassignProfile(p.id);
               })
             }
           >
@@ -102,7 +106,7 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, profile
 
       {profiles.length > 0 && (
         <div className="stack">
-          <select value={profile?.id ?? ""} onChange={(e) => { const p = profiles.find((x) => x.id === e.target.value) ?? null; setProfile(p); if (p) queue.reassignProfile(p.id); }}>
+          <select value={profile?.id ?? ""} onChange={(e) => { const p = profiles.find((x) => x.id === e.target.value) ?? null; if (p) queue.adoptGuestEvents(guestId, p.id); setProfile(p); }}>
             <option value="">{locale === "sw" ? "Chagua mtoto" : "Choose child"}</option>
             {profiles.map((p) => <option key={p.id} value={p.id}>{p.nickname} (Grade {p.grade})</option>)}
           </select>
@@ -112,15 +116,14 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, profile
                 className="primary"
                 onClick={() =>
                   run(async () => {
-                    queue.reassignProfile(profile.id);
-                    const pending = queue.unsynced(pack.id);
+                    const pending = queue.unsynced(pack.id, profile.id);
                     const r = await api.sync(profile.id, pack.id, pending);
                     queue.markSynced(pending.map((e) => e.eventId));
                     setMsg(`${locale === "sw" ? "Imesawazishwa" : "Synced"}: ${r.accepted} new, ${r.duplicates} already saved`);
                   })
                 }
               >
-                {locale === "sw" ? "Sawazisha" : "Sync now"} ({queue.unsynced(pack.id).length})
+                {locale === "sw" ? "Sawazisha" : "Sync now"} ({queue.unsynced(pack.id, profile.id).length})
               </button>
               <button onClick={() => run(async () => setReport(await api.report(profile.id, pack.id, locale)))}>{locale === "sw" ? "Ripoti ya wiki" : "Weekly report"}</button>
             </div>
@@ -147,7 +150,24 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, profile
       )}
 
       {msg && <p className="banner info">{msg}</p>}
-      <button className="link" onClick={() => { setToken(null); setProfile(null); setReport(null); }}>{locale === "sw" ? "Toka" : "Sign out"}</button>
+      <button
+        className="link"
+        onClick={() => {
+          // Shared device: nothing from this parent may carry over to the next one,
+          // in particular the consent tick (consent must be a fresh, explicit act).
+          setProfiles([]);
+          setConsented(false);
+          setNickname("");
+          setPin([]);
+          setPassword("");
+          setEmail("");
+          setReport(null);
+          setMsg(null);
+          onSignOut();
+        }}
+      >
+        {locale === "sw" ? "Toka" : "Sign out"}
+      </button>
     </section>
   );
 }

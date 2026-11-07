@@ -52,7 +52,10 @@ export const CONFIG_DEFAULTS: AppConfig = {
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const e = Env.parse(env);
   const production = e.NODE_ENV === "production";
-  if (production && !e.JWT_SECRET) throw new Error("JWT_SECRET (>= 32 chars) is required in production");
+  // Real data => real secret. The public dev secret is only for in-memory, local-only runs.
+  if ((production || e.DATABASE_URL) && !e.JWT_SECRET) {
+    throw new Error("JWT_SECRET (>= 32 chars) is required in production or whenever DATABASE_URL is set");
+  }
   if (production && !e.DATABASE_URL) throw new Error("DATABASE_URL is required in production");
   return {
     env: e.NODE_ENV,

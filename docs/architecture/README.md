@@ -56,7 +56,7 @@ flowchart LR
 **Boundaries that matter**
 
 - **No camera image leaves the phone.** Map recognition runs on the device.
-- **Claude never sees who the child is.** It receives the task, rubric, approved hints, exemplar, locale and the answer text. Nothing else.
+- **Claude never sees who the child is.** It receives the task, rubric, approved hints, exemplar, locale and the answer text, with phone numbers, emails and links **redacted first**, and only for parents who consented to the current policy. Nothing else.
 - **A mission never waits on the network.** The only online step (the AI check) has an offline fallback.
 
 ---
@@ -165,6 +165,7 @@ Newest first. One line per change; link the PR/ADR.
 
 | Date | Change | Diagrams updated | Ref |
 |---|---|---|---|
+| 2026-11-07 | PR #1 review: AI egress gate (current-policy consent required; phone/email/URL redaction before the provider); web queue ownership per learner (guest events adopted once, per-session guest id rotated on sign-out); dev ports bound to loopback; CI least-privilege token | Context, Flows | [ADR-0005](../adr/0005-ai-guardrails.md) amendment |
 | 2026-11-07 | CI pipeline: build + features + unit, C# core via dotnet, E2E (Postgres service + Chromium), Docker build | n/a (pipeline) | `.github/workflows/ci.yml` |
 | 2026-11-07 | Web Tier C: bundled packs, offline event queue, regional basemap (world-atlas cut to pack bounds) | Components | `apps/web` |
 | 2026-11-07 | `@dunialab/mission`: tier-agnostic mission session shared by web and (ported) Unity | Components, Flows | ADR-0004 |

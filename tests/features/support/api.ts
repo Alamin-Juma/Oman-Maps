@@ -39,6 +39,14 @@ export async function startApi(opts: { aiGrader?: AiGrader; packsDir?: string } 
   };
 }
 
+/** Register a parent who has accepted the current consent policy; return their token. */
+export async function consentedParentToken(api: TestApi) {
+  const token = await parentToken(api);
+  const c = await api.call("POST", "/v1/consents", { policyVersion: "2026-11", accepted: true }, token);
+  if (c.status !== 201) throw new Error(`consent failed: ${c.status}`);
+  return token;
+}
+
 /** Register a parent and return their token. */
 export async function parentToken(api: TestApi, email = `parent-${Math.random().toString(36).slice(2)}@example.com`) {
   const r = await api.call<{ token: string }>("POST", "/v1/auth/register", { email, password: "correct horse battery" });

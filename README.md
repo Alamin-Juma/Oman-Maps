@@ -44,4 +44,4 @@ The original project is archived in [`legacy/oman-maps-2019/`](legacy/oman-maps-
 
 | Printed map | Governorate info | Cities | Geographical features |
 |---|---|---|---|
-| ![](images/map_pic.jpeg) | ![](images/cities_info.jpeg) | ![](images/cities.jpeg) | ![](images/Geographical_features.jpeg) |
+| ![Printed map](images/map_pic.jpeg) | ![Governorate info](images/cities_info.jpeg) | ![Cities](images/cities.jpeg) | ![Geographical features](images/Geographical_features.jpeg) |

@@ -43,12 +43,15 @@ export class DuniaApi {
     private readonly baseUrl: string,
     private readonly getToken: () => string | null,
     private readonly fetchImpl: typeof fetch = (...a) => fetch(...a),
+    /** A mission never waits on the network: a stalled check must fail fast to the local checker. */
+    private readonly checkTimeoutMs = 6000,
   ) {}
 
-  private async call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  private async call<T>(method: string, path: string, body?: unknown, timeoutMs = 15000): Promise<T> {
     const token = this.getToken();
     const res = await this.fetchImpl(`${this.baseUrl}${path}`, {
       method,
+      signal: AbortSignal.timeout(timeoutMs),
       headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
@@ -74,5 +77,5 @@ export class DuniaApi {
 
   /** Online explanation check; the mission session falls back to the local checker on any error. */
   checkerFor = (packId: string) => (task: ExplainTask, answer: string, locale: Locale, attempt: number) =>
-    this.call<ExplanationFeedback>("POST", "/v1/explanations/check", { packId, taskId: task.id, answer, locale, attempt });
+    this.call<ExplanationFeedback>("POST", "/v1/explanations/check", { packId, taskId: task.id, answer, locale, attempt }, this.checkTimeoutMs);
 }

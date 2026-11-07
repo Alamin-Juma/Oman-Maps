@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: dunialab
       POSTGRES_DB: dunialab
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"  # loopback only: fixed dev credentials
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -38,7 +38,7 @@ services:
       # ANTHROPIC_API_KEY: set in your shell to exercise the real AI grader
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"  # loopback only
 
 volumes:
   pgdata:

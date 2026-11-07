@@ -8,17 +8,22 @@ import { FamilyPanel } from "./components/FamilyPanel.js";
 import { DuniaApi, type Profile } from "./lib/api.js";
 import { PACKS, t } from "./lib/packs.js";
 import { browserStorage, EventQueue } from "./lib/queue.js";
+import { uuid } from "@dunialab/mission";
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3000";
 const storage = browserStorage();
-const LOCAL_PROFILE_KEY = "dunialab.localProfile";
+const GUEST_KEY = "dunialab.guestId";
 
-/** Offline play needs a profile id before any parent signs in; it is re-attributed on first sync. */
-function localProfileId(): string {
-  let id = storage.getItem(LOCAL_PROFILE_KEY);
+/**
+ * Offline play needs an id before any parent links the device: a per-session GUEST id.
+ * Guest events are adopted once by the first child the parent links; a new guest id is
+ * issued on sign-out so the next family can never adopt this family's guest play.
+ */
+function readGuestId(): string {
+  let id = storage.getItem(GUEST_KEY);
   if (!id) {
-    id = crypto.randomUUID();
-    storage.setItem(LOCAL_PROFILE_KEY, id);
+    id = uuid();
+    storage.setItem(GUEST_KEY, id);
   }
   return id;
 }
@@ -33,6 +38,7 @@ export function App() {
   const [selected, setSelected] = useState<Feature | null>(null);
   const [reveal, setReveal] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const [guestId, setGuestId] = useState(readGuestId);
   const tapHandler = useRef<((f: Feature) => void) | null>(null);
 
   const queue = useMemo(() => new EventQueue(storage), []);
@@ -56,8 +62,18 @@ export function App() {
   );
 
   if (!pack) return <main className="empty">No content packs found.</main>;
-  const events = queue.all(pack.id);
+  const activeProfileId = profile?.id ?? guestId;
+  const events = queue.all(pack.id, activeProfileId);
   void version;
+
+  const signOut = () => {
+    setToken(null);
+    setProfile(null);
+    setMissionId(null);
+    const fresh = uuid();
+    storage.setItem(GUEST_KEY, fresh);
+    setGuestId(fresh);
+  };
 
   const onTap = (f: Feature) => {
     if (tapHandler.current) tapHandler.current(f);
@@ -101,10 +117,10 @@ export function App() {
         <aside className="side">
           {missionId ? (
             <MissionPlayer
-              key={missionId}
+              key={`${missionId}:${activeProfileId}`}
               pack={pack}
               missionId={missionId}
-              profileId={profile?.id ?? localProfileId()}
+              profileId={activeProfileId}
               locale={locale}
               {...(token ? { checker: api.checkerFor(pack.id) } : {})}
               onEvents={onEvents}
@@ -130,7 +146,18 @@ export function App() {
             </section>
           )}
           <ProgressPanel pack={pack} events={events} locale={locale} />
-          <FamilyPanel api={api} queue={queue} pack={pack} locale={locale} token={token} setToken={setToken} profile={profile} setProfile={setProfile} />
+          <FamilyPanel
+            api={api}
+            queue={queue}
+            pack={pack}
+            locale={locale}
+            token={token}
+            setToken={setToken}
+            onSignOut={signOut}
+            guestId={guestId}
+            profile={profile}
+            setProfile={(p) => { setProfile(p); setVersion((v) => v + 1); }}
+          />
         </aside>
       </main>
     </div>

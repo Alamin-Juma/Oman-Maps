@@ -122,7 +122,8 @@ All tiers share the **same mission and mastery layer**, so results are comparabl
 ### Offline-first and event sourcing
 The phone never waits for the network during a mission. Every answer becomes an **AttemptEvent** in a local queue.
 Sync sends batches; each event has a **client UUID**, so the server stores it once (`ON CONFLICT DO NOTHING`)
-no matter how many times a flaky connection resends it. **Mastery is never stored.** It is recomputed by replaying
+no matter how many times a flaky connection resends it. On a shared family phone the queue is **per learner**: a child's
+events never move to a sibling; play before a parent signs in is a **guest** session adopted once by the first linked child. **Mastery is never stored.** It is recomputed by replaying
 the events, so phone and server always agree, and a rule change applies retroactively.
 
 ### Mastery rules
@@ -139,7 +140,7 @@ then a physical-feature skill, and so on), which feels harder but improves long-
 ### The explanation step and the AI guardrails
 The explanation is what separates DuniaLab from AR toys, and it matches the competency-based assessment.
 1. The child writes 1-2 sentences (or taps words from a **word bank**).
-2. **Online:** the API sends the **task, rubric, approved hints, exemplar, locale and answer** (never who the child is)
+2. **Online** (only for parents who consented to the current policy; the client gives up after 6 s): the API redacts phone numbers, emails and links, then sends the **task, rubric, approved hints, exemplar, locale and answer** (never who the child is)
    to Claude, constrained by **structured outputs** to `{verdict, criteriaMet, hintId, confidence, unsafe}`.
 3. `decideFeedback` turns that into exactly one of **accepted / one hint / multiple-choice follow-up**:
    low confidence, off-topic or unsafe never gets "accepted"; unknown ids are discarded; unsafe raises a teacher flag.

@@ -12,29 +12,31 @@ const ev = (id: string, profileId = "local"): AttemptEvent => ({
 });
 
 describe("EventQueue", () => {
-  it("stores events per pack, ignores duplicates, and tracks what is synced", () => {
+  it("stores events per pack and learner, ignores duplicates, and tracks what is synced", () => {
     const q = new EventQueue(memory());
     q.add("pack-a", [ev("1"), ev("2")]);
     q.add("pack-a", [ev("2")]);
     q.add("pack-b", [ev("3")]);
-    expect(q.all("pack-a").map((e) => e.eventId)).toEqual(["1", "2"]);
+    expect(q.all("pack-a", "local").map((e) => e.eventId)).toEqual(["1", "2"]);
     q.markSynced(["1"]);
-    expect(q.unsynced("pack-a").map((e) => e.eventId)).toEqual(["2"]);
-    expect(q.all("pack-a")).toHaveLength(2);
+    expect(q.unsynced("pack-a", "local").map((e) => e.eventId)).toEqual(["2"]);
+    expect(q.all("pack-a", "local")).toHaveLength(2);
   });
 
-  it("re-attributes only unsynced events to the server profile", () => {
+  it("adopts only unsynced guest events and never touches a child's events", () => {
     const q = new EventQueue(memory());
-    q.add("p", [ev("1"), ev("2")]);
+    q.add("p", [ev("1", "guest"), ev("2", "guest"), ev("3", "amani")]);
     q.markSynced(["1"]);
-    q.reassignProfile("server-id");
-    expect(q.all("p").map((e) => e.profileId)).toEqual(["local", "server-id"]);
+    expect(q.adoptGuestEvents("guest", "baraka")).toBe(1);
+    expect(q.all("p", "baraka").map((e) => e.eventId)).toEqual(["2"]);
+    expect(q.all("p", "amani").map((e) => e.eventId)).toEqual(["3"]);
+    expect(q.all("p", "guest").map((e) => e.eventId)).toEqual(["1"]); // already synced, untouched
   });
 
   it("survives corrupt storage", () => {
     const s = memory();
     s.setItem("dunialab.events.v1", "{not json");
-    expect(new EventQueue(s).all("p")).toEqual([]);
+    expect(new EventQueue(s).all("p", "local")).toEqual([]);
   });
 });
 
@@ -47,6 +49,17 @@ describe("DuniaApi", () => {
     expect(url).toBe("http://api/v1/sync");
     expect((init.headers as Record<string, string>).authorization).toBe("Bearer tok");
     expect(JSON.parse(init.body as string)).toMatchObject({ profileId: "pid", packId: "pack" });
+  });
+
+  it("gives up on a stalled explanation check quickly so the mission can fall back offline", async () => {
+    // A fetch that never answers, but honours its AbortSignal like the real one.
+    const stalled = ((_: string, init: RequestInit) =>
+      new Promise((_resolve, reject) => init.signal!.addEventListener("abort", () => reject(init.signal!.reason)))) as unknown as typeof fetch;
+    const api = new DuniaApi("http://api", () => "tok", stalled, 50);
+    const started = Date.now();
+    const check = api.checkerFor("pack");
+    await expect(check({ id: "t" } as never, "answer", "en", 1)).rejects.toBeTruthy();
+    expect(Date.now() - started).toBeLessThan(2000);
   });
 
   it("raises ApiError with status and server message", async () => {

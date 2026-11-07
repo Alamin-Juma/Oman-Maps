@@ -36,6 +36,11 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ NODE_ENV: "production", JWT_SECRET: "s".repeat(40) })).toThrow(/DATABASE_URL/);
   });
 
+  it("refuses the public dev secret whenever a real database is configured, even outside production", () => {
+    expect(() => loadConfig({ DATABASE_URL: "postgres://u:p@h:5432/d" })).toThrow(/whenever DATABASE_URL is set/);
+    expect(loadConfig({ DATABASE_URL: "postgres://u:p@h:5432/d", JWT_SECRET: "s".repeat(40) }).jwtSecret).toBe("s".repeat(40));
+  });
+
   it("never serves draft content in production", () => {
     const c = loadConfig({ NODE_ENV: "production", JWT_SECRET: "s".repeat(40), DATABASE_URL: "postgres://u:p@h:5432/d" });
     expect(c.allowDraftContent).toBe(false);
