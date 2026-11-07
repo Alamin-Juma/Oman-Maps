@@ -9,6 +9,7 @@
 import { expect } from "vitest";
 import type { AttemptEvent } from "@dunialab/mastery";
 import { EventQueue, type KeyValueStorage } from "../../../apps/web/src/lib/queue.js";
+import { readGuestId, rotateGuestId } from "../../../apps/web/src/lib/guest.js";
 import { feature, scenario } from "../support/gherkin.js";
 
 const PACK = "ke.g5.sst.kenya-explorer";
@@ -16,6 +17,11 @@ const memory = (): KeyValueStorage => {
   const m = new Map<string, string>();
   return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) };
 };
+/** A phone whose browser storage is full or blocked: every read and write throws. */
+const blocked = (): KeyValueStorage => ({
+  getItem: () => { throw new Error("SecurityError"); },
+  setItem: () => { throw new Error("QuotaExceededError"); },
+});
 let n = 0;
 const play = (profileId: string): AttemptEvent => ({
   eventId: `e-${++n}`,
@@ -74,6 +80,21 @@ feature("Siblings sharing one phone keep their own progress", () => {
     await then("nothing is adopted", () => {
       expect(adopted).toBe(0);
       expect(q.unsynced(PACK, "wanjiru")).toEqual([]);
+    });
+  });
+  scenario("sign-out still issues a new guest id when the phone's storage is full or blocked", async ({ given, when, then }) => {
+    const storage = blocked();
+    let first = "";
+    await given("the app opens on a phone whose storage refuses writes", () => {
+      first = readGuestId(storage);
+    });
+    let next = "";
+    await when("the parent signs out", () => {
+      next = rotateGuestId(storage);
+    });
+    await then("the app still runs with a fresh guest id, so the next family cannot adopt this play", () => {
+      expect(first).toMatch(/^[0-9a-f-]{36}$/);
+      expect(next).not.toBe(first);
     });
   });
 });

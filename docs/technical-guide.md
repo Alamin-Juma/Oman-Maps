@@ -123,7 +123,7 @@ All tiers share the **same mission and mastery layer**, so results are comparabl
 The phone never waits for the network during a mission. Every answer becomes an **AttemptEvent** in a local queue.
 Sync sends batches; each event has a **client UUID**, so the server stores it once (`ON CONFLICT DO NOTHING`)
 no matter how many times a flaky connection resends it. On a shared family phone the queue is **per learner**: a child's
-events never move to a sibling; play before a parent signs in is a **guest** session adopted once by the first linked child. **Mastery is never stored.** It is recomputed by replaying
+events never move to a sibling; play before a parent signs in is a **guest** session adopted once by the first linked child (storage writes are best-effort: a full or blocked browser storage never stops the app or the guest-id rotation on sign-out). **Mastery is never stored.** It is recomputed by replaying
 the events, so phone and server always agree, and a rule change applies retroactively.
 
 ### Mastery rules

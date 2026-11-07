@@ -12,6 +12,7 @@ import type { AttemptEvent } from "@dunialab/mastery";
 export interface KeyValueStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
+  removeItem?(key: string): void;
 }
 
 interface Stored {
@@ -85,11 +86,42 @@ export class EventQueue {
   }
 }
 
-export function browserStorage(): KeyValueStorage {
+/**
+ * Wrap storage so it never throws. Browsers throw on access when storage is blocked
+ * (private mode, site data disabled) and on writes when the quota is full. A failed read
+ * returns null and a failed write is skipped; the app keeps running on in-memory state.
+ */
+export function safeStorage(inner: KeyValueStorage): Required<KeyValueStorage> {
+  return {
+    getItem: (k) => {
+      try {
+        return inner.getItem(k);
+      } catch {
+        return null;
+      }
+    },
+    setItem: (k, v) => {
+      try {
+        inner.setItem(k, v);
+      } catch {
+        /* blocked or full: skip the write */
+      }
+    },
+    removeItem: (k) => {
+      try {
+        inner.removeItem?.(k);
+      } catch {
+        /* blocked: skip */
+      }
+    },
+  };
+}
+
+export function browserStorage(): Required<KeyValueStorage> {
   try {
-    return window.localStorage;
+    return safeStorage(window.localStorage);
   } catch {
     const mem = new Map<string, string>();
-    return { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => void mem.set(k, v) };
+    return { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => void mem.set(k, v), removeItem: (k) => void mem.delete(k) };
   }
 }

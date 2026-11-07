@@ -8,25 +8,10 @@ import { FamilyPanel } from "./components/FamilyPanel.js";
 import { DuniaApi, type Profile } from "./lib/api.js";
 import { PACKS, t } from "./lib/packs.js";
 import { browserStorage, EventQueue } from "./lib/queue.js";
-import { uuid } from "@dunialab/mission";
+import { readGuestId, rotateGuestId } from "./lib/guest.js";
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3000";
 const storage = browserStorage();
-const GUEST_KEY = "dunialab.guestId";
-
-/**
- * Offline play needs an id before any parent links the device: a per-session GUEST id.
- * Guest events are adopted once by the first child the parent links; a new guest id is
- * issued on sign-out so the next family can never adopt this family's guest play.
- */
-function readGuestId(): string {
-  let id = storage.getItem(GUEST_KEY);
-  if (!id) {
-    id = uuid();
-    storage.setItem(GUEST_KEY, id);
-  }
-  return id;
-}
 
 export function App() {
   const [locale, setLocale] = useState<Locale>("en");
@@ -38,18 +23,14 @@ export function App() {
   const [selected, setSelected] = useState<Feature | null>(null);
   const [reveal, setReveal] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
-  const [guestId, setGuestId] = useState(readGuestId);
+  const [guestId, setGuestId] = useState(() => readGuestId(storage));
   const tapHandler = useRef<((f: Feature) => void) | null>(null);
 
   const queue = useMemo(() => new EventQueue(storage), []);
   const setToken = (tk: string | null) => {
     setTokenState(tk);
-    try {
-      if (tk) storage.setItem("dunialab.token", tk);
-      else window.localStorage.removeItem("dunialab.token");
-    } catch {
-      /* storage blocked */
-    }
+    if (tk) storage.setItem("dunialab.token", tk);
+    else storage.removeItem("dunialab.token");
   };
   const api = useMemo(() => new DuniaApi(API_URL, () => token), [token]);
   const onEvents = useCallback(
@@ -70,9 +51,7 @@ export function App() {
     setToken(null);
     setProfile(null);
     setMissionId(null);
-    const fresh = uuid();
-    storage.setItem(GUEST_KEY, fresh);
-    setGuestId(fresh);
+    setGuestId(rotateGuestId(storage));
   };
 
   const onTap = (f: Feature) => {
