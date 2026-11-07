@@ -1,0 +1,777 @@
+{
+  "schemaVersion": 1,
+  "id": "ke.g5.sst.kenya-explorer",
+  "version": "0.1.0",
+  "title": { "en": "Kenya Explorer", "sw": "Mvumbuzi wa Kenya" },
+  "country": "KE",
+  "grade": 5,
+  "subject": "Social Studies",
+  "strand": {
+    "code": "1.0",
+    "title": { "en": "Natural and Built Environments", "sw": "Mazingira Asilia na Yaliyojengwa" }
+  },
+  "review": {
+    "status": "draft",
+    "reviewedBy": null,
+    "notes": "Engineering draft. Needs a Grade 5 Social Studies teacher to check outcomes wording against the KICD curriculum design, all Kiswahili text, rubric evidence lists, and the 50+ real-explanation test set per rubric."
+  },
+  "printTarget": {
+    "id": "ke-explorer-a2-v1",
+    "size": "A2",
+    "bounds": [[33.5, -5.0], [42.0, 5.5]]
+  },
+  "subStrands": [
+    { "id": "ss-1-1", "code": "1.1", "title": { "en": "Elements of a map", "sw": "Vipengele vya ramani" }, "suggestedLessons": 4, "inMvp": true },
+    { "id": "ss-1-2", "code": "1.2", "title": { "en": "Location, position and size of Kenya", "sw": "Mahali, nafasi na ukubwa wa Kenya" }, "suggestedLessons": 4, "inMvp": false },
+    { "id": "ss-1-3", "code": "1.3", "title": { "en": "Main physical features in Kenya", "sw": "Sura kuu za nchi ya Kenya" }, "suggestedLessons": 5, "inMvp": true },
+    { "id": "ss-1-4", "code": "1.4", "title": { "en": "Weather and climate", "sw": "Hali ya anga na tabianchi" }, "suggestedLessons": 4, "inMvp": false }
+  ],
+  "skills": [
+    {
+      "id": "map.elements",
+      "subStrandId": "ss-1-1",
+      "outcome": "Identify the elements of a map (title, key, compass, scale) and explain why each is needed.",
+      "parentLabel": { "en": "Knows the parts of a map and what they are for", "sw": "Anajua sehemu za ramani na kazi zake" }
+    },
+    {
+      "id": "map.direction",
+      "subStrandId": "ss-1-1",
+      "outcome": "Use the compass to describe the direction of places on a map of Kenya.",
+      "parentLabel": { "en": "Uses north, south, east and west on a map", "sw": "Anatumia kaskazini, kusini, mashariki na magharibi kwenye ramani" }
+    },
+    {
+      "id": "map.scale",
+      "subStrandId": "ss-1-1",
+      "outcome": "Use a simple linear scale to work out real distances between places.",
+      "parentLabel": { "en": "Uses a map scale to work out real distances", "sw": "Anatumia kipimo cha ramani kupata umbali halisi" }
+    },
+    {
+      "id": "features.mountains",
+      "subStrandId": "ss-1-3",
+      "outcome": "Locate the main mountains of Kenya and explain how height affects climate.",
+      "parentLabel": { "en": "Finds Kenya's mountains and knows why they are cooler", "sw": "Anapata milima ya Kenya na anajua kwa nini kuna baridi huko" }
+    },
+    {
+      "id": "features.lakes-rift",
+      "subStrandId": "ss-1-3",
+      "outcome": "Locate the main lakes of Kenya and the Great Rift Valley, and explain how the lakes formed in the valley.",
+      "parentLabel": { "en": "Finds Kenya's lakes and the Rift Valley", "sw": "Anapata maziwa ya Kenya na Bonde la Ufa" }
+    },
+    {
+      "id": "features.rivers-coast",
+      "subStrandId": "ss-1-3",
+      "outcome": "Locate the main rivers and the coast of Kenya and explain why people settle near water bodies.",
+      "parentLabel": { "en": "Finds rivers and the coast and knows why people live near water", "sw": "Anapata mito na pwani na anajua kwa nini watu huishi karibu na maji" }
+    }
+  ],
+  "features": [
+    {
+      "id": "mount-kenya",
+      "kind": "mountain",
+      "name": { "en": "Mount Kenya", "sw": "Mlima Kenya" },
+      "anchor": [37.308, -0.152],
+      "facts": [
+        { "en": "Mount Kenya is the highest mountain in Kenya, about 5,199 metres high.", "sw": "Mlima Kenya ndio mlima mrefu zaidi nchini Kenya, wenye urefu wa takriban mita 5,199." },
+        { "en": "Its peaks are so high and cold that there is ice near the top, even though it is close to the Equator.", "sw": "Vilele vyake viko juu sana na kuna baridi kiasi kwamba kuna barafu karibu na kilele, ingawa uko karibu na Ikweta." }
+      ],
+      "narrationKey": "vo.feature.mount-kenya"
+    },
+    {
+      "id": "mount-elgon",
+      "kind": "mountain",
+      "name": { "en": "Mount Elgon", "sw": "Mlima Elgon" },
+      "anchor": [34.55, 1.13],
+      "facts": [
+        { "en": "Mount Elgon is on the border between Kenya and Uganda.", "sw": "Mlima Elgon uko mpakani mwa Kenya na Uganda." }
+      ],
+      "narrationKey": "vo.feature.mount-elgon"
+    },
+    {
+      "id": "kilimanjaro",
+      "kind": "mountain",
+      "name": { "en": "Mount Kilimanjaro (Tanzania)", "sw": "Mlima Kilimanjaro (Tanzania)" },
+      "anchor": [37.355, -3.067],
+      "facts": [
+        { "en": "Kilimanjaro can be seen from southern Kenya, but it is in Tanzania.", "sw": "Kilimanjaro huonekana kutoka kusini mwa Kenya, lakini uko Tanzania." }
+      ],
+      "narrationKey": "vo.feature.kilimanjaro"
+    },
+    {
+      "id": "lake-victoria",
+      "kind": "lake",
+      "name": { "en": "Lake Victoria", "sw": "Ziwa Viktoria" },
+      "anchor": [33.9, -0.6],
+      "facts": [
+        { "en": "Lake Victoria is the largest lake in Africa. Kenya shares it with Uganda and Tanzania.", "sw": "Ziwa Viktoria ndilo ziwa kubwa zaidi barani Afrika. Kenya inashiriki ziwa hili na Uganda na Tanzania." }
+      ],
+      "narrationKey": "vo.feature.lake-victoria"
+    },
+    {
+      "id": "lake-turkana",
+      "kind": "lake",
+      "name": { "en": "Lake Turkana", "sw": "Ziwa Turkana" },
+      "anchor": [36.1, 3.6],
+      "facts": [
+        { "en": "Lake Turkana lies in the Rift Valley in northern Kenya. It is the largest desert lake in the world.", "sw": "Ziwa Turkana liko katika Bonde la Ufa kaskazini mwa Kenya. Ndilo ziwa kubwa zaidi la jangwani duniani." }
+      ],
+      "narrationKey": "vo.feature.lake-turkana"
+    },
+    {
+      "id": "great-rift-valley",
+      "kind": "valley",
+      "name": { "en": "Great Rift Valley", "sw": "Bonde Kuu la Ufa" },
+      "anchor": [36.05, 0.5],
+      "path": [[35.9, 4.2], [36.0, 3.0], [36.0, 1.5], [36.05, 0.5], [36.2, -0.4], [36.35, -1.0], [36.1, -2.0], [35.95, -2.9]],
+      "facts": [
+        { "en": "The Great Rift Valley runs from north to south through the middle of Kenya.", "sw": "Bonde Kuu la Ufa linapita katikati ya Kenya kutoka kaskazini hadi kusini." },
+        { "en": "Many lakes lie on the valley floor, such as Lake Turkana, Lake Baringo, Lake Nakuru and Lake Naivasha.", "sw": "Maziwa mengi yako kwenye sakafu ya bonde, kama Ziwa Turkana, Ziwa Baringo, Ziwa Nakuru na Ziwa Naivasha." }
+      ],
+      "narrationKey": "vo.feature.great-rift-valley"
+    },
+    {
+      "id": "tana-river",
+      "kind": "river",
+      "name": { "en": "River Tana", "sw": "Mto Tana" },
+      "anchor": [38.9, -0.5],
+      "path": [[37.0, -0.7], [37.6, -0.4], [38.2, -0.1], [38.9, -0.5], [39.5, -1.3], [40.0, -2.1], [40.2, -2.5], [40.5, -2.55]],
+      "facts": [
+        { "en": "The Tana is the longest river in Kenya. It flows from the highlands into the Indian Ocean.", "sw": "Mto Tana ndio mto mrefu zaidi nchini Kenya. Unatiririka kutoka nyanda za juu hadi Bahari Hindi." }
+      ],
+      "narrationKey": "vo.feature.tana-river"
+    },
+    {
+      "id": "indian-ocean-coast",
+      "kind": "coast",
+      "name": { "en": "The Kenyan coast (Indian Ocean)", "sw": "Pwani ya Kenya (Bahari Hindi)" },
+      "anchor": [40.0, -3.4],
+      "facts": [
+        { "en": "Kenya's coast faces the Indian Ocean. The coast is low, hot and humid.", "sw": "Pwani ya Kenya inaelekea Bahari Hindi. Pwani iko chini, kuna joto na unyevu." }
+      ],
+      "narrationKey": "vo.feature.indian-ocean-coast"
+    },
+    {
+      "id": "nairobi",
+      "kind": "city",
+      "name": { "en": "Nairobi", "sw": "Nairobi" },
+      "anchor": [36.817, -1.286],
+      "facts": [{ "en": "Nairobi is the capital city of Kenya.", "sw": "Nairobi ni mji mkuu wa Kenya." }],
+      "narrationKey": "vo.feature.nairobi"
+    },
+    {
+      "id": "mombasa",
+      "kind": "city",
+      "name": { "en": "Mombasa", "sw": "Mombasa" },
+      "anchor": [39.668, -4.043],
+      "facts": [{ "en": "Mombasa is Kenya's main sea port, on the Indian Ocean.", "sw": "Mombasa ndiyo bandari kuu ya Kenya, kwenye Bahari Hindi." }],
+      "narrationKey": "vo.feature.mombasa"
+    },
+    {
+      "id": "kisumu",
+      "kind": "city",
+      "name": { "en": "Kisumu", "sw": "Kisumu" },
+      "anchor": [34.768, -0.092],
+      "facts": [{ "en": "Kisumu is a city on the shore of Lake Victoria.", "sw": "Kisumu ni mji ulio ufukweni mwa Ziwa Viktoria." }],
+      "narrationKey": "vo.feature.kisumu"
+    }
+  ],
+  "missions": [
+    {
+      "id": "m1-broken-map",
+      "subStrandId": "ss-1-1",
+      "title": { "en": "The map is broken!", "sw": "Ramani imeharibika!" },
+      "intro": {
+        "en": "A storm has torn pieces off the explorer's map. Help put back the title, the key, the compass and the scale.",
+        "sw": "Dhoruba imerarua vipande vya ramani ya mvumbuzi. Saidia kurudisha kichwa, ufunguo, dira na kipimo."
+      },
+      "minutes": 12,
+      "tasks": [
+        {
+          "type": "choice",
+          "id": "m1-t1-title",
+          "skillId": "map.elements",
+          "prompt": { "en": "Which part of a map tells you what the map is about?", "sw": "Sehemu ipi ya ramani inakuambia ramani inahusu nini?" },
+          "options": [
+            { "id": "title", "text": { "en": "The title", "sw": "Kichwa" } },
+            { "id": "key", "text": { "en": "The key", "sw": "Ufunguo" } },
+            { "id": "scale", "text": { "en": "The scale", "sw": "Kipimo" } }
+          ],
+          "correctOptionIds": ["title"],
+          "explanation": { "en": "The title tells you what the map shows, for example \"Kenya: Physical Features\".", "sw": "Kichwa kinakuambia ramani inaonyesha nini, kwa mfano \"Kenya: Sura za Nchi\"." }
+        },
+        {
+          "type": "choice",
+          "id": "m1-t2-key",
+          "skillId": "map.elements",
+          "prompt": { "en": "On the map, a blue wavy line is a river. Where do you find out what the symbols mean?", "sw": "Kwenye ramani, mstari wa buluu uliopinda ni mto. Unapata wapi maana ya alama?" },
+          "options": [
+            { "id": "compass", "text": { "en": "In the compass", "sw": "Kwenye dira" } },
+            { "id": "key", "text": { "en": "In the key", "sw": "Kwenye ufunguo" } },
+            { "id": "title", "text": { "en": "In the title", "sw": "Kwenye kichwa" } }
+          ],
+          "correctOptionIds": ["key"],
+          "explanation": { "en": "The key (also called the legend) lists every symbol and colour and says what it stands for.", "sw": "Ufunguo unaorodhesha kila alama na rangi na kueleza inasimamia nini." }
+        },
+        {
+          "type": "choice",
+          "id": "m1-t3-compass",
+          "skillId": "map.elements",
+          "prompt": { "en": "Which part of the map shows you which way is north?", "sw": "Sehemu ipi ya ramani inakuonyesha upande wa kaskazini?" },
+          "options": [
+            { "id": "compass", "text": { "en": "The compass", "sw": "Dira" } },
+            { "id": "scale", "text": { "en": "The scale", "sw": "Kipimo" } },
+            { "id": "key", "text": { "en": "The key", "sw": "Ufunguo" } }
+          ],
+          "correctOptionIds": ["compass"],
+          "explanation": { "en": "The compass (north arrow) shows north. From north you can find south, east and west.", "sw": "Dira (mshale wa kaskazini) inaonyesha kaskazini. Kutoka kaskazini unaweza kupata kusini, mashariki na magharibi." }
+        },
+        {
+          "type": "explain",
+          "id": "m1-t4-explain",
+          "skillId": "map.elements",
+          "prompt": {
+            "en": "The explorer's map has no key and no scale. Explain why it is hard to use.",
+            "sw": "Ramani ya mvumbuzi haina ufunguo wala kipimo. Eleza kwa nini ni vigumu kuitumia."
+          },
+          "wordBank": {
+            "en": ["symbols", "mean", "key", "scale", "distance", "how far", "real"],
+            "sw": ["alama", "maana", "ufunguo", "kipimo", "umbali", "halisi"]
+          },
+          "rubric": {
+            "minCriteria": 2,
+            "criteria": [
+              {
+                "id": "key-meaning",
+                "description": "Says that without a key you cannot tell what the symbols or colours mean.",
+                "evidence": {
+                  "en": ["symbol", "key", "legend", "colour", "color", "sign", "what things mean", "what it means"],
+                  "sw": ["alama", "ufunguo", "rangi", "ishara", "maana"]
+                }
+              },
+              {
+                "id": "scale-distance",
+                "description": "Says that without a scale you cannot work out real distance or size.",
+                "evidence": {
+                  "en": ["distance", "how far", "scale", "size", "km", "kilomet", "measure"],
+                  "sw": ["umbali", "kipimo", "mbali", "kilomita", "ukubwa", "pima"]
+                }
+              }
+            ]
+          },
+          "hints": [
+            { "id": "h-key", "criterionId": "key-meaning", "text": { "en": "Look at the little pictures on the map. How would you know what each one means?", "sw": "Angalia picha ndogo kwenye ramani. Utajuaje kila moja inamaanisha nini?" } },
+            { "id": "h-scale", "criterionId": "scale-distance", "text": { "en": "Think about a journey. How would you know how far apart two towns really are?", "sw": "Fikiria safari. Utajuaje miji miwili iko mbali kiasi gani kwa kweli?" } }
+          ],
+          "exemplar": {
+            "en": "Without a key I cannot tell what the symbols and colours mean, and without a scale I cannot work out how far apart places really are.",
+            "sw": "Bila ufunguo siwezi kujua alama na rangi zinamaanisha nini, na bila kipimo siwezi kujua umbali halisi kati ya mahali."
+          },
+          "followUp": {
+            "type": "choice",
+            "id": "m1-t4-followup",
+            "skillId": "map.elements",
+            "prompt": { "en": "Why do we need a key AND a scale on a map?", "sw": "Kwa nini tunahitaji ufunguo NA kipimo kwenye ramani?" },
+            "options": [
+              { "id": "a", "text": { "en": "The key explains symbols; the scale shows real distance", "sw": "Ufunguo unaeleza alama; kipimo kinaonyesha umbali halisi" } },
+              { "id": "b", "text": { "en": "They make the map look nice", "sw": "Vinafanya ramani ipendeze" } },
+              { "id": "c", "text": { "en": "They tell you the name of the map", "sw": "Vinakuambia jina la ramani" } }
+            ],
+            "correctOptionIds": ["a"],
+            "explanation": { "en": "The key tells us what symbols mean. The scale lets us work out real distances.", "sw": "Ufunguo unatuambia maana ya alama. Kipimo kinatusaidia kupata umbali halisi." }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m2-compass-quest",
+      "subStrandId": "ss-1-1",
+      "title": { "en": "Compass quest", "sw": "Safari ya dira" },
+      "intro": {
+        "en": "You are in Nairobi. Use the compass on the map to guide the explorer to new places.",
+        "sw": "Uko Nairobi. Tumia dira kwenye ramani kumwongoza mvumbuzi hadi mahali papya."
+      },
+      "minutes": 12,
+      "tasks": [
+        {
+          "type": "choice",
+          "id": "m2-t1-mt-kenya",
+          "skillId": "map.direction",
+          "prompt": { "en": "In which direction from Nairobi is Mount Kenya?", "sw": "Mlima Kenya uko upande gani kutoka Nairobi?" },
+          "options": [
+            { "id": "north", "text": { "en": "North", "sw": "Kaskazini" } },
+            { "id": "south", "text": { "en": "South", "sw": "Kusini" } },
+            { "id": "west", "text": { "en": "West", "sw": "Magharibi" } }
+          ],
+          "correctOptionIds": ["north"],
+          "explanation": { "en": "Mount Kenya is above Nairobi on the map, towards the north arrow.", "sw": "Mlima Kenya uko juu ya Nairobi kwenye ramani, kuelekea mshale wa kaskazini." }
+        },
+        {
+          "type": "locate",
+          "id": "m2-t2-mombasa",
+          "skillId": "map.direction",
+          "prompt": { "en": "Tap the city on the coast that is south-east of Nairobi.", "sw": "Gusa mji wa pwani ulio kusini-mashariki mwa Nairobi." },
+          "featureId": "mombasa",
+          "explanation": { "en": "Mombasa is south-east of Nairobi, on the Indian Ocean coast.", "sw": "Mombasa iko kusini-mashariki mwa Nairobi, kwenye pwani ya Bahari Hindi." }
+        },
+        {
+          "type": "choice",
+          "id": "m2-t3-kisumu",
+          "skillId": "map.direction",
+          "prompt": { "en": "Kisumu is on the shore of Lake Victoria. In which direction from Nairobi is it?", "sw": "Kisumu iko ufukweni mwa Ziwa Viktoria. Iko upande gani kutoka Nairobi?" },
+          "options": [
+            { "id": "east", "text": { "en": "East", "sw": "Mashariki" } },
+            { "id": "west", "text": { "en": "West", "sw": "Magharibi" } },
+            { "id": "south", "text": { "en": "South", "sw": "Kusini" } }
+          ],
+          "correctOptionIds": ["west"],
+          "explanation": { "en": "Lake Victoria and Kisumu are to the left of Nairobi on the map, which is west.", "sw": "Ziwa Viktoria na Kisumu ziko kushoto mwa Nairobi kwenye ramani, yaani magharibi." }
+        },
+        {
+          "type": "explain",
+          "id": "m2-t4-explain",
+          "skillId": "map.direction",
+          "prompt": { "en": "Explain why a map needs a compass.", "sw": "Eleza kwa nini ramani inahitaji dira." },
+          "wordBank": {
+            "en": ["direction", "north", "find", "way", "where", "places"],
+            "sw": ["mwelekeo", "kaskazini", "kupata", "njia", "wapi", "mahali"]
+          },
+          "rubric": {
+            "minCriteria": 2,
+            "criteria": [
+              {
+                "id": "direction",
+                "description": "Says the compass shows direction (north, south, east, west).",
+                "evidence": {
+                  "en": ["direction", "north", "south", "east", "west", "which way"],
+                  "sw": ["mwelekeo", "upande", "kaskazini", "kusini", "mashariki", "magharibi"]
+                }
+              },
+              {
+                "id": "find-places",
+                "description": "Says this helps you find places, describe where they are, or not get lost.",
+                "evidence": {
+                  "en": ["find", "locate", "where", "position", "lost", "way to", "go to", "travel", "guide"],
+                  "sw": ["pata", "kupata", "tafuta", "wapi", "mahali", "potea", "njia", "safiri", "ongoza"]
+                }
+              }
+            ]
+          },
+          "hints": [
+            { "id": "h-direction", "criterionId": "direction", "text": { "en": "What does the arrow on the compass point to?", "sw": "Mshale wa dira unaelekeza wapi?" } },
+            { "id": "h-find", "criterionId": "find-places", "text": { "en": "How does knowing north help a traveller?", "sw": "Kujua kaskazini kunamsaidiaje msafiri?" } }
+          ],
+          "exemplar": {
+            "en": "A compass shows which way is north, south, east and west, so we can find places and describe where they are.",
+            "sw": "Dira inaonyesha kaskazini, kusini, mashariki na magharibi, ili tuweze kupata mahali na kueleza yalipo."
+          },
+          "followUp": {
+            "type": "choice",
+            "id": "m2-t4-followup",
+            "skillId": "map.direction",
+            "prompt": { "en": "What does a compass on a map help us do?", "sw": "Dira kwenye ramani inatusaidia kufanya nini?" },
+            "options": [
+              { "id": "a", "text": { "en": "Know directions so we can find places", "sw": "Kujua mwelekeo ili tupate mahali" } },
+              { "id": "b", "text": { "en": "Know how hot a place is", "sw": "Kujua mahali pana joto kiasi gani" } },
+              { "id": "c", "text": { "en": "Know how many people live there", "sw": "Kujua watu wangapi wanaishi huko" } }
+            ],
+            "correctOptionIds": ["a"],
+            "explanation": { "en": "A compass shows directions, which help us find places.", "sw": "Dira inaonyesha mwelekeo, ambao hutusaidia kupata mahali." }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m3-scale-detective",
+      "subStrandId": "ss-1-1",
+      "title": { "en": "Scale detective", "sw": "Mpelelezi wa kipimo" },
+      "intro": {
+        "en": "The explorer needs to know how far each journey is. Use the scale to find out.",
+        "sw": "Mvumbuzi anahitaji kujua kila safari ni ya umbali gani. Tumia kipimo kujua."
+      },
+      "minutes": 12,
+      "tasks": [
+        {
+          "type": "choice",
+          "id": "m3-t1-nakuru",
+          "skillId": "map.scale",
+          "prompt": { "en": "On a map, 1 cm stands for 50 km. Nairobi and Nakuru are 3 cm apart. About how far apart are they really?", "sw": "Kwenye ramani, sm 1 inasimamia km 50. Nairobi na Nakuru ziko sm 3 mbali. Ziko umbali gani kwa kweli?" },
+          "options": [
+            { "id": "a", "text": { "en": "53 km", "sw": "km 53" } },
+            { "id": "b", "text": { "en": "150 km", "sw": "km 150" } },
+            { "id": "c", "text": { "en": "3 km", "sw": "km 3" } }
+          ],
+          "correctOptionIds": ["b"],
+          "explanation": { "en": "3 cm x 50 km = 150 km.", "sw": "sm 3 x km 50 = km 150." }
+        },
+        {
+          "type": "choice",
+          "id": "m3-t2-mombasa",
+          "skillId": "map.scale",
+          "prompt": { "en": "On the same map, Nairobi and Mombasa are 9 cm apart. About how far is that?", "sw": "Kwenye ramani hiyo hiyo, Nairobi na Mombasa ziko sm 9 mbali. Huo ni umbali gani?" },
+          "options": [
+            { "id": "a", "text": { "en": "90 km", "sw": "km 90" } },
+            { "id": "b", "text": { "en": "450 km", "sw": "km 450" } },
+            { "id": "c", "text": { "en": "59 km", "sw": "km 59" } }
+          ],
+          "correctOptionIds": ["b"],
+          "explanation": { "en": "9 cm x 50 km = 450 km.", "sw": "sm 9 x km 50 = km 450." }
+        },
+        {
+          "type": "choice",
+          "id": "m3-t3-which",
+          "skillId": "map.scale",
+          "prompt": { "en": "Two towns are 2 cm apart on the map. Which is true?", "sw": "Miji miwili iko sm 2 mbali kwenye ramani. Lipi ni kweli?" },
+          "options": [
+            { "id": "a", "text": { "en": "They are 2 cm apart in real life", "sw": "Ziko sm 2 mbali kwa kweli" } },
+            { "id": "b", "text": { "en": "They are 100 km apart in real life", "sw": "Ziko km 100 mbali kwa kweli" } },
+            { "id": "c", "text": { "en": "We cannot use the map to tell", "sw": "Hatuwezi kutumia ramani kujua" } }
+          ],
+          "correctOptionIds": ["b"],
+          "explanation": { "en": "Each centimetre stands for 50 km, so 2 cm stands for 100 km.", "sw": "Kila sentimita inasimamia km 50, kwa hiyo sm 2 inasimamia km 100." }
+        },
+        {
+          "type": "explain",
+          "id": "m3-t4-explain",
+          "skillId": "map.scale",
+          "prompt": { "en": "Why do map makers use a scale instead of drawing places at their real size?", "sw": "Kwa nini watengenezaji wa ramani hutumia kipimo badala ya kuchora mahali kwa ukubwa wake halisi?" },
+          "wordBank": {
+            "en": ["too big", "paper", "real", "distance", "measure", "smaller"],
+            "sw": ["kubwa mno", "karatasi", "halisi", "umbali", "pima", "ndogo"]
+          },
+          "rubric": {
+            "minCriteria": 2,
+            "criteria": [
+              {
+                "id": "too-big",
+                "description": "Says real places are far too big to draw at real size, so the map is made smaller.",
+                "evidence": {
+                  "en": ["too big", "too large", "very big", "huge", "real size", "not fit", "cannot fit", "can't fit", "paper", "smaller", "small"],
+                  "sw": ["kubwa mno", "kubwa sana", "haitoshi", "haiwezi kutosha", "karatasi", "ndogo"]
+                }
+              },
+              {
+                "id": "real-distance",
+                "description": "Says the scale lets you work out the real distance.",
+                "evidence": {
+                  "en": ["distance", "how far", "real", "measure", "calculate", "work out", "km", "kilomet"],
+                  "sw": ["umbali", "halisi", "pima", "hesabu", "kilomita", "mbali"]
+                }
+              }
+            ]
+          },
+          "hints": [
+            { "id": "h-big", "criterionId": "too-big", "text": { "en": "Could Kenya fit on a piece of paper at its real size?", "sw": "Je, Kenya inaweza kutosha kwenye karatasi kwa ukubwa wake halisi?" } },
+            { "id": "h-distance", "criterionId": "real-distance", "text": { "en": "What can you work out with the scale that you used in the last tasks?", "sw": "Ni nini unachoweza kupata kwa kipimo ulichotumia katika kazi zilizopita?" } }
+          ],
+          "exemplar": {
+            "en": "Real places are much too big to fit on paper, so the map is drawn smaller and the scale tells us the real distance.",
+            "sw": "Mahali halisi ni pakubwa mno kutosha kwenye karatasi, kwa hiyo ramani huchorwa ndogo na kipimo hutuambia umbali halisi."
+          },
+          "followUp": {
+            "type": "choice",
+            "id": "m3-t4-followup",
+            "skillId": "map.scale",
+            "prompt": { "en": "Why does a map have a scale?", "sw": "Kwa nini ramani ina kipimo?" },
+            "options": [
+              { "id": "a", "text": { "en": "Because the map is smaller than the real place, and the scale tells real distance", "sw": "Kwa sababu ramani ni ndogo kuliko mahali halisi, na kipimo kinaonyesha umbali halisi" } },
+              { "id": "b", "text": { "en": "To show which way is north", "sw": "Kuonyesha upande wa kaskazini" } },
+              { "id": "c", "text": { "en": "To explain the symbols", "sw": "Kueleza alama" } }
+            ],
+            "correctOptionIds": ["a"],
+            "explanation": { "en": "Maps are drawn smaller than real life; the scale converts map distance to real distance.", "sw": "Ramani huchorwa ndogo kuliko uhalisia; kipimo hubadilisha umbali wa ramani kuwa umbali halisi." }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m4-mountain-expedition",
+      "subStrandId": "ss-1-3",
+      "title": { "en": "Expedition: the mountains", "sw": "Msafara: milima" },
+      "intro": {
+        "en": "The terrain is rising! Find Kenya's great mountains and discover why their tops are cold.",
+        "sw": "Ardhi inainuka! Tafuta milima mikubwa ya Kenya na ugundue kwa nini vilele vyake vina baridi."
+      },
+      "minutes": 15,
+      "tasks": [
+        {
+          "type": "locate",
+          "id": "m4-t1-mt-kenya",
+          "skillId": "features.mountains",
+          "prompt": { "en": "Find and tap Mount Kenya.", "sw": "Tafuta na uguse Mlima Kenya." },
+          "featureId": "mount-kenya",
+          "explanation": { "en": "Mount Kenya is in the central highlands, north of Nairobi.", "sw": "Mlima Kenya uko katika nyanda za juu za kati, kaskazini mwa Nairobi." }
+        },
+        {
+          "type": "choice",
+          "id": "m4-t2-highest",
+          "skillId": "features.mountains",
+          "prompt": { "en": "Which is the highest mountain in Kenya?", "sw": "Mlima upi ni mrefu zaidi nchini Kenya?" },
+          "options": [
+            { "id": "mt-kenya", "text": { "en": "Mount Kenya", "sw": "Mlima Kenya" } },
+            { "id": "mt-elgon", "text": { "en": "Mount Elgon", "sw": "Mlima Elgon" } },
+            { "id": "kilimanjaro", "text": { "en": "Mount Kilimanjaro", "sw": "Mlima Kilimanjaro" } }
+          ],
+          "correctOptionIds": ["mt-kenya"],
+          "explanation": { "en": "Kilimanjaro is higher, but it is in Tanzania. Mount Kenya is the highest mountain in Kenya.", "sw": "Kilimanjaro ni mrefu zaidi, lakini uko Tanzania. Mlima Kenya ndio mrefu zaidi nchini Kenya." }
+        },
+        {
+          "type": "locate",
+          "id": "m4-t3-elgon",
+          "skillId": "features.mountains",
+          "prompt": { "en": "Find the mountain on the border with Uganda.", "sw": "Tafuta mlima ulio mpakani na Uganda." },
+          "featureId": "mount-elgon",
+          "explanation": { "en": "Mount Elgon is in the west, on the Kenya-Uganda border.", "sw": "Mlima Elgon uko magharibi, mpakani mwa Kenya na Uganda." }
+        },
+        {
+          "type": "explain",
+          "id": "m4-t4-explain",
+          "skillId": "features.mountains",
+          "prompt": {
+            "en": "Why is it cooler near the top of Mount Kenya than at the coast in Mombasa?",
+            "sw": "Kwa nini kuna baridi zaidi karibu na kilele cha Mlima Kenya kuliko pwani Mombasa?"
+          },
+          "wordBank": {
+            "en": ["high", "higher", "cold", "cooler", "coast", "low", "hot"],
+            "sw": ["juu", "baridi", "pwani", "chini", "joto"]
+          },
+          "rubric": {
+            "minCriteria": 2,
+            "criteria": [
+              {
+                "id": "height",
+                "description": "Refers to height or altitude: the mountain is high up / the higher you go.",
+                "evidence": {
+                  "en": ["high", "height", "altitude", "tall", "above sea", "top", "up"],
+                  "sw": ["juu", "urefu", "mwinuko", "kilele", "mrefu"]
+                }
+              },
+              {
+                "id": "cooler",
+                "description": "Links height with lower temperature (cooler, colder, ice, snow).",
+                "evidence": {
+                  "en": ["cool", "cold", "colder", "freez", "ice", "snow", "low temperature", "less hot"],
+                  "sw": ["baridi", "barafu", "theluji"]
+                }
+              },
+              {
+                "id": "coast-low-hot",
+                "description": "Contrasts with the coast being low (near sea level) and hot or humid.",
+                "evidence": {
+                  "en": ["coast", "sea level", "near the sea", "low land", "lowland", "hot", "warm", "humid"],
+                  "sw": ["pwani", "usawa wa bahari", "joto", "unyevu", "nyanda za chini"]
+                }
+              }
+            ]
+          },
+          "hints": [
+            { "id": "h-height", "criterionId": "height", "text": { "en": "Look at the 3D map. What is different about the land at Mount Kenya and at Mombasa?", "sw": "Angalia ramani ya 3D. Ardhi ya Mlima Kenya na ya Mombasa ina tofauti gani?" } },
+            { "id": "h-cool", "criterionId": "cooler", "text": { "en": "What happens to the temperature as you climb higher up a mountain?", "sw": "Nini hutokea kwa joto unapopanda juu zaidi mlimani?" } },
+            { "id": "h-coast", "criterionId": "coast-low-hot", "text": { "en": "Is Mombasa high up or low down? What is the weather like there?", "sw": "Je, Mombasa iko juu au chini? Hali ya hewa ikoje huko?" } }
+          ],
+          "exemplar": {
+            "en": "Mount Kenya is very high, and the higher you go the cooler it gets. Mombasa is low down at the coast, so it is hot.",
+            "sw": "Mlima Kenya uko juu sana, na kadiri unavyopanda juu ndivyo baridi inavyoongezeka. Mombasa iko chini pwani, kwa hiyo kuna joto."
+          },
+          "followUp": {
+            "type": "choice",
+            "id": "m4-t4-followup",
+            "skillId": "features.mountains",
+            "prompt": { "en": "Why is the top of Mount Kenya colder than Mombasa?", "sw": "Kwa nini kilele cha Mlima Kenya kina baridi kuliko Mombasa?" },
+            "options": [
+              { "id": "a", "text": { "en": "Because it is much higher above sea level", "sw": "Kwa sababu kiko juu sana kutoka usawa wa bahari" } },
+              { "id": "b", "text": { "en": "Because it is closer to the sun", "sw": "Kwa sababu kiko karibu zaidi na jua" } },
+              { "id": "c", "text": { "en": "Because more people live there", "sw": "Kwa sababu watu wengi wanaishi huko" } }
+            ],
+            "correctOptionIds": ["a"],
+            "explanation": { "en": "The higher a place is above sea level, the cooler it is.", "sw": "Kadiri mahali palivyo juu kutoka usawa wa bahari, ndivyo palivyo na baridi zaidi." }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m5-lakes-and-rift",
+      "subStrandId": "ss-1-3",
+      "title": { "en": "Expedition: lakes and the Rift Valley", "sw": "Msafara: maziwa na Bonde la Ufa" },
+      "intro": {
+        "en": "A giant crack runs through Kenya. Follow it and find the lakes that lie along it.",
+        "sw": "Ufa mkubwa unapita katikati ya Kenya. Ufuate na upate maziwa yaliyo kando yake."
+      },
+      "minutes": 15,
+      "tasks": [
+        {
+          "type": "locate",
+          "id": "m5-t1-victoria",
+          "skillId": "features.lakes-rift",
+          "prompt": { "en": "Find the largest lake in Africa, which Kenya shares with Uganda and Tanzania.", "sw": "Tafuta ziwa kubwa zaidi barani Afrika, ambalo Kenya inashiriki na Uganda na Tanzania." },
+          "featureId": "lake-victoria",
+          "explanation": { "en": "Lake Victoria is in the far west of Kenya.", "sw": "Ziwa Viktoria liko magharibi kabisa mwa Kenya." }
+        },
+        {
+          "type": "locate",
+          "id": "m5-t2-rift",
+          "skillId": "features.lakes-rift",
+          "prompt": { "en": "Trace the Great Rift Valley. Tap it on the map.", "sw": "Fuata Bonde Kuu la Ufa. Liguse kwenye ramani." },
+          "featureId": "great-rift-valley",
+          "explanation": { "en": "The Rift Valley runs north to south through the middle of Kenya.", "sw": "Bonde la Ufa linapita kaskazini hadi kusini katikati ya Kenya." }
+        },
+        {
+          "type": "choice",
+          "id": "m5-t3-turkana",
+          "skillId": "features.lakes-rift",
+          "prompt": { "en": "Which large lake lies in the Rift Valley in the north of Kenya?", "sw": "Ziwa lipi kubwa liko katika Bonde la Ufa kaskazini mwa Kenya?" },
+          "options": [
+            { "id": "turkana", "text": { "en": "Lake Turkana", "sw": "Ziwa Turkana" } },
+            { "id": "victoria", "text": { "en": "Lake Victoria", "sw": "Ziwa Viktoria" } },
+            { "id": "indian-ocean", "text": { "en": "The Indian Ocean", "sw": "Bahari Hindi" } }
+          ],
+          "correctOptionIds": ["turkana"],
+          "explanation": { "en": "Lake Turkana lies in the Rift Valley in northern Kenya. Lake Victoria is not in the Rift Valley.", "sw": "Ziwa Turkana liko katika Bonde la Ufa kaskazini mwa Kenya. Ziwa Viktoria haliko katika Bonde la Ufa." }
+        },
+        {
+          "type": "explain",
+          "id": "m5-t4-explain",
+          "skillId": "features.lakes-rift",
+          "prompt": { "en": "Many lakes lie on the floor of the Rift Valley. Explain why water collects there.", "sw": "Maziwa mengi yako kwenye sakafu ya Bonde la Ufa. Eleza kwa nini maji hukusanyika hapo." },
+          "wordBank": {
+            "en": ["low", "valley", "floor", "water", "rain", "rivers", "collect"],
+            "sw": ["chini", "bonde", "sakafu", "maji", "mvua", "mito", "kusanyika"]
+          },
+          "rubric": {
+            "minCriteria": 2,
+            "criteria": [
+              {
+                "id": "low-land",
+                "description": "Says the valley floor is lower than the land around it (a dip/depression).",
+                "evidence": {
+                  "en": ["low", "lower", "deep", "down", "dip", "sunk", "depression", "floor", "hollow"],
+                  "sw": ["chini", "kina", "shimo", "bonde", "sakafu"]
+                }
+              },
+              {
+                "id": "water-collects",
+                "description": "Says rain or rivers flow down into it and the water collects.",
+                "evidence": {
+                  "en": ["water", "rain", "river", "flow", "collect", "gather", "fill", "run down", "stay"],
+                  "sw": ["maji", "mvua", "mto", "mito", "tiririka", "kusanyika", "jaa", "shuka"]
+                }
+              }
+            ]
+          },
+          "hints": [
+            { "id": "h-low", "criterionId": "low-land", "text": { "en": "Look at the valley in 3D. Is its floor higher or lower than the land beside it?", "sw": "Angalia bonde kwa 3D. Je, sakafu yake iko juu au chini kuliko ardhi iliyo kando yake?" } },
+            { "id": "h-water", "criterionId": "water-collects", "text": { "en": "Where does rainwater go when it falls on high land?", "sw": "Maji ya mvua huenda wapi yanaponyesha kwenye ardhi ya juu?" } }
+          ],
+          "exemplar": {
+            "en": "The floor of the Rift Valley is lower than the land around it, so rain and rivers flow down into it and the water collects to form lakes.",
+            "sw": "Sakafu ya Bonde la Ufa iko chini kuliko ardhi inayoizunguka, kwa hiyo mvua na mito hutiririka ndani yake na maji hukusanyika kuunda maziwa."
+          },
+          "followUp": {
+            "type": "choice",
+            "id": "m5-t4-followup",
+            "skillId": "features.lakes-rift",
+            "prompt": { "en": "Why are there lakes on the floor of the Rift Valley?", "sw": "Kwa nini kuna maziwa kwenye sakafu ya Bonde la Ufa?" },
+            "options": [
+              { "id": "a", "text": { "en": "The valley floor is low, so water flows in and collects", "sw": "Sakafu ya bonde iko chini, kwa hiyo maji hutiririka ndani na kukusanyika" } },
+              { "id": "b", "text": { "en": "People dug them", "sw": "Watu waliyachimba" } },
+              { "id": "c", "text": { "en": "The sea flows into the valley", "sw": "Bahari hutiririka ndani ya bonde" } }
+            ],
+            "correctOptionIds": ["a"],
+            "explanation": { "en": "Water flows downhill and collects in low places like the valley floor.", "sw": "Maji hutiririka kuteremka na kukusanyika mahali pa chini kama sakafu ya bonde." }
+          }
+        }
+      ]
+    },
+    {
+      "id": "m6-rivers-and-coast",
+      "subStrandId": "ss-1-3",
+      "title": { "en": "Expedition: rivers and the coast", "sw": "Msafara: mito na pwani" },
+      "intro": {
+        "en": "Follow Kenya's longest river all the way to the ocean.",
+        "sw": "Fuata mto mrefu zaidi wa Kenya hadi baharini."
+      },
+      "minutes": 15,
+      "tasks": [
+        {
+          "type": "choice",
+          "id": "m6-t1-longest",
+          "skillId": "features.rivers-coast",
+          "prompt": { "en": "Which is the longest river in Kenya?", "sw": "Mto upi ni mrefu zaidi nchini Kenya?" },
+          "options": [
+            { "id": "tana", "text": { "en": "River Tana", "sw": "Mto Tana" } },
+            { "id": "nzoia", "text": { "en": "River Nzoia", "sw": "Mto Nzoia" } },
+            { "id": "nile", "text": { "en": "River Nile", "sw": "Mto Naili" } }
+          ],
+          "correctOptionIds": ["tana"],
+          "explanation": { "en": "The Tana is Kenya's longest river. The Nile is longer but does not flow through Kenya.", "sw": "Tana ndio mto mrefu zaidi wa Kenya. Naili ni mrefu zaidi lakini haupiti Kenya." }
+        },
+        {
+          "type": "locate",
+          "id": "m6-t2-tana",
+          "skillId": "features.rivers-coast",
+          "prompt": { "en": "Find and tap the River Tana.", "sw": "Tafuta na uguse Mto Tana." },
+          "featureId": "tana-river",
+          "explanation": { "en": "The Tana flows east and south from the highlands to the Indian Ocean.", "sw": "Mto Tana unatiririka mashariki na kusini kutoka nyanda za juu hadi Bahari Hindi." }
+        },
+        {
+          "type": "locate",
+          "id": "m6-t3-coast",
+          "skillId": "features.rivers-coast",
+          "prompt": { "en": "Where does the Tana end? Tap the coast.", "sw": "Mto Tana unaishia wapi? Gusa pwani." },
+          "featureId": "indian-ocean-coast",
+          "explanation": { "en": "The Tana flows into the Indian Ocean on Kenya's coast.", "sw": "Mto Tana unaingia Bahari Hindi kwenye pwani ya Kenya." }
+        },
+        {
+          "type": "explain",
+          "id": "m6-t4-explain",
+          "skillId": "features.rivers-coast",
+          "prompt": { "en": "Many people live near Lake Victoria, the River Tana and the coast. Explain why.", "sw": "Watu wengi wanaishi karibu na Ziwa Viktoria, Mto Tana na pwani. Eleza kwa nini." },
+          "wordBank": {
+            "en": ["water", "farming", "fishing", "trade", "port", "jobs"],
+            "sw": ["maji", "kilimo", "uvuvi", "biashara", "bandari", "kazi"]
+          },
+          "rubric": {
+            "minCriteria": 1,
+            "criteria": [
+              {
+                "id": "water-use",
+                "description": "Names a use of the water: drinking, farming or irrigation, animals.",
+                "evidence": {
+                  "en": ["water", "drink", "irrigat", "farm", "crops", "grow", "animals", "livestock"],
+                  "sw": ["maji", "kunywa", "umwagiliaji", "shamba", "kilimo", "mazao", "mifugo", "lima"]
+                }
+              },
+              {
+                "id": "livelihood",
+                "description": "Names a way of earning a living: fishing, trade, a port, transport, tourism, jobs.",
+                "evidence": {
+                  "en": ["fish", "trade", "port", "transport", "boat", "ship", "work", "job", "tourism", "tourist", "sell", "business"],
+                  "sw": ["samaki", "uvuvi", "biashara", "bandari", "usafiri", "mashua", "meli", "kazi", "utalii", "watalii", "uza"]
+                }
+              }
+            ]
+          },
+          "hints": [
+            { "id": "h-water", "criterionId": "water-use", "text": { "en": "What do families and farmers need every day that a lake or river gives them?", "sw": "Familia na wakulima wanahitaji nini kila siku ambacho ziwa au mto huwapa?" } },
+            { "id": "h-living", "criterionId": "livelihood", "text": { "en": "What jobs can people do near a lake or the sea?", "sw": "Watu wanaweza kufanya kazi gani karibu na ziwa au bahari?" } }
+          ],
+          "exemplar": {
+            "en": "People live near water because they need it for drinking and farming, and they can earn a living from fishing, trade at the port, and tourism.",
+            "sw": "Watu huishi karibu na maji kwa sababu wanayahitaji kwa kunywa na kilimo, na wanaweza kujipatia riziki kwa uvuvi, biashara bandarini na utalii."
+          },
+          "followUp": {
+            "type": "choice",
+            "id": "m6-t4-followup",
+            "skillId": "features.rivers-coast",
+            "prompt": { "en": "Why do many people settle near lakes, rivers and the coast?", "sw": "Kwa nini watu wengi huishi karibu na maziwa, mito na pwani?" },
+            "options": [
+              { "id": "a", "text": { "en": "For water, farming, fishing and trade", "sw": "Kwa maji, kilimo, uvuvi na biashara" } },
+              { "id": "b", "text": { "en": "Because it is always cold there", "sw": "Kwa sababu huko kuna baridi kila wakati" } },
+              { "id": "c", "text": { "en": "Because there are no animals there", "sw": "Kwa sababu huko hakuna wanyama" } }
+            ],
+            "correctOptionIds": ["a"],
+            "explanation": { "en": "Water bodies give water for homes and farms, and jobs such as fishing and trade.", "sw": "Maji hutoa maji kwa nyumba na mashamba, na kazi kama uvuvi na biashara." }
+          }
+        }
+      ]
+    }
+  ]
+}

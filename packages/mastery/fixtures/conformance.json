@@ -1,0 +1,127 @@
+{
+  "$comment": "Shared conformance cases. EVERY implementation of the mastery rules (TypeScript here, C# in apps/unity) must pass all of them. Add a case before changing a rule.",
+  "rules": {
+    "masteryDistinctDays": 2,
+    "requireExplanation": true,
+    "utcOffsetMinutes": 180,
+    "reviewIntervalsDays": [1, 3, 7, 14, 30]
+  },
+  "cases": [
+    {
+      "name": "one correct day is not mastery, even with an explanation",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t2", "kind": "explain", "correct": true, "occurredAt": "2027-01-11T07:05:00Z", "context": "mission", "checkedBy": "ai" }
+      ],
+      "expected": {
+        "A": { "status": "practising", "attempts": 2, "correctDays": ["2027-01-11"], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-12" }
+      }
+    },
+    {
+      "name": "correct on two days including an explanation is mastery",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t2", "kind": "explain", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "review", "checkedBy": "local" }
+      ],
+      "expected": {
+        "A": { "status": "mastered", "attempts": 2, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": "2027-01-12", "box": 1, "nextReviewDay": "2027-01-15" }
+      }
+    },
+    {
+      "name": "two correct days without an explanation is still practising",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t3", "kind": "locate", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "mission" }
+      ],
+      "expected": {
+        "A": { "status": "practising", "attempts": 2, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-13" }
+      }
+    },
+    {
+      "name": "day boundary is local Kenyan midnight (EAT, UTC+3), not UTC",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T20:30:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t2", "kind": "explain", "correct": true, "occurredAt": "2027-01-11T21:30:00Z", "context": "mission", "checkedBy": "ai" }
+      ],
+      "expected": {
+        "A": { "status": "mastered", "attempts": 2, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": "2027-01-12", "box": 0, "nextReviewDay": "2027-01-13" }
+      }
+    },
+    {
+      "name": "correct reviews promote one box, a wrong review resets to box 0",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "review" },
+        { "eventId": "e3", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-15T07:00:00Z", "context": "review" },
+        { "eventId": "e4", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": false, "occurredAt": "2027-01-22T07:00:00Z", "context": "review" }
+      ],
+      "expected": {
+        "A": { "status": "practising", "attempts": 4, "correctDays": ["2027-01-11", "2027-01-12", "2027-01-15"], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-23" }
+      }
+    },
+    {
+      "name": "several correct reviews on the same day promote only once",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "review" },
+        { "eventId": "e3", "profileId": "p", "skillId": "A", "taskId": "t3", "kind": "locate", "correct": true, "occurredAt": "2027-01-12T07:10:00Z", "context": "review" }
+      ],
+      "expected": {
+        "A": { "status": "practising", "attempts": 3, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": null, "box": 1, "nextReviewDay": "2027-01-15" }
+      }
+    },
+    {
+      "name": "a rejected explanation does not satisfy the explanation requirement",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t2", "kind": "explain", "correct": false, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission", "checkedBy": "ai" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "mission" },
+        { "eventId": "e3", "profileId": "p", "skillId": "A", "taskId": "t2f", "kind": "follow-up", "correct": true, "occurredAt": "2027-01-13T07:00:00Z", "context": "mission" }
+      ],
+      "expected": {
+        "A": { "status": "practising", "attempts": 3, "correctDays": ["2027-01-12", "2027-01-13"], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-14" }
+      }
+    },
+    {
+      "name": "mastery is sticky: a later wrong review never removes it",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t2", "kind": "explain", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "mission", "checkedBy": "ai" },
+        { "eventId": "e3", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": false, "occurredAt": "2027-01-13T07:00:00Z", "context": "review" }
+      ],
+      "expected": {
+        "A": { "status": "mastered", "attempts": 3, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": "2027-01-12", "box": 0, "nextReviewDay": "2027-01-14" }
+      }
+    },
+    {
+      "name": "a duplicated event (same eventId, re-sent by sync) is counted once",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" }
+      ],
+      "expected": {
+        "A": { "status": "practising", "attempts": 1, "correctDays": ["2027-01-11"], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-12" }
+      }
+    },
+    {
+      "name": "events at the same instant are ordered by eventId using ordinal (code-unit) comparison, not locale rules",
+      "events": [
+        { "eventId": "x", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "a", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "review" },
+        { "eventId": "Z", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": false, "occurredAt": "2027-01-12T07:00:00Z", "context": "review" }
+      ],
+      "expected": {
+        "A": { "status": "practising", "attempts": 3, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": null, "box": 1, "nextReviewDay": "2027-01-15" }
+      }
+    },
+    {
+      "name": "events arriving out of order are replayed in time order",
+      "events": [
+        { "eventId": "e2", "profileId": "p", "skillId": "A", "taskId": "t2", "kind": "explain", "correct": true, "occurredAt": "2027-01-12T07:00:00Z", "context": "mission", "checkedBy": "ai" },
+        { "eventId": "e1", "profileId": "p", "skillId": "A", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" }
+      ],
+      "expected": {
+        "A": { "status": "mastered", "attempts": 2, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": "2027-01-12", "box": 0, "nextReviewDay": "2027-01-13" }
+      }
+    }
+  ]
+}

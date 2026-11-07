@@ -1,0 +1,24 @@
+{
+    "name": "DuniaLab.AR",
+    "rootNamespace": "DuniaLab.AR",
+    "references": [
+        "DuniaLab.Core",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARSubsystems"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": ["DUNIA_ARFOUNDATION"],
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.arfoundation",
+            "expression": "6.0.0",
+            "define": "DUNIA_ARFOUNDATION"
+        }
+    ],
+    "noEngineReferences": false
+}

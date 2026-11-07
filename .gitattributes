@@ -1,0 +1,28 @@
+* text=auto eol=lf
+*.cs     text diff=csharp
+*.{cmd,bat,ps1} text eol=crlf
+
+# Unity YAML: merge as text, never as binary
+*.unity  text merge=unityyamlmerge eol=lf
+*.prefab text merge=unityyamlmerge eol=lf
+*.asset  text merge=unityyamlmerge eol=lf
+*.meta   text eol=lf
+
+# Large binaries in the NEW Unity project go through Git LFS.
+# (Scoped to apps/unity so the legacy history is not rewritten.)
+apps/unity/**/*.png  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.jpg  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.psd  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.fbx  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.glb  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.wav  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.mp3  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.ogg  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.exr  filter=lfs diff=lfs merge=lfs -text
+apps/unity/**/*.tif  filter=lfs diff=lfs merge=lfs -text
+
+# Binary docs
+*.docx binary
+*.jpg  binary
+*.jpeg binary
+*.png  binary

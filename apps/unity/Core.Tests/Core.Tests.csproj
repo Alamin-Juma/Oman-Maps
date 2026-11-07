@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Runs the Unity-free DuniaLab.Core code with plain `dotnet test`, so the C# mastery
+    engine is verified against the SAME fixtures as TypeScript, in CI, with no Unity licence.
+    LangVersion 9 = what Unity 6 compiles, so nothing newer sneaks into Core.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Assets/DuniaLab/Core/**/*.cs" LinkBase="Core" />
+    <Compile Include="*.cs" />
+    <None Include="../../../packages/mastery/fixtures/conformance.json" Link="fixtures/conformance.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="NUnit" Version="4.*" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.*" />
+  </ItemGroup>
+</Project>

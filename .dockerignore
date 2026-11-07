@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/dist-check
+**/*.tsbuildinfo
+.git
+legacy
+docs
+apps/unity
+# keep web's package.json so `npm ci` matches the workspace lockfile
+apps/web/*
+!apps/web/package.json
+tests
+**/.env
+**/.env.*

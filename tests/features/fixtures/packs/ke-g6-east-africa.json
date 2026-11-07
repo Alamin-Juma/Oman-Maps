@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "ke.g6.sst.east-africa-explorer",
+  "version": "0.0.1",
+  "title": { "en": "East Africa Explorer", "sw": "Mvumbuzi wa Afrika Mashariki" },
+  "country": "KE",
+  "grade": 6,
+  "subject": "Social Studies",
+  "strand": { "code": "1.0", "title": { "en": "Natural and Built Environments", "sw": "Mazingira Asilia na Yaliyojengwa" } },
+  "review": { "status": "draft", "reviewedBy": null, "notes": "TEST FIXTURE ONLY: proves a new grade is a content drop." },
+  "printTarget": { "id": "ke-ea-a2-test", "size": "A2", "bounds": [[28.0, -12.0], [42.0, 5.5]] },
+  "subStrands": [
+    { "id": "ss-1-1", "code": "1.1", "title": { "en": "Countries of East Africa", "sw": "Nchi za Afrika Mashariki" }, "suggestedLessons": 3, "inMvp": true }
+  ],
+  "skills": [
+    {
+      "id": "ea.neighbours",
+      "subStrandId": "ss-1-1",
+      "outcome": "Name the countries that border Kenya.",
+      "parentLabel": { "en": "Names Kenya's neighbours", "sw": "Anataja majirani wa Kenya" }
+    }
+  ],
+  "features": [
+    { "id": "uganda", "kind": "city", "name": { "en": "Uganda", "sw": "Uganda" }, "anchor": [32.3, 1.4], "facts": [] }
+  ],
+  "missions": [
+    {
+      "id": "m1-border-patrol",
+      "subStrandId": "ss-1-1",
+      "title": { "en": "Border patrol", "sw": "Doria ya mpakani" },
+      "intro": { "en": "Find Kenya's neighbours.", "sw": "Tafuta majirani wa Kenya." },
+      "minutes": 10,
+      "tasks": [
+        {
+          "type": "locate",
+          "id": "g6-t1",
+          "skillId": "ea.neighbours",
+          "prompt": { "en": "Tap Uganda.", "sw": "Gusa Uganda." },
+          "featureId": "uganda",
+          "explanation": { "en": "Uganda is west of Kenya.", "sw": "Uganda iko magharibi mwa Kenya." }
+        },
+        {
+          "type": "choice",
+          "id": "g6-t2",
+          "skillId": "ea.neighbours",
+          "prompt": { "en": "Which country borders Kenya to the south?", "sw": "Nchi ipi inapakana na Kenya upande wa kusini?" },
+          "options": [
+            { "id": "tz", "text": { "en": "Tanzania", "sw": "Tanzania" } },
+            { "id": "eg", "text": { "en": "Egypt", "sw": "Misri" } }
+          ],
+          "correctOptionIds": ["tz"],
+          "explanation": { "en": "Tanzania is south of Kenya.", "sw": "Tanzania iko kusini mwa Kenya." }
+        },
+        {
+          "type": "explain",
+          "id": "g6-t3",
+          "skillId": "ea.neighbours",
+          "prompt": { "en": "Why does Kenya trade with its neighbours?", "sw": "Kwa nini Kenya hufanya biashara na majirani zake?" },
+          "rubric": {
+            "minCriteria": 1,
+            "criteria": [
+              { "id": "near", "description": "Says they are close / share a border.", "evidence": { "en": ["close", "near", "border"], "sw": ["karibu", "mpaka"] } }
+            ]
+          },
+          "hints": [{ "id": "h-near", "criterionId": "near", "text": { "en": "Where are they on the map?", "sw": "Ziko wapi kwenye ramani?" } }],
+          "exemplar": { "en": "Because they are close and share a border.", "sw": "Kwa sababu ziko karibu na zinashiriki mpaka." },
+          "followUp": {
+            "type": "choice",
+            "id": "g6-t3-followup",
+            "skillId": "ea.neighbours",
+            "prompt": { "en": "Why is trading with neighbours easier?", "sw": "Kwa nini biashara na majirani ni rahisi?" },
+            "options": [
+              { "id": "a", "text": { "en": "They are close", "sw": "Wako karibu" } },
+              { "id": "b", "text": { "en": "They are far", "sw": "Wako mbali" } }
+            ],
+            "correctOptionIds": ["a"],
+            "explanation": { "en": "Close countries are easier to trade with.", "sw": "Nchi za karibu ni rahisi kufanya biashara nazo." }
+          }
+        }
+      ]
+    }
+  ]
+}

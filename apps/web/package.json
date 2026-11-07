@@ -1,0 +1,32 @@
+{
+  "name": "@dunialab/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tier C (2D map, any browser) and the family area: play missions offline, sync, parent report.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "basemap": "node scripts/build-basemap.mjs"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "^3.1.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
+    "@vitejs/plugin-react": "^6.2.1",
+    "vite": "^8.3.6"
+  },
+  "dependencies": {
+    "@dunialab/content": "^0.1.0",
+    "@dunialab/mastery": "^0.1.0",
+    "@dunialab/mission": "^0.1.0",
+    "d3-geo": "^3.1.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  }
+}

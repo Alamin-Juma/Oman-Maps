@@ -1,0 +1,29 @@
+{
+  "name": "@dunialab/content",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Curriculum engine: content-pack schema, the Kenya Explorer pack, and the offline rubric checker.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./packs/*.json": "./packs/*.json"
+  },
+  "files": [
+    "dist",
+    "packs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "validate": "node dist/cli/validate.js packs"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

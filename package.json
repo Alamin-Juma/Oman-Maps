@@ -1,0 +1,40 @@
+{
+  "name": "dunialab",
+  "private": true,
+  "description": "DuniaLab: printed, curriculum-mapped learning maps that come alive on any Android phone.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test:features && npm run test:unit",
+    "lint": "npm run lint --workspaces --if-present",
+    "validate:content": "npm run validate -w @dunialab/content",
+    "sync:unity-content": "node scripts/sync-unity-content.mjs",
+    "dev:api": "npm run dev -w @dunialab/api",
+    "dev:web": "npm run dev -w @dunialab/web",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "test:features": "vitest run --project features",
+    "test:unit": "npm run test --workspaces --if-present",
+    "test:e2e": "vitest run --project e2e"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1",
+    "playwright": "^1.65.0",
+    "topojson-client": "^3.1.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "type": "module"
+}

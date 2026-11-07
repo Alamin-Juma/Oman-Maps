@@ -1,0 +1,22 @@
+{
+  "name": "@dunialab/mastery",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mastery engine: fixed rules decide mastery; spaced, interleaved review. Pure, deterministic, no I/O.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./fixtures/*.json": "./fixtures/*.json"
+  },
+  "files": ["dist", "fixtures"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  }
+}

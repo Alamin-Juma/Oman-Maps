@@ -1,0 +1,54 @@
+# ---- Node / TypeScript ----
+node_modules/
+dist/
+build/
+legacy/
+coverage/
+*.tsbuildinfo
+.turbo/
+.vite/
+npm-debug.log*
+
+# ---- Env / secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- OS / editors ----
+.DS_Store
+Thumbs.db
+.idea/
+.vs/
+*.swp
+
+# ---- Unity (applies to apps/unity and legacy/) ----
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Mm]emoryCaptures/
+**/[Rr]ecordings/
+*.csproj
+*.sln
+# ...except the hand-written, Unity-free test project
+!apps/unity/Core.Tests/Core.Tests.csproj
+apps/unity/Core.Tests/bin/
+**/dist-check/
+*.unityproj
+*.suo
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.apk
+*.aab
+*.unitypackage
+crashlytics-build.properties
+**/[Aa]ssets/[Ss]treamingAssets/aa/

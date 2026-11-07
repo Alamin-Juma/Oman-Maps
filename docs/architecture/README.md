@@ -1,0 +1,176 @@
+# DuniaLab Architecture
+
+> **Rule:** every architectural change updates this folder **in the same PR**:
+> the diagram(s) it affects and a line in the [change log](#architecture-change-log).
+> An "architectural change" is any new or removed component, data store, external
+> service, cross-component call, data flow, or extension point.
+> See [`CLAUDE.md`](../../CLAUDE.md) and [ADR-0004](../adr/0004-content-packs-are-the-extension-point.md).
+
+Diagrams are [Mermaid](https://mermaid.js.org): text in Markdown, rendered by GitHub
+and VS Code, and reviewed in diffs like code.
+
+| Doc | What it shows |
+|---|---|
+| This page | System context, components and "what touches what", extension points |
+| [flows.md](flows.md) | Sequence diagrams for the key runtime flows |
+| [data-model.md](data-model.md) | Database tables and what we deliberately do **not** store |
+
+---
+
+## 1. System context
+
+Who and what DuniaLab talks to.
+
+```mermaid
+flowchart LR
+  child([Child, Grade 5])
+  parent([Parent])
+  teacher([Teacher])
+  map[/Printed A2 Kenya Explorer map/]
+
+  subgraph phone[Family Android phone]
+    unity[Learner app<br/>Unity: Tier A full AR / Tier B scan-and-pop]
+  end
+  subgraph browser[Any browser]
+    web[Web app<br/>Tier C 2D map + parent report]
+  end
+
+  api[DuniaLab API<br/>NestJS]
+  db[(PostgreSQL)]
+  claude[[Claude API<br/>explanation grading only]]
+  sms[[SMS / WhatsApp link<br/>planned]]
+
+  child -- points phone at --> map
+  child --> unity
+  child --> web
+  parent --> web
+  teacher --> web
+  unity -- HTTPS: sync, check, catalog --> api
+  web -- HTTPS --> api
+  api --> db
+  api -- task + rubric + answer only --> claude
+  api -. weekly report link .-> sms
+  sms -.-> parent
+```
+
+**Boundaries that matter**
+
+- **No camera image leaves the phone.** Map recognition runs on the device.
+- **Claude never sees who the child is.** It receives the task, rubric, approved hints, exemplar, locale and the answer text. Nothing else.
+- **A mission never waits on the network.** The only online step (the AI check) has an offline fallback.
+
+---
+
+## 2. Components: what touches what
+
+```mermaid
+flowchart TB
+  subgraph packages[Shared packages: pure, no I/O]
+    content["@dunialab/content<br/>pack schema, validator,<br/>offline rubric checker"]
+    mastery["@dunialab/mastery<br/>fixed mastery rules,<br/>spaced review, weekly summary"]
+    mission["@dunialab/mission<br/>mission session state machine<br/>(tasks, 1 hint, follow-up, events)"]
+    packs[/"content packs (JSON)<br/>kenya-explorer.json, ..."/]
+    fixtures[/"mastery conformance<br/>fixtures (JSON)"/]
+  end
+
+  subgraph api[apps/api: NestJS]
+    registry[ContentRegistry<br/>loads every pack in a folder]
+    ctrls[Controllers<br/>auth, family, progress,<br/>explanations, catalog]
+    decide[decideFeedback<br/>AI guardrails]
+    storePort{{Store port}}
+    graderPort{{AiGrader port}}
+    pgStore[PostgresStore]
+    memStore[InMemoryStore<br/>tests/demo]
+    claudeGrader[ClaudeGrader]
+  end
+
+  subgraph web[apps/web: React + Vite]
+    tierC[Tier C 2D map + mission player]
+    queue[Offline event queue<br/>localStorage]
+    basemap[/Regional basemap<br/>generated from world-atlas/]
+  end
+
+  subgraph unity[apps/unity: Unity 6 LTS]
+    csMastery[C# mastery engine<br/>DuniaLab.Core, no UnityEngine]
+    tierSel[Tier selector A/B/C]
+    tiers[Tier A / Tier B scenes]
+    addr[Addressables content bundles]
+  end
+  coreTests[[Core.Tests<br/>dotnet test, no Unity licence]]
+
+  db[(PostgreSQL)]
+  claudeApi[[Claude API]]
+
+  packs --> content
+  content --> registry
+  registry --> ctrls
+  mastery --> ctrls
+  ctrls --> decide --> content
+  ctrls --> storePort
+  storePort --> pgStore --> db
+  storePort --> memStore
+  ctrls --> graderPort --> claudeGrader --> claudeApi
+
+  content --> mission
+  mastery --> mission
+  mission --> tierC
+  mastery --> tierC
+  packs -- bundled at build --> tierC
+  basemap --> tierC
+  tierC --> queue
+  queue -- HTTP sync --> ctrls
+  tierC -- HTTP check --> ctrls
+
+  packs -. synced by scripts/sync-unity-content .-> addr
+  fixtures -. same cases must pass .-> coreTests
+  coreTests --> csMastery
+  fixtures --> mastery
+  mission -. same flow, ported to C# .-> tiers
+  tierSel --> tiers
+  tiers --> csMastery
+  tiers -- HTTP --> ctrls
+```
+
+### Dependency rules
+
+1. `packages/*` are **pure**: no network, no database, no framework. Every app can use them.
+2. Apps depend on packages, **never on each other** (they talk over HTTP).
+3. The API depends on **ports** (`Store`, `AiGrader`), not on Postgres or Claude directly. Adapters are chosen once, in `main.ts` / `app.factory.ts`.
+4. Logic that exists in two languages (mastery rules in TypeScript and C#) is specified by **shared JSON fixtures**. Change the fixture first.
+
+---
+
+## 3. Extension points (how DuniaLab grows without touching the POC)
+
+Built in from day one, so new grades, subjects and countries are **content drops**, not rewrites.
+
+| To add... | You change | You do NOT change |
+|---|---|---|
+| A new grade / subject / country (e.g. Grade 6 East Africa, Tanzania) | Add a pack JSON to the packs folder (+ its print target and 3D assets for Unity) | API, web, mastery engine |
+| A mission or task to an existing pack | The pack JSON; run `npm run validate:content` | Any code |
+| A new task type (e.g. drag-and-drop) | `packages/content` schema + `packages/mission` + each client renderer | API sync/mastery (they only see events) |
+| A new region's basemap (web) | `npm run basemap -w @dunialab/web` after adding the pack | Map component |
+| A new language | Add the locale to `LocalizedText` and translate packs | Mastery, sync |
+| A different AI provider | A new `AiGrader` adapter | Controllers, guardrails |
+| A different database | A new `Store` adapter | Controllers |
+| A new mastery rule | A fixture case, then TypeScript + C# | Content packs |
+
+Guarded by the feature test `tests/features/api/new-grade-is-a-content-drop.feature.test.ts`.
+
+---
+
+## Architecture change log
+
+Newest first. One line per change; link the PR/ADR.
+
+| Date | Change | Diagrams updated | Ref |
+|---|---|---|---|
+| 2026-11-07 | CI pipeline: build + features + unit, C# core via dotnet, E2E (Postgres service + Chromium), Docker build | n/a (pipeline) | `.github/workflows/ci.yml` |
+| 2026-11-07 | Web Tier C: bundled packs, offline event queue, regional basemap (world-atlas cut to pack bounds) | Components | `apps/web` |
+| 2026-11-07 | `@dunialab/mission`: tier-agnostic mission session shared by web and (ported) Unity | Components, Flows | ADR-0004 |
+| 2026-11-07 | Unity `DuniaLab.Core` (plain C#) + `Core.Tests` (dotnet) running the shared mastery fixtures; tier selector | Components | ADR-0002, ADR-0003 |
+| 2026-11-07 | API container image (`docker/api.Dockerfile`) and compose `app` profile for E2E | Context | this PR |
+| 2026-11-07 | Content registry + catalog: packs are the extension point; progress scoped by `packId` | Components, Extension points | [ADR-0004](../adr/0004-content-packs-are-the-extension-point.md) |
+| 2026-11-07 | AI grading behind `AiGrader` port with guardrails + offline fallback | Context, Components, Flows | [ADR-0005](../adr/0005-ai-guardrails.md) |
+| 2026-11-07 | Event-sourced mastery with shared TS/C# conformance fixtures | Components, Flows, Data model | [ADR-0003](../adr/0003-event-sourced-mastery.md) |
+| 2026-11-07 | Monorepo created; 2019 Oman Maps archived to `legacy/` | All | [ADR-0001](../adr/0001-rebuild-as-monorepo.md) |
