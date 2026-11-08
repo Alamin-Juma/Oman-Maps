@@ -132,3 +132,12 @@ input, select, textarea { width: 100%; border: 1px solid var(--line); background
 .status.practising { color: var(--practising); }
 .report h4 { margin: 12px 0 4px; }
 .empty { padding: 40px; text-align: center; }
+
+/* Camera device check (Tier B precursor). Frames stay on the device. */
+.row.between { justify-content: space-between; }
+.camera h2 { margin: 0; }
+.camera-view { position: relative; margin: 8px 0; background: #000; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; aspect-ratio: 4 / 3; display: grid; place-items: center; }
+.camera-view video, .camera-view img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.camera-view video[hidden] { display: none; }
+.camera-placeholder { font-size: 2.5rem; opacity: 0.45; }
+.ok { color: var(--accent); font-size: 0.9rem; margin: 4px 0 8px; font-weight: 600; }

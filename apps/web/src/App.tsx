@@ -5,6 +5,7 @@ import { KenyaMap } from "./components/KenyaMap.js";
 import { MissionPlayer } from "./components/MissionPlayer.js";
 import { ProgressPanel } from "./components/ProgressPanel.js";
 import { FamilyPanel } from "./components/FamilyPanel.js";
+import { CameraCheck } from "./components/CameraCheck.js";
 import { DuniaApi, type Profile } from "./lib/api.js";
 import { PACKS, t } from "./lib/packs.js";
 import { browserStorage, EventQueue } from "./lib/queue.js";
@@ -24,6 +25,9 @@ export function App() {
   const [reveal, setReveal] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [guestId, setGuestId] = useState(() => readGuestId(storage));
+  const [cameraCheck, setCameraCheck] = useState(
+    () => new URLSearchParams(window.location.search).get("check") === "camera",
+  );
   const tapHandler = useRef<((f: Feature) => void) | null>(null);
 
   const queue = useMemo(() => new EventQueue(storage), []);
@@ -74,6 +78,13 @@ export function App() {
           <button className="chip" onClick={() => setLocale(locale === "en" ? "sw" : "en")} aria-label="language">
             {locale === "en" ? "Kiswahili" : "English"}
           </button>
+          <button
+            className={cameraCheck ? "chip on" : "chip"}
+            onClick={() => setCameraCheck((v) => !v)}
+            aria-label={locale === "sw" ? "Ukaguzi wa kamera" : "Camera check"}
+          >
+            📷
+          </button>
         </div>
       </header>
 
@@ -94,6 +105,7 @@ export function App() {
         </div>
 
         <aside className="side">
+          {cameraCheck && <CameraCheck locale={locale} onClose={() => setCameraCheck(false)} />}
           {missionId ? (
             <MissionPlayer
               key={`${missionId}:${activeProfileId}`}

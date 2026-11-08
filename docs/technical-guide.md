@@ -180,6 +180,22 @@ comes before any child profile. Before the pilot: ODPC registration, a DPIA, and
 1. Edit `apps/api/src/db/schema.ts`, then `npm run db:generate -w @dunialab/api` (creates SQL in `apps/api/drizzle/`).
 2. Update `docs/architecture/data-model.md`. Migrations run automatically at API start.
 
+**Test the camera on a real phone (Tier B precursor)**
+1. `npm run dev:phone` — serves HTTPS on the LAN and prints the URL to type on the phone.
+   The camera API exists only in a *secure context*: `localhost` qualifies, a LAN IP over plain
+   HTTP does not, which is why this script exists.
+2. On the phone (same Wi-Fi), open the printed `https://<lan-ip>:5173/?check=camera` URL.
+   Accept the self-signed certificate warning once ("Advanced" then "Proceed").
+3. Tap **Start camera**, then **Take picture**. The 📷 chip in the header toggles the same panel.
+4. On this computer, `npm run dev:web` then <http://localhost:5173/?check=camera> works with no
+   certificate, because loopback is a secure context.
+
+Nothing is uploaded: the stream and the captured JPEG stay in the page. The E2E test
+`tests/e2e/web/camera-device-check.e2e.test.ts` runs Chromium with a synthetic camera and asserts
+both that a frame is really decoded and that no request carries image data.
+*Full AR on the printed map (Tier A) is a separate step: it needs Unity 6 LTS installed, the ARCore
+packages (`DuniaLab > Install required packages`), an Android build and the printed A2 sheet.*
+
 **Use the real AI locally:** put `ANTHROPIC_API_KEY` in `apps/api/.env`, restart `npm run dev:api`, sign in on the web app, and the explanation check goes through Claude.
 
 ## 8. Status and roadmap

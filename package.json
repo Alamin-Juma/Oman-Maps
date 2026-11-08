@@ -24,7 +24,8 @@
     "db:down": "docker compose down",
     "test:features": "vitest run --project features",
     "test:unit": "npm run test --workspaces --if-present",
-    "test:e2e": "vitest run --project e2e"
+    "test:e2e": "vitest run --project e2e",
+    "dev:phone": "npm run dev:phone -w @dunialab/web"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

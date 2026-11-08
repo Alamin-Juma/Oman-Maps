@@ -61,6 +61,7 @@ npm run test:e2e              # E2E (spawns built API against Postgres)
 npm run validate:content      # validate content packs
 npm run dev:api               # API on :3000
 npm run dev:web               # web on :5173
+npm run dev:phone             # web over HTTPS on the LAN (real-phone camera testing)
 docker compose --profile app up -d --build   # API image + Postgres; then E2E_API_URL=http://localhost:3000 npm run test:e2e
 ```
 
