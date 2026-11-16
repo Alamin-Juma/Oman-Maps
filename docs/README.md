@@ -7,3 +7,4 @@
 | [adr/](adr/README.md) | Why we decided what we decided |
 | [engineering/testing-workflow.md](engineering/testing-workflow.md) | The Feature → Unit → E2E rule |
 | [product/](product/) | Product Definition & Validation (source of truth) and reference images |
+| [briefs/](briefs/) | Work briefs handed to an agent or engineer: scope, decisions, acceptance tests, checkpoints ([3D Explorer](briefs/3d-explorer.md)) |
