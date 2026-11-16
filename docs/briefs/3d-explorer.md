@@ -109,7 +109,9 @@ Write these as `docs/adr/0008-3d-rendering-stack.md` and `docs/adr/0009-geodata-
      - **Albedo:** hypsometric tint blended with land cover from **ESA WorldCover 10 m**, so forest shows on Mount Kenya's slopes, dryland in the north, and farmland in the highlands. Add water and a faint summit snow tint.
      - **Detail normal map** from the full-resolution DEM.
      - **Baked ambient occlusion** (horizon-based) and **baked sun shading** at a fixed, pleasant afternoon sun. Real-time shadows only on the high tier.
-  5. **Rivers.**
+  5. **Rivers.** *(Phase 0 finding: the HydroRIVERS licence carries conditions that do not fit us. See
+     [ADR-0009](../adr/0009-geodata-sources-and-3d-assets.md) section 3, which proposes tracing rivers on the
+     Copernicus DEM instead. Follow the ADR once the founder approves it.)*
      - Start from the pack's rough `path`; its first point is the source end.
      - Snap that point to the river network in **HydroRIVERS** (part of HydroSHEDS), then follow `NEXT_DOWN` reach by reach until the river reaches the ocean or a lake. That gives the real course **all the way to the sea** with no hand drawing and no id-specific code.
      - Guard against cycles and broken links.

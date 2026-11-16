@@ -52,3 +52,6 @@ apps/unity/Core.Tests/bin/
 *.unitypackage
 crashlytics-build.properties
 **/[Aa]ssets/[Ss]treamingAssets/aa/
+
+# ---- Geodata download cache (tools/geo, ADR-0009): raw source data is never committed ----
+.cache/

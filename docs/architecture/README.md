@@ -59,6 +59,7 @@ flowchart LR
   device check (Tier B precursor) holds its stream locally and draws to a local canvas; it has no
   API client, and an E2E test asserts no request carries a frame.
 - **Claude never sees who the child is.** It receives the task, rubric, approved hints, exemplar, locale and the answer text, with phone numbers, emails and links **redacted first**, and only for parents who consented to the current policy. Nothing else.
+- **Open geodata is used at build time only.** The generator (`tools/geo`) downloads elevation and land-cover data on a developer machine; learners' devices only ever fetch our own generated files from our own origin (ADR-0009).
 - **A mission never waits on the network.** The only online step (the AI check) has an offline fallback.
 
 ---
@@ -126,6 +127,26 @@ flowchart TB
   tierC -- HTTP check --> ctrls
 
   packs -. synced by scripts/sync-unity-content .-> addr
+
+  %% 3D Explorer (ADR-0008, ADR-0009). Dashed = planned, built in later phases of docs/briefs/3d-explorer.md
+  subgraph geo[tools/geo: geodata generator]
+    cogspike[COG window spike<br/>Phase 0, measurement only]
+    geogen[Terrain, texture and river generator<br/>planned, Phase 1]
+  end
+  opendata[[Open geodata, build time only<br/>Copernicus DEM, WorldCover, Natural Earth]]
+  assets3d[/"content-assets/&lt;packId&gt;/3d<br/>tiles, textures, rivers, manifest<br/>planned, Git LFS"/]
+  viewer3d[3D viewer, lazy chunk<br/>three.js, planned Phase 2]
+  budget["DELIVERY_BUDGET<br/>data budgets as code<br/>(in @dunialab/content)"]
+
+  opendata -- HTTPS range reads --> cogspike
+  opendata -.-> geogen
+  packs -. bounds + features .-> geogen
+  geogen -.-> assets3d
+  assets3d -. same origin, cached .-> viewer3d
+  tierC -. "See in 3D" .-> viewer3d
+  assets3d -. RAW heightmaps .-> addr
+  budget -. enforced by tests .-> geogen
+  budget -- bundle test --> tierC
   fixtures -. same cases must pass .-> coreTests
   coreTests --> csMastery
   fixtures --> mastery
@@ -155,6 +176,7 @@ Built in from day one, so new grades, subjects and countries are **content drops
 | A new task type (e.g. drag-and-drop) | `packages/content` schema + `packages/mission` + each client renderer | API sync/mastery (they only see events) |
 | A new region's basemap (web) | `npm run basemap -w @dunialab/web` after adding the pack | Map component |
 | A new language | Add the locale to `LocalizedText` and translate packs | Mastery, sync |
+| 3D terrain and rivers for a new pack (planned, ADR-0009) | Run the `tools/geo` generator; commit `content-assets/<packId>/3d` after review | Generator code, 3D viewer |
 | A different AI provider | A new `AiGrader` adapter | Controllers, guardrails |
 | A different database | A new `Store` adapter | Controllers |
 | A new mastery rule | A fixture case, then TypeScript + C# | Content packs |
@@ -169,6 +191,7 @@ Newest first. One line per change; link the PR/ADR.
 
 | Date | Change | Diagrams updated | Ref |
 |---|---|---|---|
+| 2026-11-16 | 3D Explorer, Phase 0 (decisions and spikes): `tools/geo` workspace with a one-window Copernicus DEM spike; data budgets as code (`DELIVERY_BUDGET` in `@dunialab/content`) with a production-bundle test; E2E WebGL2 harness (SwiftShader, screenshot read-back). Planned, not built: generator, `content-assets/`, 3D viewer. Open geodata is a **build-time** source only; nothing new is contacted at runtime | Components, Extension points | [ADR-0008](../adr/0008-3d-rendering-stack.md), [ADR-0009](../adr/0009-geodata-sources-and-3d-assets.md) (both Proposed) |
 | 2026-11-08 | Web camera device check (Tier B scan-and-pop precursor): `getUserMedia` + local canvas capture, no network path; HTTPS dev server (`npm run dev:phone`) so a real phone has a secure context | Context, Components | `apps/web/src/components/CameraCheck.tsx` |
 | 2026-11-07 | PR #1 review: AI egress gate (current-policy consent required; phone/email/URL redaction before the provider); web queue ownership per learner (guest events adopted once, per-session guest id rotated on sign-out); dev ports bound to loopback; CI least-privilege token | Context, Flows | [ADR-0005](../adr/0005-ai-guardrails.md) amendment |
 | 2026-11-07 | CI pipeline: build + features + unit, C# core via dotnet, E2E (Postgres service + Chromium), Docker build | n/a (pipeline) | `.github/workflows/ci.yml` |

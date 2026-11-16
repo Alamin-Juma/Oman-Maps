@@ -54,10 +54,11 @@ stores events idempotently, recomputes mastery with the same engine, serves repo
 | `packages/mission` | Mission session: task order, one hint then follow-up, one event per task | `test/` |
 | `apps/api` | NestJS 12 API: auth, consent, profiles, sync, report, catalog, explanation check | `test/` |
 | `apps/web` | React + Vite: Tier C 2D map, missions, offline queue, parent area | `test/` |
+| `tools/geo` | Geodata generator for 3D assets (ADR-0009). Phase 0: one spike script, no generator yet | (Phase 1) |
 | `apps/unity` | Unity 6 LTS learner app. `Assets/DuniaLab/Core` is plain C# | `Core.Tests/` (dotnet) |
 | `tests/features` | Acceptance specs (Given/When/Then), written first | |
 | `tests/e2e` | Real API + Postgres (+ Chromium for web) | |
-| `docs/` | product, architecture, adr, engineering, this guide | |
+| `docs/` | product, architecture, adr, engineering, briefs, this guide | |
 | `docker/`, `docker-compose.yml` | API image, Postgres, `app` profile | |
 | `legacy/oman-maps-2019` | The 2019 project, reference only | |
 
@@ -195,6 +196,25 @@ Nothing is uploaded: the stream and the captured JPEG stay in the page. The E2E 
 both that a frame is really decoded and that no request carries image data.
 *Full AR on the printed map (Tier A) is a separate step: it needs Unity 6 LTS installed, the ARCore
 packages (`DuniaLab > Install required packages`), an Android build and the printed A2 sheet.*
+
+**3D Explorer (in progress; brief: `docs/briefs/3d-explorer.md`)**
+Phase 0 is done: decisions and measurements only, nothing a learner sees yet.
+- *Decisions:* [ADR-0008](adr/0008-3d-rendering-stack.md) (three.js in the web app, baked assets) and
+  [ADR-0009](adr/0009-geodata-sources-and-3d-assets.md) (data sources, verified licences, how assets are stored).
+  Both are **Proposed** until the founder approves them.
+- *Data budgets* are code: `DELIVERY_BUDGET` in `packages/content/src/delivery-budget.ts` (first page load 150 kB gzip
+  of JavaScript, first 3D open 3 MB, one HD patch 1.5 MB, one pack 25 MB). Check measurements with
+  `deliveryBudgetViolations()`. `tests/e2e/web/bundle-budget.e2e.test.ts` already enforces the first one against the
+  real production build.
+- *Testing 3D in the browser:* launch Chromium with `launchWebglChromium()` and read what is on screen with
+  `screenshotPixels()` + `pixelStats()` (`tests/e2e/support/browser.ts`). Do not read a three.js canvas from page
+  script: after the frame it is blank. `tests/e2e/web/webgl2-harness.e2e.test.ts` pins these facts.
+- *Elevation data spike:* `npm run spike:cog -w @dunialab/geo` reads one 40 km window around a point from the
+  Copernicus elevation data and prints what it cost (about 10 MB of download). Results are recorded in ADR-0009.
+
+**Windows: "Vitest failed to find the runner"**
+Every test fails this way when the shell's working directory starts with a lower-case drive letter (`c:\dev\...`).
+Vitest then loads itself twice. `cd` to the same folder with an upper-case letter (`cd C:/dev/personal/Oman-Maps`).
 
 **Use the real AI locally:** put `ANTHROPIC_API_KEY` in `apps/api/.env`, restart `npm run dev:api`, sign in on the web app, and the explanation check goes through Claude.
 

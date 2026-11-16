@@ -12,5 +12,7 @@ accepted ADR's decision. Supersede it with a new one and link both ways.
 | [0005](0005-ai-guardrails.md) | AI may only choose among teacher-approved outcomes, behind a port, with offline fallback | Accepted |
 | [0006](0006-test-driven-feature-unit-e2e.md) | Feature → unit → E2E test-driven workflow | Accepted |
 | [0007](0007-backend-stack.md) | Backend: NestJS 12, Drizzle, PostgreSQL 17, zod; ESM throughout | Accepted |
+| [0008](0008-3d-rendering-stack.md) | 3D Explorer: three.js in the web app, baked assets, Unity reuses the assets | Proposed |
+| [0009](0009-geodata-sources-and-3d-assets.md) | Geodata sources and licences; generated 3D assets committed with a manifest | Proposed |
 
 Template: copy [`_template.md`](_template.md).

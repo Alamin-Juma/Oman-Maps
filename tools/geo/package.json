@@ -1,0 +1,13 @@
+{
+  "name": "@dunialab/geo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Geodata generator for 3D assets (ADR-0009): reads content packs, writes terrain, textures and rivers per pack. Phase 0: spike only.",
+  "type": "module",
+  "scripts": {
+    "spike:cog": "node spikes/cog-window.mjs"
+  },
+  "dependencies": {
+    "geotiff": "3.0.5"
+  }
+}

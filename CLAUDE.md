@@ -43,11 +43,13 @@ packages/mastery   mastery rules, spaced review, weekly summary, fixtures/confor
 packages/mission   tier-agnostic mission session (tasks, one hint, follow-up, events)
 apps/api           NestJS 12 + Drizzle + Postgres; ports: Store, AiGrader; ContentRegistry
 apps/web           React + Vite: Tier C 2D map + parent report
+tools/geo          geodata generator for 3D assets (ADR-0009); does I/O, so it is not in packages/.
+                   Phase 0: spikes/cog-window.mjs only
 apps/unity         Unity 6 LTS learner app (Tier A AR, Tier B scan-and-pop);
                    Assets/DuniaLab/Core is plain C# tested by Core.Tests (`dotnet test`)
 tests/features     acceptance specs (written first)
-tests/e2e          end-to-end against the real system
-docs/              product, architecture (diagrams), adr, engineering, technical-guide
+tests/e2e          end-to-end against the real system (support/browser.ts: WebGL2 launch + pixel read-back)
+docs/              product, architecture (diagrams), adr, engineering, technical-guide, briefs
 legacy/            2019 Oman Maps (reference only, never built)
 ```
 
@@ -62,6 +64,7 @@ npm run validate:content      # validate content packs
 npm run dev:api               # API on :3000
 npm run dev:web               # web on :5173
 npm run dev:phone             # web over HTTPS on the LAN (real-phone camera testing)
+npm run spike:cog -w @dunialab/geo   # Phase 0 spike: read one Copernicus DEM window, print bytes used (downloads ~10 MB)
 docker compose --profile app up -d --build   # API image + Postgres; then E2E_API_URL=http://localhost:3000 npm run test:e2e
 ```
 
@@ -69,4 +72,7 @@ docker compose --profile app up -d --build   # API image + Postgres; then E2E_AP
 - TypeScript 7, ESM, `strict` + `noUncheckedIndexedAccess`. Relative imports end in `.js`.
 - Nest DI uses explicit `@Inject(TOKEN)`. Validate all input with zod (`common/zod.ts#parse`).
 - Claude API: default model `claude-opus-5-5`, configurable via `AI_MODEL`; structured outputs; never send child identity.
+- Data budgets live in `DELIVERY_BUDGET` (`packages/content/src/delivery-budget.ts`); never hard-code a size limit elsewhere.
+- Windows: run tests from a shell whose working directory starts with an upper-case drive letter (`C:\...`).
+  From `c:\...` Vitest loads itself twice and every test fails with "failed to find the runner".
 - Commit only when asked. Keep `docs/technical-guide.md` current when behaviour changes.
