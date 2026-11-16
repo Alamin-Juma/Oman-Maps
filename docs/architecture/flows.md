@@ -79,6 +79,8 @@ sequenceDiagram
 
 ## 4. Adding a new grade (content drop)
 
+For 3D terrain, rivers and lakes of the new pack, also run flow 5.
+
 ```mermaid
 flowchart LR
   A[Teacher-designer writes pack JSON] --> B[npm run validate:content]
@@ -88,4 +90,34 @@ flowchart LR
   D --> E[API ContentRegistry loads it at start]
   E --> F[/v1/catalog lists it]
   D --> G[sync-unity-content -> Addressables bundle]
+```
+
+## 5. Generating a pack's 3D assets (build time, on a developer machine)
+
+`npm run geo:build` (ADR-0009). Learners' devices are not involved: they later fetch only the
+committed files, from our own origin.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Dev as Developer
+  participant Gen as tools/geo generator
+  participant Cache as .cache/geo (gitignored)
+  participant Open as Open geodata (Copernicus DEM, WorldCover, Natural Earth)
+  participant Out as content-assets/<packId>/3d
+  actor Teacher
+
+  Dev->>Gen: npm run geo:build
+  Gen->>Gen: read every pack: map bounds + features (kind, anchor, rough river line)
+  Gen->>Open: range requests for the levels and windows needed (retries on dropped connections)
+  Open-->>Cache: raw rasters, cached; a second run needs no network
+  Gen->>Gen: trace each river downhill to the sea or a lake, inside a corridor around the surveyed line
+  Gen->>Gen: find each lake's flat surface and outline
+  Gen->>Gen: bake heights, surface colour and relief light: overview tiles, regional tiles, HD patches (by feature kind)
+  Gen->>Out: tiles, patches, rivers.json, lakes.json, previews, manifest.json (SHA-256 + size per file, sources, licences, review flags)
+  Gen->>Gen: verify files against the manifest and the data budgets (exit 1 on any problem)
+  Dev->>Teacher: previews/*.jpg for review
+  Teacher-->>Dev: approve, or correct the pack (anchor, rough line) and regenerate
+  Dev->>Out: commit (images through Git LFS)
+  Note over Out: CI verifies sizes, fingerprints and budgets from the LFS pointers on every run,<br/>and the real pixels only when assets, generator or packs change
 ```

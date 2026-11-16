@@ -1,0 +1,42 @@
+# Full check of the generated 3D assets WITH the real image files (Git LFS).
+# Runs only when the assets, the generator or a content pack change, so ordinary pushes
+# never spend Git LFS bandwidth (ADR-0009). The main ci.yml still verifies sizes,
+# fingerprints and budgets on every run, from the LFS pointers alone.
+name: content-assets
+
+on:
+  pull_request:
+    paths:
+      - "content-assets/**"
+      - "tools/geo/**"
+      - "packages/content/packs/**"
+      - "packages/content/src/assets3d.ts"
+      - "packages/content/src/delivery-budget.ts"
+      - ".github/workflows/content-assets.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-assets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 3D assets match the real world, the manifest and the data budget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Verify every file against its manifest and the budgets
+        run: npm run geo:verify
+      - name: Real-world checks on the shipped pixels (mountain heights, river mouth, flat lakes)
+        run: node scripts/vitest.mjs run --project features tests/features/geo

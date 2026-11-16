@@ -20,7 +20,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "node ../../scripts/vitest.mjs run",
     "validate": "node dist/cli/validate.js packs"
   },
   "dependencies": {

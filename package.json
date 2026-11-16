@@ -23,10 +23,13 @@
     "dev:web": "npm run dev -w @dunialab/web",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "test:features": "vitest run --project features",
+    "test:features": "node scripts/vitest.mjs run --project features",
     "test:unit": "npm run test --workspaces --if-present",
-    "test:e2e": "vitest run --project e2e",
-    "dev:phone": "npm run dev:phone -w @dunialab/web"
+    "test:e2e": "node scripts/vitest.mjs run --project e2e",
+    "dev:phone": "npm run dev:phone -w @dunialab/web",
+    "vitest": "node scripts/vitest.mjs",
+    "geo:build": "npm run build -w @dunialab/content && npm run build -w @dunialab/geo && npm run generate -w @dunialab/geo --",
+    "geo:verify": "npm run build -w @dunialab/content && npm run build -w @dunialab/geo && npm run verify -w @dunialab/geo --"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

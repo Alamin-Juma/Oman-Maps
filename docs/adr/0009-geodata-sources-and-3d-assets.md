@@ -1,7 +1,9 @@
 # 0009. Geodata sources, licences and how 3D assets are produced and stored
 
-- **Status:** Proposed (awaiting founder approval at the Phase 0 checkpoint of `docs/briefs/3d-explorer.md`).
-  **No geodata is committed until this is approved.**
+- **Status:** Accepted (founder, 2026-11-16, Phase 0 checkpoint of `docs/briefs/3d-explorer.md`), with these decisions:
+  rivers are traced on the Copernicus DEM guided by Natural Earth (option B); OpenStreetMap (option C) is the
+  pre-approved fallback; HydroRIVERS is not used; generated assets are committed through Git LFS.
+  Section "What Phase 1 built" records how the approved design was carried out.
 - **Date:** 2026-11-16
 - **Licences checked on:** 2026-11-16, each at its official source (links below). This is an engineer's reading of
   the licence texts, not legal advice. Before commercial launch, have a lawyer confirm the table.
@@ -111,12 +113,12 @@ adds conditions:
 | 8.1 | "The Licensee shall not issue any press release or any other publicity regarding this License ... without WWF's express written approval." | Minor, but a constraint. |
 | Exhibit B | A long mandatory copyright statement naming WWF and seven other rights holders. | Workable, but heavy. |
 
-**Decision proposed: do not use HydroRIVERS.** Options for rivers instead:
+**Decision (approved 2026-11-16): do not use HydroRIVERS.** Options that were considered instead:
 
 | Option | How | Licence burden | Risk |
 |---|---|---|---|
-| **B. Trace rivers ourselves on the Copernicus DEM** (recommended) | From the source end of the pack's rough `path`, route water downhill over the elevation data (fill pits, follow steepest descent) until the sea or a lake. Use Natural Earth's 10 m river centre lines (public domain) as a guide corridor and as a cross-check. | None beyond Copernicus (already accepted) and Natural Earth (public domain). | Accuracy in very flat land (the lower Tana and its delta). Mitigated by the guide line and by the founder's preview checkpoint in Phase 1. More algorithm work in Phase 1. |
-| **C. OpenStreetMap waterways** (fallback) | Extract the river from OSM and order it from source to mouth. | Attribution, plus share-alike: our extracted river lines must be offered under ODbL. Acceptable (they are plain geography), but a standing duty. | Extraction tooling; OSM tagging quality varies by river. |
+| **B. Trace rivers ourselves on the Copernicus DEM** (**chosen**) | From the source end of the pack's rough `path`, route water downhill over the elevation data (fill pits, follow steepest descent) until the sea or a lake. Use Natural Earth's 10 m river centre lines (public domain) as a guide corridor and as a cross-check. | None beyond Copernicus (already accepted) and Natural Earth (public domain). | Accuracy in very flat land (the lower Tana and its delta). Mitigated by the guide line and by the founder's preview checkpoint in Phase 1. More algorithm work in Phase 1. |
+| **C. OpenStreetMap waterways** (**pre-approved fallback**: if option B gets a river visibly wrong, switch for that river, record why here and add the ODbL credit; no need to ask first) | Extract the river from OSM and order it from source to mouth. | Attribution, plus share-alike: our extracted river lines must be offered under ODbL. Acceptable (they are plain geography), but a standing duty. | Extraction tooling; OSM tagging quality varies by river. |
 | A. HydroRIVERS | As the brief planned. | Section 3 above. | Not recommended. |
 
 With option B the river's on-screen width comes from the upstream drainage area we compute while routing, in place of
@@ -164,10 +166,18 @@ What this tells Phase 1:
 
 ## Consequences
 - New top-level folders: `tools/geo` (now, spike only) and `content-assets/` (Phase 1). `.cache/` is gitignored.
-- Git LFS gains `content-assets/**` in Phase 1. Total LFS above 50 MB needs the founder's approval first.
+- Git LFS holds the images under `content-assets/**` (`*.webp`, `*.jpg`); JSON and Markdown stay ordinary text so they
+  can be reviewed in diffs. Total LFS above 50 MB needs the founder's approval first; `npm run geo:build` prints the
+  total and says STOP when it is exceeded.
+- **CI does not download the images on every run.** `actions/checkout` leaves Git LFS files as small pointer files,
+  and a pointer records the real file's size and SHA-256. `verifyAssets` reads those, so the main workflow still
+  checks every file's size and fingerprint against the manifest, and all data budgets, at no LFS bandwidth cost.
+  Scenarios that need real pixels (mountain heights, lake flatness in the terrain) are skipped there and run in a
+  second workflow, `.github/workflows/content-assets.yml`, which checks out with `lfs: true` **only when
+  `content-assets/**`, `tools/geo/**` or a pack changes**.
 - Phase 1 includes a river-routing algorithm (option B) with fixtures: a synthetic terrain with a known river,
   pits to fill, and a flat delta.
-- The brief's section 4.2 step 5 (HydroRIVERS) is superseded by section 3 here once approved.
+- The brief's section 4.2 step 5 now describes option B.
 - Sensitive content stays under teacher review: borders (the Ilemi Triangle is disputed) use the same Natural Earth
   source as the 2D basemap and are flagged in the manifest.
 - Diagrams changed: components (generator, planned asset store, external data sources) and change log in

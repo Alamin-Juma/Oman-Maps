@@ -13,11 +13,11 @@ type Step = (label: string, fn?: () => unknown | Promise<unknown>) => Promise<vo
  * A scenario gets labelled steps. Each step may carry a function; steps run in order.
  * Failures report the step label, so the failing promise is obvious.
  */
-export function scenario(
-  name: string,
-  body: (steps: { given: Step; when: Step; then: Step; and: Step }) => Promise<void> | void,
-) {
-  it(`Scenario: ${name}`, async () => {
+type ScenarioBody = (steps: { given: Step; when: Step; then: Step; and: Step }) => Promise<void> | void;
+
+export function scenario(name: string, body: ScenarioBody, options: { skip?: boolean; timeout?: number } = {}) {
+  const register = options.skip ? it.skip : it;
+  register(`Scenario: ${name}`, { timeout: options.timeout }, async () => {
     const run =
       (kind: string): Step =>
       async (label, fn) => {

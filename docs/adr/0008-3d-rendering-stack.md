@@ -1,6 +1,6 @@
 # 0008. 3D Explorer rendering: three.js in the web app, baked assets, Unity reuses the assets
 
-- **Status:** Proposed (awaiting founder approval at the Phase 0 checkpoint of `docs/briefs/3d-explorer.md`)
+- **Status:** Accepted (founder, 2026-11-16, Phase 0 checkpoint of `docs/briefs/3d-explorer.md`)
 - **Date:** 2026-11-16
 
 ## Context

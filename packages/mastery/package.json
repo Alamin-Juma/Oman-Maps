@@ -13,10 +13,13 @@
     },
     "./fixtures/*.json": "./fixtures/*.json"
   },
-  "files": ["dist", "fixtures"],
+  "files": [
+    "dist",
+    "fixtures"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "node ../../scripts/vitest.mjs run"
   }
 }

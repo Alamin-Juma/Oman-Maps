@@ -44,7 +44,10 @@ packages/mission   tier-agnostic mission session (tasks, one hint, follow-up, ev
 apps/api           NestJS 12 + Drizzle + Postgres; ports: Store, AiGrader; ContentRegistry
 apps/web           React + Vite: Tier C 2D map + parent report
 tools/geo          geodata generator for 3D assets (ADR-0009); does I/O, so it is not in packages/.
-                   Phase 0: spikes/cog-window.mjs only
+                   Pure core (river tracing, lakes, baking) behind source ports; remote adapters; CLI
+content-assets     GENERATED 3D assets per pack (tiles, patches, rivers, lakes, previews, manifest).
+                   Never edit by hand: change the pack or the generator and run `npm run geo:build`.
+                   Images are in Git LFS
 apps/unity         Unity 6 LTS learner app (Tier A AR, Tier B scan-and-pop);
                    Assets/DuniaLab/Core is plain C# tested by Core.Tests (`dotnet test`)
 tests/features     acceptance specs (written first)
@@ -64,7 +67,10 @@ npm run validate:content      # validate content packs
 npm run dev:api               # API on :3000
 npm run dev:web               # web on :5173
 npm run dev:phone             # web over HTTPS on the LAN (real-phone camera testing)
-npm run spike:cog -w @dunialab/geo   # Phase 0 spike: read one Copernicus DEM window, print bytes used (downloads ~10 MB)
+npm run geo:build              # generate 3D assets for every pack (first run downloads open geodata into .cache/geo)
+npm run geo:build -- --pack <id>   # ...for one pack
+npm run geo:verify             # check content-assets against manifests, fingerprints and data budgets
+npm run vitest -- <args>       # run Vitest directly (use this, not `npx vitest`: see Conventions)
 docker compose --profile app up -d --build   # API image + Postgres; then E2E_API_URL=http://localhost:3000 npm run test:e2e
 ```
 
@@ -73,6 +79,9 @@ docker compose --profile app up -d --build   # API image + Postgres; then E2E_AP
 - Nest DI uses explicit `@Inject(TOKEN)`. Validate all input with zod (`common/zod.ts#parse`).
 - Claude API: default model `claude-opus-5-5`, configurable via `AI_MODEL`; structured outputs; never send child identity.
 - Data budgets live in `DELIVERY_BUDGET` (`packages/content/src/delivery-budget.ts`); never hard-code a size limit elsewhere.
-- Windows: run tests from a shell whose working directory starts with an upper-case drive letter (`C:\...`).
-  From `c:\...` Vitest loads itself twice and every test fails with "failed to find the runner".
+- Tests always start through `scripts/vitest.mjs` (all `npm test*` scripts do). On Windows, a terminal in
+  `c:\...` (lower-case drive, VS Code's default) makes a directly started Vitest load itself twice and fail
+  with "failed to find the runner"; the launcher starts it through its true-case path. Do not call `npx vitest`.
+- The generator never names a pack, feature or place: behaviour comes from `feature.kind` and data
+  (a feature test greps `tools/geo/src` for place names).
 - Commit only when asked. Keep `docs/technical-guide.md` current when behaviour changes.

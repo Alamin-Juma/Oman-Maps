@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "node ../../scripts/vitest.mjs run",
     "start": "node --env-file-if-exists=.env dist/main.js",
     "dev": "tsc -p tsconfig.build.json && concurrently -k -n tsc,api \"tsc -p tsconfig.build.json -w --preserveWatchOutput\" \"node --env-file-if-exists=.env --watch dist/main.js\"",
     "db:generate": "drizzle-kit generate",

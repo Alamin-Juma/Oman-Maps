@@ -54,7 +54,8 @@ stores events idempotently, recomputes mastery with the same engine, serves repo
 | `packages/mission` | Mission session: task order, one hint then follow-up, one event per task | `test/` |
 | `apps/api` | NestJS 12 API: auth, consent, profiles, sync, report, catalog, explanation check | `test/` |
 | `apps/web` | React + Vite: Tier C 2D map, missions, offline queue, parent area | `test/` |
-| `tools/geo` | Geodata generator for 3D assets (ADR-0009). Phase 0: one spike script, no generator yet | (Phase 1) |
+| `tools/geo` | Geodata generator for 3D assets (ADR-0009): river tracing, lakes, baked tiles and patches, manifest, verify | `test/` |
+| `content-assets/` | Generated 3D assets per pack. Never edited by hand. Images in Git LFS | `tests/features/geo` |
 | `apps/unity` | Unity 6 LTS learner app. `Assets/DuniaLab/Core` is plain C# | `Core.Tests/` (dotnet) |
 | `tests/features` | Acceptance specs (Given/When/Then), written first | |
 | `tests/e2e` | Real API + Postgres (+ Chromium for web) | |
@@ -198,7 +199,8 @@ both that a frame is really decoded and that no request carries image data.
 packages (`DuniaLab > Install required packages`), an Android build and the printed A2 sheet.*
 
 **3D Explorer (in progress; brief: `docs/briefs/3d-explorer.md`)**
-Phase 0 is done: decisions and measurements only, nothing a learner sees yet.
+Phases 0 and 1 are done: the decisions, and the generator that makes each pack's 3D assets.
+Nothing a learner sees yet; the viewer is Phase 2.
 - *Decisions:* [ADR-0008](adr/0008-3d-rendering-stack.md) (three.js in the web app, baked assets) and
   [ADR-0009](adr/0009-geodata-sources-and-3d-assets.md) (data sources, verified licences, how assets are stored).
   Both are **Proposed** until the founder approves them.
@@ -212,9 +214,32 @@ Phase 0 is done: decisions and measurements only, nothing a learner sees yet.
 - *Elevation data spike:* `npm run spike:cog -w @dunialab/geo` reads one 40 km window around a point from the
   Copernicus elevation data and prints what it cost (about 10 MB of download). Results are recorded in ADR-0009.
 
+**Generate or regenerate a pack's 3D assets**
+1. `npm run geo:build` (all packs) or `npm run geo:build -- --pack <packId>`.
+   The first run downloads open geodata into `.cache/geo/` (gitignored); later runs need no network.
+2. Look at `content-assets/<packId>/3d/previews/*.jpg`:
+   - `overview.jpg`: the whole map with rivers, lake outlines and the HD patch squares.
+   - `river-<id>.jpg`: blue is the traced river, pink the surveyed guide line, black dots the pack's rough line.
+   - `lake-<id>.jpg`: the lake outline, its level and area.
+   - `patch-<id>.jpg`: each HD close-up.
+3. If something is wrong, fix the **pack** (a feature's `anchor`, a river's rough `path`) and regenerate. Never edit files in `content-assets/` by hand.
+4. `npm run geo:verify` checks every file's size and SHA-256 against `manifest.json` and the data budgets. The build runs it too and exits 1 on any problem.
+5. Commit `content-assets/` (images go through Git LFS automatically). The manifest's `review.status` is `draft` until a teacher has approved the previews; regenerating resets it.
+
+How it works, in one paragraph: the generator reads each pack's map bounds and features and decides what to make from each feature's **kind** (mountains and valleys get an HD patch; rivers with a rough line are traced; lakes are found as flat water in the elevation data). Rivers are traced by flooding the land upward from the sea and remembering the way down, inside a corridor around Natural Earth's surveyed line. Heights are stored as terrain-rgb in lossless WebP; surface colour (elevation tint blended with WorldCover land cover) and relief light are baked into images at a higher resolution than the mesh. Details: `docs/architecture/flows.md` flow 5 and ADR-0009.
+
+What the files are: `tiles/<z>/<x>/<y>/{h,albedo,shade}.webp` (overview and regional levels, standard XYZ tiles), `patches/<featureId>/...` (HD close-ups), `rivers.json`, `lakes.json`, `manifest.json` (the format is `Assets3dManifest` in `packages/content/src/assets3d.ts`). `content-assets/ATTRIBUTION.md` lists the notices we must show; it is generated.
+
+For Unity: `npm run unity -w @dunialab/geo` writes 16-bit RAW heightmaps to `.cache/geo/unity/` from the committed tiles (not committed, because they are derived).
+
+CI: every run verifies sizes, fingerprints and budgets from the Git LFS pointers without downloading the images. The `content-assets` workflow downloads them and checks the real pixels only when assets, the generator or a pack change.
+
 **Windows: "Vitest failed to find the runner"**
-Every test fails this way when the shell's working directory starts with a lower-case drive letter (`c:\dev\...`).
-Vitest then loads itself twice. `cd` to the same folder with an upper-case letter (`cd C:/dev/personal/Oman-Maps`).
+Fixed at the root: every test script starts Vitest through `scripts/vitest.mjs`. The cause was not the folder but the path
+Node used to start Vitest: from a terminal in `c:\dev\...` (lower-case drive letter, VS Code's default) npm starts it as
+`c:\...`, while the tests' own imports resolve to `C:\...`, so Vitest was loaded twice. The launcher starts it through its
+true-case path. To run Vitest by hand use `npm run vitest -- run --project features <file>`, not `npx vitest`.
+`tests/e2e/tooling/vitest-launcher.e2e.test.ts` proves the fix on Windows and reports if it is ever no longer needed.
 
 **Use the real AI locally:** put `ANTHROPIC_API_KEY` in `apps/api/.env`, restart `npm run dev:api`, sign in on the web app, and the explanation check goes through Claude.
 

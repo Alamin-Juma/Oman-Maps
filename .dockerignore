@@ -12,3 +12,10 @@ apps/web/*
 tests
 **/.env
 **/.env.*
+# The geodata generator is a developer tool: the API image needs only its package.json (for the lockfile).
+# Its libraries (sharp, geotiff) are devDependencies, so they are pruned from the image.
+tools/geo/*
+!tools/geo/package.json
+# Generated map images and the raw geodata cache never belong in the API image.
+content-assets
+.cache

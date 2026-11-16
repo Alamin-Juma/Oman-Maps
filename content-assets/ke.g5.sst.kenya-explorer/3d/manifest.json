@@ -1,0 +1,2358 @@
+{
+ "schemaVersion": 1,
+ "packId": "ke.g5.sst.kenya-explorer",
+ "packVersion": "0.1.0",
+ "generator": {
+  "name": "@dunialab/geo",
+  "version": "0.2.0"
+ },
+ "bounds": [
+  [
+   33.5,
+   -5
+  ],
+  [
+   42,
+   5.5
+  ]
+ ],
+ "encoding": {
+  "height": "terrain-rgb/webp-lossless",
+  "heightStepMetres": 1,
+  "albedo": "rgb/webp",
+  "shade": "grey/webp",
+  "tiles": "xyz-web-mercator",
+  "patches": "equirectangular"
+ },
+ "overview": {
+  "zoom": 6,
+  "heightSize": 257,
+  "textureSize": 512,
+  "tiles": [
+   {
+    "x": 37,
+    "y": 31
+   },
+   {
+    "x": 38,
+    "y": 31
+   },
+   {
+    "x": 39,
+    "y": 31
+   },
+   {
+    "x": 37,
+    "y": 32
+   },
+   {
+    "x": 38,
+    "y": 32
+   },
+   {
+    "x": 39,
+    "y": 32
+   }
+  ]
+ },
+ "regional": {
+  "zoom": 8,
+  "heightSize": 257,
+  "textureSize": 1024,
+  "tiles": [
+   {
+    "x": 151,
+    "y": 124
+   },
+   {
+    "x": 152,
+    "y": 124
+   },
+   {
+    "x": 153,
+    "y": 124
+   },
+   {
+    "x": 154,
+    "y": 124
+   },
+   {
+    "x": 155,
+    "y": 124
+   },
+   {
+    "x": 156,
+    "y": 124
+   },
+   {
+    "x": 157,
+    "y": 124
+   },
+   {
+    "x": 151,
+    "y": 125
+   },
+   {
+    "x": 152,
+    "y": 125
+   },
+   {
+    "x": 153,
+    "y": 125
+   },
+   {
+    "x": 154,
+    "y": 125
+   },
+   {
+    "x": 155,
+    "y": 125
+   },
+   {
+    "x": 156,
+    "y": 125
+   },
+   {
+    "x": 157,
+    "y": 125
+   },
+   {
+    "x": 151,
+    "y": 126
+   },
+   {
+    "x": 152,
+    "y": 126
+   },
+   {
+    "x": 153,
+    "y": 126
+   },
+   {
+    "x": 154,
+    "y": 126
+   },
+   {
+    "x": 155,
+    "y": 126
+   },
+   {
+    "x": 156,
+    "y": 126
+   },
+   {
+    "x": 157,
+    "y": 126
+   },
+   {
+    "x": 151,
+    "y": 127
+   },
+   {
+    "x": 152,
+    "y": 127
+   },
+   {
+    "x": 153,
+    "y": 127
+   },
+   {
+    "x": 154,
+    "y": 127
+   },
+   {
+    "x": 155,
+    "y": 127
+   },
+   {
+    "x": 156,
+    "y": 127
+   },
+   {
+    "x": 157,
+    "y": 127
+   },
+   {
+    "x": 151,
+    "y": 128
+   },
+   {
+    "x": 152,
+    "y": 128
+   },
+   {
+    "x": 153,
+    "y": 128
+   },
+   {
+    "x": 154,
+    "y": 128
+   },
+   {
+    "x": 155,
+    "y": 128
+   },
+   {
+    "x": 156,
+    "y": 128
+   },
+   {
+    "x": 157,
+    "y": 128
+   },
+   {
+    "x": 151,
+    "y": 129
+   },
+   {
+    "x": 152,
+    "y": 129
+   },
+   {
+    "x": 153,
+    "y": 129
+   },
+   {
+    "x": 154,
+    "y": 129
+   },
+   {
+    "x": 155,
+    "y": 129
+   },
+   {
+    "x": 156,
+    "y": 129
+   },
+   {
+    "x": 157,
+    "y": 129
+   },
+   {
+    "x": 151,
+    "y": 130
+   },
+   {
+    "x": 152,
+    "y": 130
+   },
+   {
+    "x": 153,
+    "y": 130
+   },
+   {
+    "x": 154,
+    "y": 130
+   },
+   {
+    "x": 155,
+    "y": 130
+   },
+   {
+    "x": 156,
+    "y": 130
+   },
+   {
+    "x": 151,
+    "y": 131
+   },
+   {
+    "x": 152,
+    "y": 131
+   },
+   {
+    "x": 153,
+    "y": 131
+   },
+   {
+    "x": 154,
+    "y": 131
+   },
+   {
+    "x": 155,
+    "y": 131
+   },
+   {
+    "x": 156,
+    "y": 131
+   }
+  ]
+ },
+ "patches": [
+  {
+   "featureId": "great-rift-valley",
+   "kind": "valley",
+   "bounds": [
+    [
+     35.780496,
+     0.228688
+    ],
+    [
+     36.319504,
+     0.771312
+    ]
+   ],
+   "sizeKm": 60,
+   "heightSize": 513,
+   "textureSize": 1024,
+   "dir": "patches/great-rift-valley",
+   "elevationRange": [
+    936.2,
+    2498
+   ]
+  },
+  {
+   "featureId": "kilimanjaro",
+   "kind": "mountain",
+   "bounds": [
+    [
+     37.17508,
+     -3.247874
+    ],
+    [
+     37.53492,
+     -2.886126
+    ]
+   ],
+   "sizeKm": 40,
+   "heightSize": 513,
+   "textureSize": 1024,
+   "dir": "patches/kilimanjaro",
+   "elevationRange": [
+    1175.5,
+    5878.4
+   ]
+  },
+  {
+   "featureId": "mount-elgon",
+   "kind": "mountain",
+   "bounds": [
+    [
+     34.370303,
+     0.949126
+    ],
+    [
+     34.729697,
+     1.310874
+    ]
+   ],
+   "sizeKm": 40,
+   "heightSize": 513,
+   "textureSize": 1024,
+   "dir": "patches/mount-elgon",
+   "elevationRange": [
+    1308.8,
+    4308.5
+   ]
+  },
+  {
+   "featureId": "mount-kenya",
+   "kind": "mountain",
+   "bounds": [
+    [
+     37.128337,
+     -0.332874
+    ],
+    [
+     37.487663,
+     0.028874
+    ]
+   ],
+   "sizeKm": 40,
+   "heightSize": 513,
+   "textureSize": 1024,
+   "dir": "patches/mount-kenya",
+   "elevationRange": [
+    1940.6,
+    5130.4
+   ]
+  }
+ ],
+ "rivers": {
+  "file": "rivers.json",
+  "items": [
+   {
+    "featureId": "tana-river",
+    "lengthKm": 750.8,
+    "points": 586,
+    "endsIn": "sea",
+    "guided": true,
+    "maxOffGuideKm": 17.5,
+    "sourceElevation": 1499.9
+   }
+  ]
+ },
+ "lakes": {
+  "file": "lakes.json",
+  "items": [
+   {
+    "featureId": "lake-turkana",
+    "surfaceMetres": 362,
+    "areaKm2": 7182,
+    "clippedByMap": false
+   },
+   {
+    "featureId": "lake-victoria",
+    "surfaceMetres": 1133,
+    "areaKm2": 18720,
+    "clippedByMap": true
+   }
+  ]
+ },
+ "sources": [
+  {
+   "id": "copernicus-dem-glo-30",
+   "title": "Copernicus DEM GLO-30 (Digital Surface Model)",
+   "version": "2021_1 or later, as served by the AWS Open Data registry",
+   "licence": "Licence for Copernicus DEM instance COP-DEM-GLO-30-F, Full, Free & Open",
+   "licenceUrl": "https://dataspace.copernicus.eu/sites/default/files/media/files/2025-06/copernicus_contributing_mission_data_access_v2_cop_dem_licenses.pdf",
+   "notices": [
+    "© DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+    "Produced using Copernicus WorldDEM-30 and WorldDEM-90 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+    "The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for any use of the Copernicus WorldDEM-30 and WorldDEM-90."
+   ]
+  },
+  {
+   "id": "copernicus-dem-glo-90",
+   "title": "Copernicus DEM GLO-90 (Digital Surface Model)",
+   "version": "2021_1 or later, as served by the AWS Open Data registry",
+   "licence": "Licence for Copernicus DEM instance COP-DEM-GLO-90-F, Full, Free & Open",
+   "licenceUrl": "https://dataspace.copernicus.eu/sites/default/files/media/files/2025-06/copernicus_contributing_mission_data_access_v2_cop_dem_licenses.pdf",
+   "notices": [
+    "© DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+    "Produced using Copernicus WorldDEM-30 and WorldDEM-90 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved.",
+    "The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for any use of the Copernicus WorldDEM-30 and WorldDEM-90."
+   ]
+  },
+  {
+   "id": "esa-worldcover-2021",
+   "title": "ESA WorldCover 10 m 2021 v200",
+   "version": "v200 (2021)",
+   "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+   "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+   "notices": [
+    "© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium"
+   ]
+  },
+  {
+   "id": "natural-earth-rivers",
+   "title": "Natural Earth 1:10m rivers and lake centre lines",
+   "version": "5.1.2",
+   "licence": "Public domain",
+   "licenceUrl": "https://www.naturalearthdata.com/about/terms-of-use/",
+   "notices": [
+    "Made with Natural Earth."
+   ]
+  }
+ ],
+ "files": [
+  {
+   "path": "lakes.json",
+   "bytes": 67326,
+   "sha256": "678d49fe9ef20c1f07ec3e8364fc88ad745dd86a465d0d18a042e389d6a9d5da",
+   "role": "manifest-data",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/great-rift-valley/albedo.webp",
+   "bytes": 266382,
+   "sha256": "052b087397a66f1dbbf0614a97dc7690d96da84e5f3b947ad77157546c6e2c1c",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "patches/great-rift-valley/h.webp",
+   "bytes": 179210,
+   "sha256": "00a8ec4721ec1fbf5e7563be3d1dcc76a053de47a781012440e55ffac2fc34d5",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/great-rift-valley/shade.webp",
+   "bytes": 138188,
+   "sha256": "863d398abb331606dc054a776c589ab24a52728b9ab1e17e506e24c579290231",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/kilimanjaro/albedo.webp",
+   "bytes": 101046,
+   "sha256": "b2078de65457d8c256797b4361dda8f2ea1d58b401bd49795c68aeb11120a9d3",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "patches/kilimanjaro/h.webp",
+   "bytes": 203304,
+   "sha256": "f03f847aa128be7fa3a17dd413cf0e91545597cbfa34a5967a131703882bdb02",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/kilimanjaro/shade.webp",
+   "bytes": 200986,
+   "sha256": "65a92e67f336f97ed453fa6f8c6a5c2fdf04c079ed83b16e8d8e11017e58e028",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/mount-elgon/albedo.webp",
+   "bytes": 171014,
+   "sha256": "b6492d6285238e603cf681549b75f1cbe683f247a1e1c1bad4ce36cb8ae4cf69",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "patches/mount-elgon/h.webp",
+   "bytes": 217108,
+   "sha256": "ce19aa8319c45e8eca0bac2ac6e1029c33ff8c4df63b3a0f47047681c99e373b",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/mount-elgon/shade.webp",
+   "bytes": 214942,
+   "sha256": "d32b29c448b4f91be6cf2c6fe36e700ff7e011e10e7e30f791dd6537e4e85a75",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/mount-kenya/albedo.webp",
+   "bytes": 122862,
+   "sha256": "0d986bbdc7b040973660e3a5e1bf8c0c0aa991b96f42b4341b322aba9f57704e",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "patches/mount-kenya/h.webp",
+   "bytes": 204628,
+   "sha256": "f5e6682c3169c6fe1fb51a3dd6955948d13933f032c468e9df2aa2cc51e1f6d9",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "patches/mount-kenya/shade.webp",
+   "bytes": 196614,
+   "sha256": "fc40232b9e8321ffa3c2feddf204e3a02e3225b71d971699545b626380a02a8a",
+   "role": "patch",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "previews/lake-lake-turkana.jpg",
+   "bytes": 582860,
+   "sha256": "56b670384be7f8afb2e7d460a82591a204c13d15108e82fbe8cc17f20d615dee",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "previews/lake-lake-victoria.jpg",
+   "bytes": 493250,
+   "sha256": "9270847fa157b84cf215d07dd4dc73a7b20d198a63de736d8b5007f54b6dbc99",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "previews/overview.jpg",
+   "bytes": 492340,
+   "sha256": "b98b03a5c47eb95fb405026714c8a2f960501d2a17455b02286b82c72015744e",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "previews/patch-great-rift-valley.jpg",
+   "bytes": 310278,
+   "sha256": "67c1a38dc246e1ae9acf957f06a8c634456d1a6c6db43e42bed933a2f035907b",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "previews/patch-kilimanjaro.jpg",
+   "bytes": 252677,
+   "sha256": "1be4c6f4bcbca7e5ce3a113d553ea62a16155c855e0a82e90813e8081ca23e37",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "previews/patch-mount-elgon.jpg",
+   "bytes": 282856,
+   "sha256": "6be3234e31652d82703f94b126b1bba02ef646ec0119eb632c0c402567852e2a",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "previews/patch-mount-kenya.jpg",
+   "bytes": 258012,
+   "sha256": "6c0ddccacb88b576d050eb9e4b6c196c55739ac2acf8b3e446805ff778b9b9c0",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "previews/river-tana-river.jpg",
+   "bytes": 282159,
+   "sha256": "ec8cd6a26ad47e0e6fa4c2937bdc67851b0a9ba76c0a2c1513b687fa6b4b007f",
+   "role": "preview",
+   "sources": []
+  },
+  {
+   "path": "rivers.json",
+   "bytes": 21856,
+   "sha256": "88eb146c7b55911eabdd11566860912d15e0163354427d84bbd1f73f3d52d21f",
+   "role": "manifest-data",
+   "sources": [
+    "copernicus-dem-glo-30",
+    "copernicus-dem-glo-90",
+    "natural-earth-rivers"
+   ]
+  },
+  {
+   "path": "tiles/6/37/31/albedo.webp",
+   "bytes": 6202,
+   "sha256": "9061a1caeb6384b5127d1e2c536253927226862d1ac9a5ed91877406c158fe09",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/6/37/31/h.webp",
+   "bytes": 6056,
+   "sha256": "16767e968611d2798cb23102fa611f16427489dd309dd202506dab7f6ca85ffe",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/37/31/shade.webp",
+   "bytes": 3758,
+   "sha256": "9332511482ce6b196414bdcf8b3a623ab097c6411ebf0a0a3ebaf574f1c8921e",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/37/32/albedo.webp",
+   "bytes": 3400,
+   "sha256": "31e97d843df0de7746fd811d2b867012b681624b2fb328b8fda24a4a778dddca",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/6/37/32/h.webp",
+   "bytes": 3546,
+   "sha256": "69cc878e195791610d429948ec36127376e6ebe43f093faeb4189bed63724227",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/37/32/shade.webp",
+   "bytes": 1804,
+   "sha256": "d748f0b76ac282d4ef7da7463e55157b0a794c9f4849adb3214e6e11a3edbe32",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/38/31/albedo.webp",
+   "bytes": 25914,
+   "sha256": "2646528377c60482d34f89636f6e1f7e757f453192fa04d7955f379ec1793975",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/6/38/31/h.webp",
+   "bytes": 64670,
+   "sha256": "35ae163feea94420680d1a56d20213cb441cd00235f8734b7ed68ee9b79c3668",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/38/31/shade.webp",
+   "bytes": 41366,
+   "sha256": "3be7c3b6358e26174ba9c4506c68476916900125a564f24a064986936c6e925f",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/38/32/albedo.webp",
+   "bytes": 31364,
+   "sha256": "b95da16f3bf3ecb366b8661edea0bb30c737ac5b1e239b6521f078d922e9a735",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/6/38/32/h.webp",
+   "bytes": 62256,
+   "sha256": "53ff72be70f9553d8b481775879c8fdd9ceeb091bfe8fade6c1c9c2259520635",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/38/32/shade.webp",
+   "bytes": 40372,
+   "sha256": "c1a6dd3d1b01586adbab01792118b4e1b3166ca17187a9b4f10e365e497d2e0b",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/39/31/albedo.webp",
+   "bytes": 4314,
+   "sha256": "2e73efbff375bb09115762b255a9532f4b64b56783b490c6e43ad38c8ddb18f4",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/6/39/31/h.webp",
+   "bytes": 26628,
+   "sha256": "43c935a29dc98d808711009ad6f8f7892a72ffb8c0708ea423984115b84536ee",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/39/31/shade.webp",
+   "bytes": 11796,
+   "sha256": "ac751126fae3cd3b4fb73fb7ebb783cc4edff9b6b065b2f54ea3407228921008",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/39/32/albedo.webp",
+   "bytes": 6964,
+   "sha256": "da3dacec3e4e23bdf8adb7805e5e0a7d98375d9f4038d36dbc5a6e0c79b3db98",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/6/39/32/h.webp",
+   "bytes": 9454,
+   "sha256": "c0f4d5c7ee18849a12406ba605132fcab5aa8809d604ac36f79a585625761f4b",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/6/39/32/shade.webp",
+   "bytes": 1938,
+   "sha256": "5b08cde29c3edb7732ca9e689ef5626c8ec8a438af0632d1ed282353912b4ac5",
+   "role": "overview-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/124/albedo.webp",
+   "bytes": 125904,
+   "sha256": "01e360de8995f8311c2d3a712ce73213692746541fea75574b27cfd08ede7724",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/124/h.webp",
+   "bytes": 14028,
+   "sha256": "aabf2a2d3c3af284a08323776c8965da435be57e30dd2c4fc768484ea5f3cdbf",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/124/shade.webp",
+   "bytes": 55412,
+   "sha256": "d6afaa373c070980395e9ffecf3f6d9734ba439071ecbefc7bb97091e539c6a3",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/125/albedo.webp",
+   "bytes": 182526,
+   "sha256": "0c775876d3077c4cd961cc45e09b27f347904b96c21bcab88abd8962f2ce973b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/125/h.webp",
+   "bytes": 18222,
+   "sha256": "d9ad392a7ce59784190ab0981232aefb302675d7b27bbac8e6622a0072fd272c",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/125/shade.webp",
+   "bytes": 124868,
+   "sha256": "7d1fd2bdde15eb6ab47411381d2cc77287afde3c0cd0483dcfbf635a626807dd",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/126/albedo.webp",
+   "bytes": 272292,
+   "sha256": "014f4e6047b1f003d44d7399753dfe57f30b4290322c15e9c72a187ed9e55ffc",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/126/h.webp",
+   "bytes": 15594,
+   "sha256": "3b324a1fb49a1984a5e231585dbca69429dbc862ba647ae230b568226601501a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/126/shade.webp",
+   "bytes": 60568,
+   "sha256": "39afa3af8cb4aee91155dfd433459a4d8822d1ba70aec5b108dfdd254d1b9825",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/127/albedo.webp",
+   "bytes": 318662,
+   "sha256": "30ac072bb0346cadb3dc7a9ffb939f64b995a5fcc7bc5653791509dd380006b3",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/127/h.webp",
+   "bytes": 13324,
+   "sha256": "edecb88a60ecedd1e0a8060a87ef842d7830f41ef16a27f7ca2bc0c1fd0f66df",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/127/shade.webp",
+   "bytes": 105320,
+   "sha256": "b563e72550b03e9226749b09dc6b15aa5cdfc3c9cbea08f66d7b13c7aab1d5ed",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/128/albedo.webp",
+   "bytes": 9130,
+   "sha256": "d9a466b5c8fe12b05cb1c7fc7eeaf2c5d5a01a6c09725ef7ce5e422c90c8c0f1",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/128/h.webp",
+   "bytes": 296,
+   "sha256": "d6203984225a2b3768b559d136e199562031b74340d8fa280d5a69e2f207d454",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/128/shade.webp",
+   "bytes": 5746,
+   "sha256": "2f2b696a26b85837a2eba9468dc39fd4dc440924072f1ce6ce406d464f7ea296",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/129/albedo.webp",
+   "bytes": 68090,
+   "sha256": "4cb657daaa3f3c13fd44b80c79dd7348f262d0c3c8f2088bc4877176feec80a9",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/129/h.webp",
+   "bytes": 10134,
+   "sha256": "4203236c424a800288245b423740e8310ef755635a0964a6e5b27485945b523d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/129/shade.webp",
+   "bytes": 39630,
+   "sha256": "142f4e424f394104952df06ce280e5d2192930352a27bfc8a0aed7b02753e4d8",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/130/albedo.webp",
+   "bytes": 114652,
+   "sha256": "acab7ca5c58583a544c77dd1a2848f5983b1b7821641560f6646ae65d8ba869a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/130/h.webp",
+   "bytes": 13334,
+   "sha256": "00aff078024bf0d3070e344eec8a34770c0d89487096b683d9769dc3d596920b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/130/shade.webp",
+   "bytes": 55664,
+   "sha256": "e9805f95f03b5eac9103e42212ef7f3eb4fb304cab75bda99bf44813fd1fb1a6",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/131/albedo.webp",
+   "bytes": 286970,
+   "sha256": "e08fee60f8acb5c35896e1e4752bf535366994f9368034ed4b5ac1612f1bd82e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/151/131/h.webp",
+   "bytes": 9848,
+   "sha256": "56f91b1cc9a1c58acdaa3b29fd1b6dcfd54958eefde24073d1e16bf5c4cd0b29",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/151/131/shade.webp",
+   "bytes": 69404,
+   "sha256": "93f1c2167e07e631d1385aad57e7bc09c5b562e35f8961d3b247dc708f7d1838",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/124/albedo.webp",
+   "bytes": 146902,
+   "sha256": "2f4455afc752c2245103eba3c9a81a9e07b4e00131c33c977c4a7610bf71390f",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/124/h.webp",
+   "bytes": 34584,
+   "sha256": "ad13c51b8aafed3b069008142891c094aff5869025bb9b8eb0c47dd0ff7c4ec6",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/124/shade.webp",
+   "bytes": 65370,
+   "sha256": "c4c9b48586af22508cd05245fbe77673ca32055b9584d70414351fde20ff3668",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/125/albedo.webp",
+   "bytes": 127778,
+   "sha256": "061b3086664474b5a38df09f20feb0a0e510dd6abeaefd87f85117c5e04e82cb",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/125/h.webp",
+   "bytes": 53614,
+   "sha256": "3b75e041b61002e717c9f1e02bd68691de5306a73512756db6d27030c7e3f8c1",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/125/shade.webp",
+   "bytes": 155534,
+   "sha256": "54ecb1cd30a0d32a082ea87cedaca4656a6c0af1185adeddc92bf9a6c10d7ec5",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/126/albedo.webp",
+   "bytes": 119858,
+   "sha256": "9a66e22a413fa117ff19d07fa1953306009279e61662b40ae7219d629bec1812",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/126/h.webp",
+   "bytes": 45648,
+   "sha256": "f5632631f6394930d556db562b08d4ae6e0777bfe4234b6c4fc404411401325e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/126/shade.webp",
+   "bytes": 87764,
+   "sha256": "6f2a8e4109bf6cbbfdcb5a5baeebbaf7b3f6ceae6c0abc457e3fe01f233d1dc3",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/127/albedo.webp",
+   "bytes": 339502,
+   "sha256": "cec12d4924aef23103d85e3d782644caabf44dde73dd82533aa567af694ac71f",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/127/h.webp",
+   "bytes": 58662,
+   "sha256": "91e042d2c8266435e64b237e5d26a6dcaa2dea28a0e8051d1fcdfc49e6d6ee1e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/127/shade.webp",
+   "bytes": 169564,
+   "sha256": "08658865249cb35cc4ee3ae7ea9c16cddaf955b88b60d890b0c9fd48e952d6c3",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/128/albedo.webp",
+   "bytes": 225306,
+   "sha256": "97698e08c329d87e6e527ff1eff07c6b238fb18c69f1f0bd6d48471118720187",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/128/h.webp",
+   "bytes": 44574,
+   "sha256": "260d3c8c43ac4d24bf0b66d1b2bb962ac746c89a56c41be036c09be5376fd29d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/128/shade.webp",
+   "bytes": 121466,
+   "sha256": "316d99207db3f1efc1423a2e699b1973273d683eeee1c69eef89dce3c642cf82",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/129/albedo.webp",
+   "bytes": 104090,
+   "sha256": "75e5d4140f4dd1cadd19ccca03b3366046607c51bc0cf437666ff9af3bbb6d8c",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/129/h.webp",
+   "bytes": 48988,
+   "sha256": "82d1d083dd84a1308a27ccd1985df179d4d70d83bca85b749bce270923683378",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/129/shade.webp",
+   "bytes": 98670,
+   "sha256": "b507001862b3e2a8d53f9a48c0a7cfc2e3557d48245d64d24882403690c18de0",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/130/albedo.webp",
+   "bytes": 131016,
+   "sha256": "ff3a0fbfe5277b103b104bb93d7ee9dc0ac08730314b708b1a90197cc0caef0d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/130/h.webp",
+   "bytes": 40432,
+   "sha256": "9f416397e688acbda7afda56c36453a832db55200c8327e9fdffaaa9397acd36",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/130/shade.webp",
+   "bytes": 76030,
+   "sha256": "abad124722846a375a370d32752ff65a9fa4bfb07a8fa023150fdcbdbc908b0e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/131/albedo.webp",
+   "bytes": 246110,
+   "sha256": "0acf8dfe3eda2093eb6a1fd57f651dce67c6afef9e1843f47c958f0b92f6b18e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/152/131/h.webp",
+   "bytes": 30436,
+   "sha256": "2bb7932ec6c6318d6962525adac8066c327fe423904b154b98d99d3adf644818",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/152/131/shade.webp",
+   "bytes": 71514,
+   "sha256": "5ccc139808eaf701f9b820c42b6e41a1fe441b54fe860d810ba94872cc726dd7",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/124/albedo.webp",
+   "bytes": 153630,
+   "sha256": "f7c93581bcf3cbdb627bcff5aea268ab1c7b23fb05cd513f0f09b160a85b51d7",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/124/h.webp",
+   "bytes": 45072,
+   "sha256": "18676cd201be44fa8fa0531e2add1715419f85722cbcfc29cc89e5926ada6ce6",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/124/shade.webp",
+   "bytes": 124088,
+   "sha256": "ff90df446d6ffa5055fa03d852aec04a8e23c1f88ba837799b2fc090093f289d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/125/albedo.webp",
+   "bytes": 117304,
+   "sha256": "d49a6f73951d62deb0caf546031161b9b7a89ae93a212db2eec05e0583c44fe0",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/125/h.webp",
+   "bytes": 34538,
+   "sha256": "8da755d9aa3d5d75587a3b5632281e48b5261bd165b27c70148d4c45f2f9d582",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/125/shade.webp",
+   "bytes": 83344,
+   "sha256": "2d83b9434e343a8fe56492c7bd519c356ee0f598fd0b5fb4745101bdb02d039b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/126/albedo.webp",
+   "bytes": 142116,
+   "sha256": "1796f87bf001207999f70e26a53335f9fa29e082147e2f8b879ebf8d4986397d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/126/h.webp",
+   "bytes": 53244,
+   "sha256": "74c27ed7d1ae338563792e826fb8ccc6eba109816f54f39032b2e423173dd4b5",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/126/shade.webp",
+   "bytes": 175604,
+   "sha256": "dab140622f1b463d746dc34d1253af27dc03a30de35b172f37b0c170ee00859a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/127/albedo.webp",
+   "bytes": 276616,
+   "sha256": "7904954e812ebb5d231200dd789b21ce9717397dd765edef89cb2b2c2b00783b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/127/h.webp",
+   "bytes": 63912,
+   "sha256": "3d4f7e9b85b136d9fa0ef844bd5d1897be8cf265594c834d2062eb16b87af3e0",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/127/shade.webp",
+   "bytes": 245294,
+   "sha256": "d6a76dd3a5de0d66804a51496b0e0d0c17e0b6ad455c4b6ee848e5baaaf98799",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/128/albedo.webp",
+   "bytes": 274724,
+   "sha256": "c128e9af56bf94ed97b5821cb4e20587102370d114d10467036fe28d59a0c555",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/128/h.webp",
+   "bytes": 61268,
+   "sha256": "25d476945afd3659fcc62299ea42f3acfb5a4f856889b7e256e94c1421018141",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/128/shade.webp",
+   "bytes": 218474,
+   "sha256": "c0c6250813c1aacdf9d83f907cd5e6cbdae1fc844d5df9fa27bc597d33ae7f68",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/129/albedo.webp",
+   "bytes": 144030,
+   "sha256": "7efe24802c93f4cdbe6d8a54036b6bec5dea30a43843b84c95283bac424c8a6b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/129/h.webp",
+   "bytes": 59406,
+   "sha256": "4b72e594b979d28d8e3e34097c96996aa216da6972b72b3f9644112358e3b55c",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/129/shade.webp",
+   "bytes": 185834,
+   "sha256": "eeb0d928731d5b63ccf1a1c21a4c0abb832d2964ce02a05e7e28f382801b00a6",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/130/albedo.webp",
+   "bytes": 161312,
+   "sha256": "0d3e852e7170ab9233ed8cea418ad2d5e7457b4cff7ed8cd5a082b54233cdfde",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/130/h.webp",
+   "bytes": 58214,
+   "sha256": "182407c11a4fb975d117c5d02b4f7b208e51d00004e96de27cb8fb7c33dc0965",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/130/shade.webp",
+   "bytes": 171900,
+   "sha256": "27fd98ed68c2b48a6f8adcf3ce7095209c4b417bbf8ce54839f5c34c54776322",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/131/albedo.webp",
+   "bytes": 225858,
+   "sha256": "b85847570df39b1d233759ec9f952ddd64349637c62017531285b3119a499e78",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/153/131/h.webp",
+   "bytes": 38094,
+   "sha256": "5773d39c7d4fe9cfaeb3ae8278532ef6d6287c8f862651c2432ffea894e27ed1",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/153/131/shade.webp",
+   "bytes": 123588,
+   "sha256": "08e3c4a5a131f66593c7d29b761a2e8f83d27a466754c35169cfe149dfd7f942",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/124/albedo.webp",
+   "bytes": 141456,
+   "sha256": "76ca5190d00397038bdebf6cb806c540e879a6debbdc98adedf63d555ebd415f",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/124/h.webp",
+   "bytes": 57636,
+   "sha256": "85fb0eef138fbf73022e967613b7053125701ae4afdcaa8946287343ed330f2b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/124/shade.webp",
+   "bytes": 184868,
+   "sha256": "feab15776cd04d31e3f08a5475f870516b65ed257b28e40efa680eb167cc90de",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/125/albedo.webp",
+   "bytes": 84226,
+   "sha256": "e983686226221f97bb0a42c676226cf33345276e9e0c2f2d4ae0c13659342fdd",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/125/h.webp",
+   "bytes": 41736,
+   "sha256": "4ce844e79f6a85b9bb9f345ef640b42592efaada7b421ba9ee39e6861a5f0921",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/125/shade.webp",
+   "bytes": 76862,
+   "sha256": "ecc2532bf1615fc68a174f159ff67a607a1662d6fad66e90a8a2b8b0957fa44b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/126/albedo.webp",
+   "bytes": 102956,
+   "sha256": "0a1d5d8dcd032d690b0c6f7e92c0aad30370097c3839a7f388ac399f553507ec",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/126/h.webp",
+   "bytes": 51420,
+   "sha256": "4c9b9d507d454735180709f27a2e164d17e955ae2609d9c5e3b2456345b9bc1b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/126/shade.webp",
+   "bytes": 139112,
+   "sha256": "0068dea965ed943e1c687d7bfe9441c3c3d8e4f53893e2123179504ca88f7dce",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/127/albedo.webp",
+   "bytes": 119502,
+   "sha256": "2e062863b06f8160ebcbf14314224aacd1436c5304fa4a41c182753c2e76dc3a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/127/h.webp",
+   "bytes": 58950,
+   "sha256": "a14d9ec08f675e3f9c07face1520b122bfd1c13ae4e7980c00a43b9b33a6c67f",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/127/shade.webp",
+   "bytes": 167902,
+   "sha256": "4655cd00b0b89a3ad2d261207fe4c1b770adf07c67ef218df15bbc7372bf3026",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/128/albedo.webp",
+   "bytes": 272470,
+   "sha256": "c49a2a4558648775aa12df90342d237fa3df6b8e54741eee4510a0b60466d489",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/128/h.webp",
+   "bytes": 61334,
+   "sha256": "2bb4de88c1f46f001325f6637aaa0b1c99265e3626fe4640f9ef76250c90b600",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/128/shade.webp",
+   "bytes": 246922,
+   "sha256": "2bff14cbc1713a56497f78c33bd567b0e4b1732945e6105b2c0074a96b4fc7ac",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/129/albedo.webp",
+   "bytes": 161334,
+   "sha256": "783d18067e9174a94a6b19a5a2ba5f88a53cea6ffc65050cf8844f201e5a5a31",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/129/h.webp",
+   "bytes": 54590,
+   "sha256": "ae4462781cafe80e2accfdeda83f4883e865fc86b5bed92044ce6adddf6973eb",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/129/shade.webp",
+   "bytes": 141424,
+   "sha256": "11613eea18c7c02b53576d6894a9e9a8a30b88c36a2b41843e367cc087e7fd60",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/130/albedo.webp",
+   "bytes": 155330,
+   "sha256": "c88b2b24610041a507b63156adf96c192e1b1816d45bd4e0e66154706b85102e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/130/h.webp",
+   "bytes": 55142,
+   "sha256": "f158571028e62c45167b2393540aa8e9873a341e185935247328bc8b6fb739d5",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/130/shade.webp",
+   "bytes": 130612,
+   "sha256": "b1e0cda240e783fefc53875d89ef11325a007849cfde6ebabc37f140842a5507",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/131/albedo.webp",
+   "bytes": 225350,
+   "sha256": "a90f67d0236be1c38ac30ba76444d1e7779b7bfd747394e9a620711a67320e9d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/154/131/h.webp",
+   "bytes": 33238,
+   "sha256": "275770be17c6c5de2843a5fd4610fcb8140a31f0c7d930bd96855012f5456604",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/154/131/shade.webp",
+   "bytes": 86260,
+   "sha256": "e53154ab0316247baae61ecb5b203c8608d8ffd897f90b13ad4fc664fb9b6231",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/124/albedo.webp",
+   "bytes": 149394,
+   "sha256": "360b6bc5d57f69876e65d6f462d91452e2555f1bd3f59559eb88a3df3ed35adb",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/124/h.webp",
+   "bytes": 59576,
+   "sha256": "a4929025cd9bae7d866d392d5bf72e029f21c8959cee6cbb2c96726012ec9d86",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/124/shade.webp",
+   "bytes": 183244,
+   "sha256": "d388fd84c701d09797005e94deaf02be509977fdf0379391d9337b44401ef19b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/125/albedo.webp",
+   "bytes": 75502,
+   "sha256": "9bb8c254d0b6ea30558612341781a6144ede9a921211a2a572ba1968eab062a8",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/125/h.webp",
+   "bytes": 45220,
+   "sha256": "46644ed5b49fa22669837d99040d9c9df437b6aa3484c27d9944450f35d3ae75",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/125/shade.webp",
+   "bytes": 79370,
+   "sha256": "2d89430466896719c5b0c96bcd7f6a9fccc24b24d58aa98ab0169b868ff273f3",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/126/albedo.webp",
+   "bytes": 64000,
+   "sha256": "4d5d8b1be5f42ce7cede806bd0c16b4d7ae472e3df06b1f1e80c4e8030ccb4be",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/126/h.webp",
+   "bytes": 26828,
+   "sha256": "117e755c271ce06d62cd7bc4cb2890ba44344c62fdb696a62a8855b8ee509554",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/126/shade.webp",
+   "bytes": 28630,
+   "sha256": "7120d3b4384a6469dc6a6e3eb6846aeb020c2461ba479028b8a713fc4261778a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/127/albedo.webp",
+   "bytes": 82114,
+   "sha256": "1c882937056f7063fb1b93821e126726f628ac7ebcd278e5c0fcddc189185329",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/127/h.webp",
+   "bytes": 33894,
+   "sha256": "9ecae16dc3d1a87141830553fa9d050891c46ef98897262ae0a06da4867fbc68",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/127/shade.webp",
+   "bytes": 48518,
+   "sha256": "0ba2168882157bc4ce7400c3e9b11f7f13809d9a45ed8d2089531268fa09929b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/128/albedo.webp",
+   "bytes": 154442,
+   "sha256": "1f7d71e1a1657ffc97797dd160609fc617edfb5e032dba9bf5d8ada0a669ae3a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/128/h.webp",
+   "bytes": 42528,
+   "sha256": "c9c38e1d7af45bd129d2564fa255ee6f14c811be47d9123fa4a5bc2989503d40",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/128/shade.webp",
+   "bytes": 89916,
+   "sha256": "ebbe85c2cc7ae1ae2fa5ce9ef95d5b71ca884a2f7854acff95e6d8ff7b18dc40",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/129/albedo.webp",
+   "bytes": 142206,
+   "sha256": "b9ae09c95acd4dd9f993e0db0bcd0db9944880ec1c1e89452f557ac516324476",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/129/h.webp",
+   "bytes": 34094,
+   "sha256": "d01e4d3cf721e940b496abcdac1a2a6e18d0830460089af4fc66ff3cec4d77b9",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/129/shade.webp",
+   "bytes": 48308,
+   "sha256": "03305510520965d09423103fa47acdd3184aed0a04f13aedf56ac5d29585e8cb",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/130/albedo.webp",
+   "bytes": 76234,
+   "sha256": "bdc9eb15a92495e231ec69f5bb442c07df9c5bb27ef863e2e261d54081c6b925",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/130/h.webp",
+   "bytes": 46992,
+   "sha256": "0635ff3284c74c2317fce5aa2902ee199cafc767c1ce003ae2ec212065ba7420",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/130/shade.webp",
+   "bytes": 72494,
+   "sha256": "8de1563eeb6dca92b5d377489027d79b5be3ee0cc3b69ad82a6b26d41be3efff",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/131/albedo.webp",
+   "bytes": 225942,
+   "sha256": "7aa2162c80f0d6807bf8b1a6fa234c8e29d26970fc1146221898d7161343a925",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/155/131/h.webp",
+   "bytes": 38878,
+   "sha256": "b606b279534ea28d1c5daf03a8f5d294a484e242902efe3307d7c797d3ada051",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/155/131/shade.webp",
+   "bytes": 162056,
+   "sha256": "07cc8963e029c4ab49068bb76871ef9da34dc49031ab30e9d074bd3ce313a541",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/124/albedo.webp",
+   "bytes": 73024,
+   "sha256": "996b7d0b68f95507565e4be2c82bbb8ef75c26f08f4cee34960c17090f72a864",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/124/h.webp",
+   "bytes": 61184,
+   "sha256": "eb75747e7880bbc1c361307233c177c40f845a4a35feee820e539db21527f794",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/124/shade.webp",
+   "bytes": 237450,
+   "sha256": "89799aef2e4c4ff2aea89cf4fc4903f200375380224596f7e4b09d879781e801",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/125/albedo.webp",
+   "bytes": 18096,
+   "sha256": "3b4a200f6eb00d05558036c09d64671564c1349f5bac5a0571c2d831bff66975",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/125/h.webp",
+   "bytes": 39022,
+   "sha256": "0eadc3e46fb0f84b4736bf954435243bae9babfcc5f30d37f638057fe9d33d5b",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/125/shade.webp",
+   "bytes": 53396,
+   "sha256": "98019b88588cd03a35d3328b0576979f7951e7ee2db3d9810c674e5c417f49ea",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/126/albedo.webp",
+   "bytes": 28908,
+   "sha256": "eaa36cfd0b330503d91f88a0a103f7169a950824a9c101617bc802952b2d5558",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/126/h.webp",
+   "bytes": 22516,
+   "sha256": "ac5b07b31b5b32d002b6349d51c7711dd08f029f2d48159fe2f6ea1f38ae4250",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/126/shade.webp",
+   "bytes": 12292,
+   "sha256": "d2dcfd2d741b184c8312241a6f02a520e69304596327e1b84e2966aab6f45a03",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/127/albedo.webp",
+   "bytes": 48896,
+   "sha256": "4ed3db8319eb0842db346298267bdc7f47e710ba734125b6540f26c19141f02e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/127/h.webp",
+   "bytes": 20298,
+   "sha256": "ac1fd02228215a8b49837c2f2fab6bd76616af10b9e057bd295b836af38653d5",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/127/shade.webp",
+   "bytes": 6520,
+   "sha256": "aeaf0e6725e7dd10b660429331ccc9d8637a65f67ab52810b0bddd16a3133e14",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/128/albedo.webp",
+   "bytes": 77946,
+   "sha256": "6a6d4f1c523720d8b1bf2332bcf1dea8556522b5e631009fb630cce03254ef6c",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/128/h.webp",
+   "bytes": 21010,
+   "sha256": "bf96ad55c6b8109334c039d49d5762a5e976576711fd97e9240ad99e9b388d56",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/128/shade.webp",
+   "bytes": 8414,
+   "sha256": "2bf453737ff1fb035b4639ca88f61330322a28deda6459e7be586eac5e6f570c",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/129/albedo.webp",
+   "bytes": 129712,
+   "sha256": "97a324b50a6ebdfba7c75fe81319f68be0caf0eeb736322832f4c9a06b870a30",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/129/h.webp",
+   "bytes": 22156,
+   "sha256": "4c686df13a5439db333fcb65eb4d323351f51bc575629dcf29eadc9ac597eb17",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/129/shade.webp",
+   "bytes": 17158,
+   "sha256": "c08c440c65ed339ec7315047549ea754eb277191bda4ff0b88ee4e0fe9e87a33",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/130/albedo.webp",
+   "bytes": 98984,
+   "sha256": "b6b70fe8e0a236856c9a15c2a41a29c06359d2d0f8727d2f69bf957e5748d680",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/130/h.webp",
+   "bytes": 20296,
+   "sha256": "44a8896822404eda44af4f7d1f1794b738dd303677a3f8f14386a0f37a2deb87",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/130/shade.webp",
+   "bytes": 49466,
+   "sha256": "a4fbbab8547a9ca3c1502cedb394664305f7a6d9a4be5ec1b96fb38f34d1297d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/131/albedo.webp",
+   "bytes": 26672,
+   "sha256": "00efe7f9a0e50e6237d9143511d26486412c535ecbfa8deddd165825792bab46",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/156/131/h.webp",
+   "bytes": 3612,
+   "sha256": "f8faf789fe3d8cfd6d98e40d3b4594658ecfb70a79da54321ae78a1f5f5b9d13",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/156/131/shade.webp",
+   "bytes": 15320,
+   "sha256": "10ccc4f6566c343648c4cb7a992fcae02f7c0b023f43bea66221e087e24da588",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/124/albedo.webp",
+   "bytes": 115764,
+   "sha256": "380fc3b1c592a95ac332c78a6aaba84b9dbf666c2daf82abbcdec139bd514e8a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/157/124/h.webp",
+   "bytes": 52524,
+   "sha256": "ce89da2ecacfcb0ae922f591ea5b8cf0ef89920adc00f764a01532cc3d87df3e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/124/shade.webp",
+   "bytes": 164780,
+   "sha256": "879d23b45200abc286b0e5acf5a49d69078f83e67e77807110dd520027ac2011",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/125/albedo.webp",
+   "bytes": 45570,
+   "sha256": "75d59463116b56740e627cf00aeb872d7866dbe75dd811da32e7b199ebfd1a9e",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/157/125/h.webp",
+   "bytes": 44192,
+   "sha256": "5dd331358a3c3d522370b752c6ccd42014eb68761b507de19f53fc5835fb7d3d",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/125/shade.webp",
+   "bytes": 96920,
+   "sha256": "8a6e2327982f121efa30d8702411e02ffdaadfc1c03b8874d20d2f10ca1d6c2f",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/126/albedo.webp",
+   "bytes": 10022,
+   "sha256": "eb4b17b075ad348a8ec5ea643b4e463ecd559436f8d2af2c3402d464b6c687d9",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/157/126/h.webp",
+   "bytes": 31962,
+   "sha256": "58e8b32aca23a19c443eff24e30ab188f32b43ef4da887048b9b80e91f559556",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/126/shade.webp",
+   "bytes": 37660,
+   "sha256": "ab4af1cafe7bf3f965605505cbbf09228a969e824719acb4bdbdfdf03fcfe298",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/127/albedo.webp",
+   "bytes": 23796,
+   "sha256": "8f486bedcf0b331e0a8c73c7aec63303498d2f0219cd0a09dfbf88e67d2f38fe",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/157/127/h.webp",
+   "bytes": 13174,
+   "sha256": "59a8edfde3ed2732c896f6e39e8131b76bf18769b31130fab0ef921c9247ceef",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/127/shade.webp",
+   "bytes": 2724,
+   "sha256": "b829f76d36bd385060debeea6850659cf426f3743cd9d91c78b0e2e2140ea63a",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/128/albedo.webp",
+   "bytes": 53400,
+   "sha256": "6f14c6a90442d08af928c9eb967bcf3d7028eafea5a6084ce047727713a30491",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/157/128/h.webp",
+   "bytes": 17876,
+   "sha256": "558b66a63d4b64ff96aa917257970b6c19d01e4e4b115216c184f40f31badfd8",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/128/shade.webp",
+   "bytes": 9444,
+   "sha256": "29d42b412cd789122ae070c7386754bf4af5ef30456a8e59d8a4260ab865c834",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/129/albedo.webp",
+   "bytes": 60526,
+   "sha256": "dba9df4cdab74e064742dc4c94ff68f08998a498e022ed2c0b3bbbc7ddb4f069",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90",
+    "esa-worldcover-2021"
+   ]
+  },
+  {
+   "path": "tiles/8/157/129/h.webp",
+   "bytes": 8222,
+   "sha256": "a224af465880e9df8dd1aa8f720c3aea2861b30071aa2c46e85f03c719578422",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  },
+  {
+   "path": "tiles/8/157/129/shade.webp",
+   "bytes": 12736,
+   "sha256": "d2b8804836786225b210bb4e78749395c6db8bc573e211faa780083b0323b5cb",
+   "role": "regional-tile",
+   "sources": [
+    "copernicus-dem-glo-90"
+   ]
+  }
+ ],
+ "delivery": {
+  "first3dOpenBytes": 496725,
+  "pack3dTotalBytes": 17358155,
+  "hdFeaturePatchBytes": {
+   "great-rift-valley": 583780,
+   "kilimanjaro": 505336,
+   "mount-elgon": 603064,
+   "mount-kenya": 524104
+  }
+ },
+ "review": {
+  "status": "draft",
+  "flags": [
+   {
+    "id": "borders-not-baked",
+    "message": "Country borders are not drawn into the terrain images. The viewer draws them from the same Natural Earth data as the 2D map. A teacher must review how disputed borders are shown."
+   },
+   {
+    "id": "heights-for-drawing-only",
+    "message": "Elevations and lengths in these files are for drawing. Numbers shown to children come from the pack's approved facts."
+   },
+   {
+    "id": "river-course:tana-river",
+    "message": "Traced course, 750.8 km. Compare previews/river-tana-river.jpg with a trusted map before approval."
+   }
+  ]
+ }
+}

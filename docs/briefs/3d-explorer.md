@@ -107,19 +107,23 @@ Write these as `docs/adr/0008-3d-rendering-stack.md` and `docs/adr/0009-geodata-
   3. **Meshing.** Build meshes in the browser with RTIN (`@mapbox/martini`): an adaptive triangle count with an error threshold set per quality tier. Add skirts so cracks between tiles are hidden.
   4. **Baked textures** at a higher resolution than the mesh. This is the main "HD on a cheap phone" trick.
      - **Albedo:** hypsometric tint blended with land cover from **ESA WorldCover 10 m**, so forest shows on Mount Kenya's slopes, dryland in the north, and farmland in the highlands. Add water and a faint summit snow tint.
-     - **Detail normal map** from the full-resolution DEM.
-     - **Baked ambient occlusion** (horizon-based) and **baked sun shading** at a fixed, pleasant afternoon sun. Real-time shadows only on the high tier.
-  5. **Rivers.** *(Phase 0 finding: the HydroRIVERS licence carries conditions that do not fit us. See
-     [ADR-0009](../adr/0009-geodata-sources-and-3d-assets.md) section 3, which proposes tracing rivers on the
-     Copernicus DEM instead. Follow the ADR once the founder approves it.)*
-     - Start from the pack's rough `path`; its first point is the source end.
-     - Snap that point to the river network in **HydroRIVERS** (part of HydroSHEDS), then follow `NEXT_DOWN` reach by reach until the river reaches the ocean or a lake. That gives the real course **all the way to the sea** with no hand drawing and no id-specific code.
-     - Guard against cycles and broken links.
-     - Output a polyline ordered from source to mouth, with:
-       - distance along the river,
-       - DEM elevation smoothed to be **non-increasing** (water never flows uphill on screen),
-       - width taken from the discharge attribute (the river widens downstream).
-     - Carve a shallow channel into the L1/L2 heightmaps along the river.
+     - **Baked relief light:** sun shading and darkened hollows in one greyscale image, from the finest elevation data used for that level. *(Phase 1: this replaces a separate normal map, which lossy WebP damages and lossless WebP makes too big; see ADR-0009.)* Real-time shadows only on the high tier.
+  5. **Rivers** (decided in [ADR-0009](../adr/0009-geodata-sources-and-3d-assets.md) section 3; approved 2026-11-16).
+     - We trace rivers ourselves on the Copernicus elevation data. No licensed river network is used.
+     - Start from the pack's rough `path`; its first point is the source end. The river starts on the
+       biggest stream within a few km of that point.
+     - Flood the land upward from the sea (or from the lake under the line's last point) and remember,
+       for every cell, the way down. Following that from the start gives the real course **all the way
+       to the sea**, climbing out of hollows the way water fills and spills them.
+     - Natural Earth's public-domain river lines are the guide: only land in a corridor around them can
+       carry the river, and in flat land the trace is pulled gently toward them. Gaps in the surveyed
+       line (it is drawn in pieces, broken at reservoirs) are bridged.
+     - OpenStreetMap is the pre-approved fallback if a river comes out visibly wrong; switching needs
+       a note in ADR-0009 and the ODbL attribution.
+     - Output: a line ordered from source to mouth with distance along the river, elevation smoothed
+       to be **non-increasing** (water never flows uphill on screen), and a width hint from the
+       upstream area (the river widens downstream).
+     - Carve a shallow channel into the terrain along the river.
   6. **Lakes:** a flat water surface at the lake's surface level, with a shoreline from the water mask.
 
 ### 4.3 Viewer behaviour depends on feature kind
@@ -154,7 +158,9 @@ Rendering only executes that plan. Examples:
 | Data | Use | Licence to **verify** |
 |---|---|---|
 | Copernicus DEM GLO-30 / GLO-90 | Elevation | Expected: free incl. commercial, attribution required |
-| HydroRIVERS (HydroSHEDS) | River network, `NEXT_DOWN`, discharge | Check the current licence terms. If commercial use is not allowed, fall back to OSM waterways (ODbL, attribution) |
+| Natural Earth rivers (1:10m) | Guide lines for river tracing | Public domain |
+| OpenStreetMap waterways | Pre-approved fallback for rivers | ODbL: attribution, and share extracted lines under ODbL |
+| ~~HydroRIVERS~~ | Not used | Licence conditions do not fit us (ADR-0009 section 3) |
 | ESA WorldCover 10 m | Land-cover colour | Expected CC BY 4.0 |
 | Natural Earth (`world-atlas`) | Borders, coastline | Public domain (already used) |
 | GEBCO (optional) | Bathymetry | Expected free with attribution |
@@ -189,7 +195,8 @@ Feature tests (examples; write them in our Given/When/Then style):
 - **Mountains are real.** In the committed L2 patch around the `mount-kenya` anchor, the highest point within 15 km is between 4,900 and 5,300 m. Around `kilimanjaro` it is between 5,600 and 5,950 m.
 - **The Tana reaches the sea.**
   - The traced river starts within 10 km of the first point of the pack's `path` and ends at the ocean (elevation ≤ 5 m, next to sea pixels).
-  - Its length is between 850 and 1,150 km.
+  - Its length is believable. *(Phase 1 measured this from the pack's starting point; see
+    ADR-0009 "What Phase 1 built". The original 850 to 1,150 km band assumed the river's farthest source.)*
   - Its elevation never increases from source to mouth.
 - **Lakes are flat.** The Lake Victoria surface sits at 1,134 m ± 15 m and is uniform.
 - **New region, no code.** Running the generator over a fixture pack for another region produces a valid manifest with no code change. Reuse `tests/features/api/fixtures/packs/ke-g6-east-africa.json` or a tiny synthetic one.

@@ -130,22 +130,32 @@ flowchart TB
 
   %% 3D Explorer (ADR-0008, ADR-0009). Dashed = planned, built in later phases of docs/briefs/3d-explorer.md
   subgraph geo[tools/geo: geodata generator]
-    cogspike[COG window spike<br/>Phase 0, measurement only]
-    geogen[Terrain, texture and river generator<br/>planned, Phase 1]
+    geoplan[Plan: what to make<br/>from bounds + feature KIND]
+    geosrc{{Source ports<br/>elevation, land cover, guide rivers}}
+    georemote[Remote adapters<br/>range reads, retries, disk cache]
+    geocore[Pure core: river tracing, lakes,<br/>baking heights, colour, relief light]
+    geoverify[verify: manifest, fingerprints,<br/>budgets, LFS pointers]
   end
   opendata[[Open geodata, build time only<br/>Copernicus DEM, WorldCover, Natural Earth]]
-  assets3d[/"content-assets/&lt;packId&gt;/3d<br/>tiles, textures, rivers, manifest<br/>planned, Git LFS"/]
+  assets3d[/"content-assets/&lt;packId&gt;/3d<br/>tiles, patches, rivers.json, lakes.json,<br/>previews, manifest.json (images in Git LFS)"/]
+  manifestSchema["Assets3dManifest schema<br/>(in @dunialab/content)"]
   viewer3d[3D viewer, lazy chunk<br/>three.js, planned Phase 2]
   budget["DELIVERY_BUDGET<br/>data budgets as code<br/>(in @dunialab/content)"]
 
-  opendata -- HTTPS range reads --> cogspike
-  opendata -.-> geogen
-  packs -. bounds + features .-> geogen
-  geogen -.-> assets3d
+  opendata -- HTTPS range reads --> georemote
+  georemote --> geosrc
+  packs -- bounds + features --> geoplan
+  geoplan --> geocore
+  geosrc --> geocore
+  geocore --> assets3d
+  geoverify --> assets3d
+  manifestSchema --> geocore
+  manifestSchema --> geoverify
+  manifestSchema -.-> viewer3d
   assets3d -. same origin, cached .-> viewer3d
   tierC -. "See in 3D" .-> viewer3d
   assets3d -. RAW heightmaps .-> addr
-  budget -. enforced by tests .-> geogen
+  budget -- enforced on every build and in CI --> geoverify
   budget -- bundle test --> tierC
   fixtures -. same cases must pass .-> coreTests
   coreTests --> csMastery
@@ -176,7 +186,9 @@ Built in from day one, so new grades, subjects and countries are **content drops
 | A new task type (e.g. drag-and-drop) | `packages/content` schema + `packages/mission` + each client renderer | API sync/mastery (they only see events) |
 | A new region's basemap (web) | `npm run basemap -w @dunialab/web` after adding the pack | Map component |
 | A new language | Add the locale to `LocalizedText` and translate packs | Mastery, sync |
-| 3D terrain and rivers for a new pack (planned, ADR-0009) | Run the `tools/geo` generator; commit `content-assets/<packId>/3d` after review | Generator code, 3D viewer |
+| 3D terrain, rivers and lakes for a new pack (ADR-0009) | `npm run geo:build`; review `previews/`; commit `content-assets/<packId>/3d` | Generator code, 3D viewer |
+| HD close-ups for another kind of feature | `patchKmByKind` in `tools/geo/src/plan.ts` (a kind and a size in km) | Any id-specific code (there is none) |
+| A different elevation or land-cover provider | A new adapter for the source ports in `tools/geo/src/plan.ts` | The generator core, the manifest |
 | A different AI provider | A new `AiGrader` adapter | Controllers, guardrails |
 | A different database | A new `Store` adapter | Controllers |
 | A new mastery rule | A fixture case, then TypeScript + C# | Content packs |
