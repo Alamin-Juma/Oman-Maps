@@ -1,0 +1,10 @@
+.viewer3d { position: relative; background: linear-gradient(#9cc4e4, #e6eef2); }
+.viewer3d-canvas { position: relative; height: min(65vh, 570px); min-height: 360px; touch-action: none; }
+.viewer3d-labels { position: absolute; inset: 0; pointer-events: none; z-index: 20; overflow: hidden; }
+.viewer3d-actions { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 30; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+.viewer3d-actions button { pointer-events: auto; box-shadow: 0 2px 8px #0002; }
+.viewer3d-label { pointer-events: auto; white-space: nowrap; padding: 8px 10px; min-height: 44px; font-size: 0.8rem; box-shadow: 0 2px 8px #0003; }
+.viewer3d-card { position: relative; z-index: 30; background: var(--panel); padding: 14px; border-top: 1px solid var(--line); }
+.viewer3d-card p { margin: 8px 0; }
+.viewer3d-card ul { max-height: 180px; overflow: auto; padding-left: 20px; font-size: 0.85rem; }
+.viewer3d-status { min-height: 360px; margin: 0; padding: 110px 20px 20px; color: #1f2a1f; }

@@ -11,6 +11,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
+import { createServer } from "vite";
 import { Assets3dManifest, DELIVERY_BUDGET, LakesFile, RiversFile, validatePack } from "@dunialab/content";
 import { chooseTier, has3d, plannedFiles, planScene, supports3d } from "../../../apps/web/src/three/plan.js";
 import { feature, scenario } from "../support/gherkin.js";
@@ -26,6 +27,26 @@ const feat = (id: string) => pack.features.find((f) => f.id === id)!;
 const bytesOf = (paths: string[]) => paths.reduce((sum, p) => sum + manifest.files.find((f) => f.path === p)!.bytes, 0);
 
 feature("See the map in 3D", () => {
+  scenario("learners receive only manifest-listed assets, never previews or other files", async ({ given, when, then }) => {
+    const server = await createServer({ root: join(ROOT, "apps/web"), server: { port: 0, host: "127.0.0.1" }, logLevel: "error" });
+    try {
+      await given("the app's own asset server", () => server.listen());
+      let response: Response;
+      const base = `${server.resolvedUrls!.local[0]}content-assets/${pack.id}/3d/`;
+      await when("a learner asks for the manifest", async () => { response = await fetch(`${base}manifest.json`); });
+      await then("the manifest is JSON and unlisted paths are refused", async () => {
+        expect(response!.status).toBe(200);
+        expect(response!.headers.get("content-type")).toContain("application/json");
+        expect(Assets3dManifest.parse(await response!.json()).packId).toBe(pack.id);
+        for (const path of ["previews/overview.jpg", "secret.json", "%2e%2e%2fmanifest.json"]) {
+          expect((await fetch(base + path)).status).toBe(404);
+        }
+      });
+    } finally {
+      await server.close();
+    }
+  });
+
   scenario("tapping Mount Kenya pops the real mountain up out of the flat map", async ({ given, when, then, and }) => {
     let plan = planScene({ ...base, featureId: null });
     await given("a child exploring the Kenya map on a normal phone", () => {});

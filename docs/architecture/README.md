@@ -139,7 +139,8 @@ flowchart TB
   opendata[[Open geodata, build time only<br/>Copernicus DEM, WorldCover, Natural Earth]]
   assets3d[/"content-assets/&lt;packId&gt;/3d<br/>tiles, patches, rivers.json, lakes.json,<br/>previews, manifest.json (images in Git LFS)"/]
   manifestSchema["Assets3dManifest schema<br/>(in @dunialab/content)"]
-  viewer3d[3D viewer, lazy chunk<br/>three.js, planned Phase 2]
+  viewer3d[3D viewer, lazy chunk<br/>pure planner + loader + three.js<br/>rise, orbit, static water, pack facts]
+  assetserver[Vite content-assets plugin<br/>manifest allowlist, no previews<br/>dev route + production copy]
   budget["DELIVERY_BUDGET<br/>data budgets as code<br/>(in @dunialab/content)"]
 
   opendata -- HTTPS range reads --> georemote
@@ -151,9 +152,11 @@ flowchart TB
   geoverify --> assets3d
   manifestSchema --> geocore
   manifestSchema --> geoverify
-  manifestSchema -.-> viewer3d
-  assets3d -. same origin, cached .-> viewer3d
-  tierC -. "See in 3D" .-> viewer3d
+  manifestSchema --> viewer3d
+  assets3d --> assetserver
+  assetserver -- same-origin JSON + WebP, max 4 loads --> viewer3d
+  tierC -- "See in 3D / whole map; no mission running" --> viewer3d
+  viewer3d -- "Back to map / no WebGL2 / failure" --> tierC
   assets3d -. RAW heightmaps .-> addr
   budget -- enforced on every build and in CI --> geoverify
   budget -- bundle test --> tierC
@@ -203,6 +206,7 @@ Newest first. One line per change; link the PR/ADR.
 
 | Date | Change | Diagrams updated | Ref |
 |---|---|---|---|
+| 2026-11-17 | 3D Explorer, Phase 2: lazy web viewer, pure scene planner, bounded same-origin loader and Vite manifest allowlist (dev serving / production copy, previews excluded). Terrain rise, orbit, labels, lake surfaces and static rivers; localized facts and source notices; 2D fallback and mission isolation. WebGL E2E and first-open budget enforced | Components, Flow 6 | [ADR-0008](../adr/0008-3d-rendering-stack.md), [ADR-0010](../adr/0010-web-terrain-rendering.md) |
 | 2026-11-16 | 3D Explorer, Phase 0 (decisions and spikes): `tools/geo` workspace with a one-window Copernicus DEM spike; data budgets as code (`DELIVERY_BUDGET` in `@dunialab/content`) with a production-bundle test; E2E WebGL2 harness (SwiftShader, screenshot read-back). Planned, not built: generator, `content-assets/`, 3D viewer. Open geodata is a **build-time** source only; nothing new is contacted at runtime | Components, Extension points | [ADR-0008](../adr/0008-3d-rendering-stack.md), [ADR-0009](../adr/0009-geodata-sources-and-3d-assets.md) (both Proposed) |
 | 2026-11-08 | Web camera device check (Tier B scan-and-pop precursor): `getUserMedia` + local canvas capture, no network path; HTTPS dev server (`npm run dev:phone`) so a real phone has a secure context | Context, Components | `apps/web/src/components/CameraCheck.tsx` |
 | 2026-11-07 | PR #1 review: AI egress gate (current-policy consent required; phone/email/URL redaction before the provider); web queue ownership per learner (guest events adopted once, per-session guest id rotated on sign-out); dev ports bound to loopback; CI least-privilege token | Context, Flows | [ADR-0005](../adr/0005-ai-guardrails.md) amendment |

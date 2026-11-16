@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from "react";
 import type { Feature, Locale } from "@dunialab/content";
 import type { AttemptEvent } from "@dunialab/mastery";
 import { KenyaMap } from "./components/KenyaMap.js";
@@ -10,6 +10,11 @@ import { DuniaApi, type Profile } from "./lib/api.js";
 import { PACKS, t } from "./lib/packs.js";
 import { browserStorage, EventQueue } from "./lib/queue.js";
 import { readGuestId, rotateGuestId } from "./lib/guest.js";
+import { device3d } from "./lib/device3d.js";
+import { has3d, supports3d } from "./three/plan.js";
+import { ThreeBoundary } from "./components/ThreeBoundary.js";
+
+const Viewer3D = lazy(() => import("./three/Viewer3D.js"));
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3000";
 const storage = browserStorage();
@@ -22,6 +27,8 @@ export function App() {
   const [token, setTokenState] = useState<string | null>(() => storage.getItem("dunialab.token"));
   const [profile, setProfile] = useState<Profile | null>(null);
   const [selected, setSelected] = useState<Feature | null>(null);
+  const [view3d, setView3d] = useState<{ featureId: string | null } | null>(null);
+  const [device] = useState(device3d);
   const [reveal, setReveal] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [guestId, setGuestId] = useState(() => readGuestId(storage));
@@ -71,13 +78,14 @@ export function App() {
         </div>
         <div className="row">
           {PACKS.length > 1 && (
-            <select value={pack.id} onChange={(e) => { setPackId(e.target.value); setMissionId(null); }}>
+            <select value={pack.id} onChange={(e) => { setPackId(e.target.value); setMissionId(null); setSelected(null); setView3d(null); }}>
               {PACKS.map((p) => <option key={p.id} value={p.id}>{t(p.title, locale)} · Grade {p.grade}</option>)}
             </select>
           )}
           <button className="chip" onClick={() => setLocale(locale === "en" ? "sw" : "en")} aria-label="language">
             {locale === "en" ? "Kiswahili" : "English"}
           </button>
+          {supports3d(device) && !missionId && <button className="chip" onClick={() => setView3d({ featureId: null })}>3D</button>}
           <button
             className={cameraCheck ? "chip on" : "chip"}
             onClick={() => setCameraCheck((v) => !v)}
@@ -94,14 +102,25 @@ export function App() {
 
       <main className="layout">
         <div className="map-wrap">
+          {view3d ? <ThreeBoundary key={`${pack.id}:${view3d.featureId ?? "all"}`} locale={locale} onClose={() => setView3d(null)}>
+            <Suspense fallback={<section className="panel"><p role="status">{locale === "sw" ? "Inapakia 3D..." : "Loading 3D..."}</p>
+              <button onClick={() => setView3d(null)}>{locale === "sw" ? "Rudi kwenye ramani" : "Back to map"}</button></section>}>
+              <Viewer3D pack={pack} featureId={view3d.featureId} locale={locale} onClose={() => setView3d(null)}
+                onSelect={(featureId) => setView3d({ featureId })} />
+            </Suspense>
+          </ThreeBoundary> : <>
           <KenyaMap pack={pack} locale={locale} revealId={reveal} onFeatureTap={onTap} />
           {selected && !missionId && (
             <div className="fact">
               <strong>{t(selected.name, locale)}</strong>
               {selected.facts.map((f, i) => <p key={i}>{t(f, locale)}</p>)}
+              {supports3d(device) && has3d(selected) && <button onClick={() => setView3d({ featureId: selected.id })}>
+                {locale === "sw" ? "Tazama katika 3D" : "See in 3D"}
+              </button>}
               <button className="link" onClick={() => setSelected(null)}>×</button>
             </div>
           )}
+          </>}
         </div>
 
         <aside className="side">
@@ -127,7 +146,7 @@ export function App() {
                 <div key={ss.id} className="substrand">
                   <h4>{ss.code} {t(ss.title, locale)}</h4>
                   {pack.missions.filter((m) => m.subStrandId === ss.id).map((m) => (
-                    <button key={m.id} className="mission" onClick={() => { setSelected(null); setReveal(null); setMissionId(m.id); }}>
+                    <button key={m.id} className="mission" onClick={() => { setView3d(null); setSelected(null); setReveal(null); setMissionId(m.id); }}>
                       <span>{t(m.title, locale)}</span>
                       <span className="muted">{m.minutes} min</span>
                     </button>

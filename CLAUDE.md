@@ -43,6 +43,7 @@ packages/mastery   mastery rules, spaced review, weekly summary, fixtures/confor
 packages/mission   tier-agnostic mission session (tasks, one hint, follow-up, events)
 apps/api           NestJS 12 + Drizzle + Postgres; ports: Store, AiGrader; ContentRegistry
 apps/web           React + Vite: Tier C 2D map + parent report
+apps/web/src/three lazy 3D viewer: pure planner, bounded same-origin loader, terrain/water + orbit
 tools/geo          geodata generator for 3D assets (ADR-0009); does I/O, so it is not in packages/.
                    Pure core (river tracing, lakes, baking) behind source ports; remote adapters; CLI
 content-assets     GENERATED 3D assets per pack (tiles, patches, rivers, lakes, previews, manifest).

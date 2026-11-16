@@ -12,6 +12,10 @@ on:
       - "packages/content/packs/**"
       - "packages/content/src/assets3d.ts"
       - "packages/content/src/delivery-budget.ts"
+      - "apps/web/**"
+      - "tests/e2e/web/see-in-3d.e2e.test.ts"
+      - "tests/e2e/support/browser.ts"
+      - "package-lock.json"
       - ".github/workflows/content-assets.yml"
 
 permissions:
@@ -40,3 +44,6 @@ jobs:
         run: npm run geo:verify
       - name: Real-world checks on the shipped pixels (mountain heights, river mouth, flat lakes)
         run: node scripts/vitest.mjs run --project features tests/features/geo
+      - run: npx playwright install --with-deps chromium
+      - name: Real 3D viewer with shipped terrain and water
+        run: node scripts/vitest.mjs run --project e2e tests/e2e/web/see-in-3d.e2e.test.ts

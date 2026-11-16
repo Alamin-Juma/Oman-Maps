@@ -7,14 +7,15 @@
  * index.html preloads. Lazy chunks (the future 3D code) are deliberately NOT counted here;
  * they are counted against the "first 3D open" budget instead.
  */
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { build } from "vite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { DELIVERY_BUDGET, deliveryBudgetViolations } from "@dunialab/content";
+import { Assets3dManifest, DELIVERY_BUDGET, deliveryBudgetViolations, validatePack } from "@dunialab/content";
+import { planScene, plannedFiles } from "../../../apps/web/src/three/plan.js";
 
 const WEB_ROOT = fileURLToPath(new URL("../../../apps/web", import.meta.url));
 
@@ -62,5 +63,19 @@ describe("E2E (build): first page load stays inside the data budget", () => {
     );
 
     expect(deliveryBudgetViolations({ initialJsGzipBytes: total })).toEqual([]);
+  });
+
+  it("keeps lazy JavaScript plus the overview assets within the first 3D open budget", () => {
+    const initial = new Set(initialScripts(readFileSync(join(outDir, "index.html"), "utf8")));
+    const lazy = readdirSync(join(outDir, "assets")).filter((file) => file.endsWith(".js") && !initial.has(`/assets/${file}`));
+    expect(lazy.length).toBeGreaterThan(0);
+    const codeBytes = lazy.reduce((sum, file) => sum + gzipSync(readFileSync(join(outDir, "assets", file))).length, 0);
+    const pack = validatePack(JSON.parse(readFileSync(join(WEB_ROOT, "../../packages/content/packs/kenya-explorer.json"), "utf8"))).pack!;
+    const manifestBytes = readFileSync(join(outDir, "content-assets", pack.id, "3d/manifest.json"));
+    const manifest = Assets3dManifest.parse(JSON.parse(manifestBytes.toString()));
+    const plan = planScene({ pack, manifest, featureId: null, tier: "medium", reducedMotion: false });
+    const assetBytes = plannedFiles(plan, manifest).reduce((sum, path) => sum + manifest.files.find((f) => f.path === path)!.bytes, manifestBytes.length);
+    console.info(`[bundle-budget] lazy JS: ${codeBytes} bytes gzip; first 3D open: ${assetBytes + codeBytes} bytes`);
+    expect(assetBytes + codeBytes).toBeLessThanOrEqual(DELIVERY_BUDGET.first3dOpenBytes);
   });
 });

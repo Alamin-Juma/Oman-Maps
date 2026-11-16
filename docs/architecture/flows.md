@@ -121,3 +121,36 @@ sequenceDiagram
   Dev->>Out: commit (images through Git LFS)
   Note over Out: CI verifies sizes, fingerprints and budgets from the LFS pointers on every run,<br/>and the real pixels only when assets, generator or packs change
 ```
+
+## 6. Opening a place in 3D
+
+```mermaid
+sequenceDiagram
+  actor Child
+  participant Map as Web 2D map
+  participant Viewer as Lazy 3D viewer
+  participant Plan as Pure scene planner
+  participant Assets as Same-origin content-assets (Vite / static host)
+  Child->>Map: Tap a place, then See in 3D (or header 3D)
+  alt no WebGL2 or memory at most 1 GB
+    Map-->>Child: Keep working 2D map; no 3D buttons
+  else capable device, no mission running
+    Map->>Viewer: Load lazy chunk
+    Viewer->>Assets: Fetch and validate manifest.json
+    Viewer->>Plan: Pack + manifest + feature + tier + reduced motion
+    Plan-->>Viewer: Patch / region / overview, camera, approved facts
+    Viewer->>Assets: Fetch planned JSON and WebP (at most four concurrent files)
+    Note over Assets: Only manifest-listed learner files are served/copied; never previews
+    Viewer->>Viewer: Decode exact height bytes, build meshes, draw first frame
+    Viewer-->>Child: Land rises and camera flies in; then orbit / zoom / tap labels
+    Note over Viewer: Reduced motion cuts directly to final height and camera.<br/>Facts come from the pack; Map data exposes licence notices.
+    alt missing assets, chunk failure or lost graphics context
+      Viewer-->>Child: Explain 3D is unavailable; Back to map remains usable
+    end
+    Child->>Map: Back to map (or start a mission)
+    Map->>Viewer: Unmount, cancel loads, dispose graphics resources
+  end
+```
+
+No geodata provider is contacted by the browser. Offline asset caching and adaptive frame-time
+quality tuning remain Phase 4; missions never wait for the viewer.

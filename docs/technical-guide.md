@@ -199,11 +199,13 @@ both that a frame is really decoded and that no request carries image data.
 packages (`DuniaLab > Install required packages`), an Android build and the printed A2 sheet.*
 
 **3D Explorer (in progress; brief: `docs/briefs/3d-explorer.md`)**
-Phases 0 and 1 are done: the decisions, and the generator that makes each pack's 3D assets.
-Nothing a learner sees yet; the viewer is Phase 2.
+Phases 0, 1 and 2 are implemented: decisions, generated assets, and the lazy web viewer.
+The viewer raises terrain, supports orbit/zoom and tappable labels, and draws lakes and
+static river ribbons. Animated "Show river" is Phase 3; offline caching is Phase 4.
 - *Decisions:* [ADR-0008](adr/0008-3d-rendering-stack.md) (three.js in the web app, baked assets) and
   [ADR-0009](adr/0009-geodata-sources-and-3d-assets.md) (data sources, verified licences, how assets are stored).
-  Both are **Proposed** until the founder approves them.
+  Both are **Accepted**. [ADR-0010](adr/0010-web-terrain-rendering.md) records the viewer's
+  strided grids, logarithmic depth and dedicated HTML-label portal.
 - *Data budgets* are code: `DELIVERY_BUDGET` in `packages/content/src/delivery-budget.ts` (first page load 150 kB gzip
   of JavaScript, first 3D open 3 MB, one HD patch 1.5 MB, one pack 25 MB). Check measurements with
   `deliveryBudgetViolations()`. `tests/e2e/web/bundle-budget.e2e.test.ts` already enforces the first one against the
@@ -213,6 +215,27 @@ Nothing a learner sees yet; the viewer is Phase 2.
   script: after the frame it is blank. `tests/e2e/web/webgl2-harness.e2e.test.ts` pins these facts.
 - *Elevation data spike:* `npm run spike:cog -w @dunialab/geo` reads one 40 km window around a point from the
   Copernicus elevation data and prints what it cost (about 10 MB of download). Results are recorded in ADR-0009.
+
+**How to see the 3D**
+1. Run `npm run dev:web`, open the local URL and tap **Mount Kenya**, then **See in 3D**.
+   The land rises; drag to orbit and pinch/scroll to zoom.
+2. Use **Whole map** or the header **3D** for the country view. Labels open other places.
+   Mountains and the valley use HD patches; lakes use regional terrain; rivers use the overview.
+3. **Map data** shows the source licence notices; **Back to map** returns to 2D.
+   Starting a mission also closes 3D. Missing WebGL2 or at most 1 GB reported memory hides
+   the 3D controls. Reduced-motion preferences skip the rise and flight.
+
+Assets are served by the `dunialab-content-assets` Vite plugin from the same origin. Production
+builds copy only the manifest and its non-preview files into the output directory. The loader
+validates JSON, decodes heights without colour/premultiplication changes and limits concurrent
+files to four. A failed load or lost graphics context shows an error with a working return path.
+Download measurements (production E2E, 2026-11-17): initial JS **148.8 kB gzip**, lazy 3D JS
+**252.3 kB gzip**, first whole-map open including manifest and assets **0.749 MB**. Software
+Chromium (simulated 4 GB device, medium tier) reached its first mountain frame in **1.36 s**,
+overview in **1.13 s** on the targeted run;
+these are local test measurements, not phone or mobile-network promises.
+Final validation passed: feature/unit tests, typecheck, workspace build, asset verification,
+and all **30 E2E tests**, including the real Postgres flows and the five new viewer scenarios.
 
 **Generate or regenerate a pack's 3D assets**
 1. `npm run geo:build` (all packs) or `npm run geo:build -- --pack <packId>`.
@@ -232,7 +255,7 @@ What the files are: `tiles/<z>/<x>/<y>/{h,albedo,shade}.webp` (overview and regi
 
 For Unity: `npm run unity -w @dunialab/geo` writes 16-bit RAW heightmaps to `.cache/geo/unity/` from the committed tiles (not committed, because they are derived).
 
-CI: every run verifies sizes, fingerprints and budgets from the Git LFS pointers without downloading the images. The `content-assets` workflow downloads them and checks the real pixels only when assets, the generator or a pack change.
+CI: every run verifies sizes, fingerprints and budgets from the Git LFS pointers without downloading the images. The `content-assets` workflow downloads them and checks the real pixels and viewer when assets, the generator, a pack, the web app or its viewer tests change. Viewer E2E explicitly skips pointer-only checkouts.
 
 **Windows: "Vitest failed to find the runner"**
 Fixed at the root: every test script starts Vitest through `scripts/vitest.mjs`. The cause was not the folder but the path

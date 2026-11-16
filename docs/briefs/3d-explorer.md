@@ -2,7 +2,8 @@
 
 **For:** an AI coding agent (Fable) working autonomously in this repo.
 **From:** the founder (product) and the previous engineering session.
-**Status:** ready to start. Work through the phases in order. Stop at every human checkpoint marked 🧑.
+**Status:** Phases 0-2 implemented; Phase 3 is next. Review the viewer on a real phone before
+proceeding. Stop at every human checkpoint marked 🧑.
 
 ---
 
@@ -215,6 +216,17 @@ Also produce **preview PNGs** (hillshade with the river overlaid) in `content-as
 - 🧑 **Checkpoint:** the founder looks at the previews. Is the Tana's course right? Do Mount Kenya, the Rift and the lakes look correct?
 
 ### Phase 2: the 3D viewer (mountains, lakes, valley)
+- **Implemented 2026-11-17.** Lazy same-origin viewer, rise/flight, orbit/zoom, tappable labels,
+  lake surfaces and static river ribbons; pack facts, exaggeration notes and licence notices.
+  WebGL E2E checks rendering, rise, navigation, reduced motion, missing assets and 2D fallback.
+  Measured: initial JS 148.8 kB gzip; lazy JS 252.3 kB gzip; first overview open 0.749 MB.
+  Local software-rendered readiness (4 GB/medium tier): mountain 1.36 s; overview 1.13 s.
+  Final feature/unit, typecheck, build, asset verification and all 30 E2E tests passed.
+- **Implementation choices:** strided grids rather than RTIN; logarithmic depth avoids
+  overview sea flicker; dedicated HTML portal keeps labels stable (ADR-0010).
+  Frame-time probing, offline caching and label collision/terrain occlusion remain Phase 4.
+  The founder still needs to review the look, touch controls and frame rate on a real phone,
+  and confirm the exaggeration wording with a teacher. "Show river" is not built.
 - **Entry point:** tapping a feature on the 2D map in explore mode, or the fact card's **"See in 3D"** button, opens the 3D view. A clear **"Back to map"** returns to 2D. The 3D code is a lazy chunk.
 - The scene planner is pure and unit-tested. Rendering follows its plan.
 - **E2E tests** (Playwright, WebGL2):
