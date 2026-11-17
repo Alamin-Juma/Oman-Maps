@@ -55,3 +55,13 @@ crashlytics-build.properties
 
 # ---- Geodata download cache (tools/geo, ADR-0009): raw source data is never committed ----
 .cache/
+
+# ---- Local-only files that must never be committed ----
+# Review exports can contain access tokens in links.
+docs/reviews
+# Test runner and browser artefacts
+test-results/
+playwright-report/
+*.log
+# Agent / editor working folders
+.claude/

@@ -4,12 +4,14 @@
 - **Date:** 2026-11-07
 
 ## Context
+
 - *"AI service: a hosted LLM behind our own API, given only the approved rubric and the mission. Output limited to one of a fixed set of feedback types. No free conversation."*
 - *"Below the threshold the child gets a multiple-choice follow-up instead."*
 - *"A single privacy incident with children would end the company."*
 - Pilot gate: ≥ 85% AI-teacher agreement on explanations.
 
 ## Decision
+
 1. **Port + adapter.** Controllers depend on `AiGrader`; `ClaudeGrader` is one adapter (Anthropic SDK, structured outputs via `betaZodOutputFormat`, server-side refusal fallback enabled).
 2. **The model can only reference ids.** It returns `{verdict, criteriaMet[], hintId, confidence, unsafe}`. It never writes text a child sees. Hint wording is teacher-written.
 3. **`decideFeedback` is the guardrail**, a pure, unit-tested function:
@@ -22,11 +24,13 @@
 6. **Model:** `claude-opus-5-5` at `effort: low` by default (configurable via `AI_MODEL`). Cost per check is to be measured in the pilot against the "< 10% of revenue per learner" target. Trying a smaller model is a pricing decision for the founder, made with eval data.
 
 ## Amendment (2026-11-07, PR #1 review)
+
 - **Consent gate:** the online check runs only for parents who accepted the current consent policy; otherwise the offline checker answers and nothing is sent.
 - **Egress redaction:** phone-like digit runs (7+ digits), emails and links are replaced with `[removed]` before the answer leaves our API. The model's `unsafe` flag remains a *feedback* control; redaction is the *egress* control. Names cannot be detected reliably, which is why explanation text is not stored and the prompt contains no identity.
 - **Client timeout:** the web client aborts the check after 6 s so the offline checker takes over.
 
 ## Consequences
+
 - Swapping provider = new adapter. Changing the threshold = config.
 - Explanation text is not stored in the MVP; building the 50+ answer teacher-marked eval set needs a separate consented dataset.
 - An eval harness (AI vs teacher agreement) is required before the pilot. Tracked in the technical guide roadmap.
