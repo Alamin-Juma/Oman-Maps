@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit review settings for DuniaLab.
+language: en-GB
+reviews:
+  # Generated or binary files are not reviewed as code:
+  #  - content-assets/ is produced by `npm run geo:build` (ADR-0009) and checked by
+  #    `npm run geo:verify`; review the generator in tools/geo instead.
+  #  - images and the original Word product document carry no reviewable code.
+  path_filters:
+    - "!content-assets/**"
+    - "!**/*.webp"
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.jpeg"
+    - "!**/*.docx"
+    - "!**/package-lock.json"
+  path_instructions:
+    - path: "**/*"
+      instructions: >-
+        Rules for this repo are in CLAUDE.md. In particular: no code may branch on a content pack,
+        country or place name; nothing identifying a child may reach the AI; every online step has an
+        offline fallback; only teacher-approved packs ship in production.
