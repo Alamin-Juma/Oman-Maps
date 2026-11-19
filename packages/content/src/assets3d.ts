@@ -19,13 +19,7 @@ const BoundsLonLat = z.tuple([LonLat, LonLat]);
 const RelPath = z.string().regex(/^[a-z0-9][a-z0-9._/-]*$/, "relative, lower-case, forward slashes").refine((p) => !p.includes(".."), "no ..");
 const Sha256 = z.string().regex(/^[0-9a-f]{64}$/);
 
-export const ASSETS3D_SCHEMA_VERSION = 1;
-export const TERRAIN_RGB = { baseMetres: -10000, stepMetres: 0.1 } as const;
-
-/** Decode one terrain-rgb pixel to metres. */
-export function terrainRgbToMetres(r: number, g: number, b: number): number {
-  return TERRAIN_RGB.baseMetres + (r * 65536 + g * 256 + b) * TERRAIN_RGB.stepMetres;
-}
+import { ASSETS3D_SCHEMA_VERSION } from "./assets3d-format.js";
 
 export const AssetFileRole = z.enum(["manifest-data", "overview-tile", "regional-tile", "patch", "preview"]);
 
@@ -155,8 +149,3 @@ export const LakesFile = z.object({
   ),
 });
 export type LakesFile = z.infer<typeof LakesFile>;
-
-/** Path of one tile file relative to the manifest. */
-export function tilePath(z_: number, x: number, y: number, file: "h" | "albedo" | "shade"): string {
-  return `tiles/${z_}/${x}/${y}/${file}.webp`;
-}

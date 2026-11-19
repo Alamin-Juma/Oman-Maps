@@ -4,7 +4,10 @@
  *     `docker compose --profile app up -d --build`, then E2E_API_URL=http://localhost:3000).
  *  2. otherwise           -> spawn the BUILT server (apps/api/dist/main.js) against
  *     DATABASE_URL (default: the docker compose Postgres on :5433).
- * If Postgres is unreachable the suite is skipped with a clear message (CI always provides it).
+ * If Postgres is unreachable:
+ *  - locally, the suite is SKIPPED and says so on stderr (nobody needs Docker for a quick check);
+ *  - with E2E_REQUIRE_DB=1 (set in CI), the run FAILS. A skip reads as a pass in every summary,
+ *    and the skipped tests are the ones proving strangers are refused (findings register T1).
  */
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
@@ -22,8 +25,25 @@ export async function databaseReachable(): Promise<boolean> {
     await client.end();
     return true;
   } catch {
-    console.warn(`[e2e] Postgres not reachable at ${DATABASE_URL}; run \`npm run db:up\`. Skipping E2E.`);
+    const where = `Postgres not reachable at ${withoutPassword(DATABASE_URL)}`;
+    if (process.env.E2E_REQUIRE_DB === "1") {
+      throw new Error(`[e2e] ${where}, and E2E_REQUIRE_DB=1 requires it: failing instead of skipping.`);
+    }
+    // stderr, not console.warn: Vitest drops console output from a file whose tests all skip,
+    // which made this skip invisible.
+    process.stderr.write(`[e2e] ${where}; run \`npm run db:up\`. Skipping E2E (set E2E_REQUIRE_DB=1 to fail instead).\n`);
     return false;
+  }
+}
+
+/** A database address safe to print: the password is replaced (findings register T7). */
+export function withoutPassword(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.password) parsed.password = "***";
+    return parsed.toString();
+  } catch {
+    return "<unparseable database address>";
   }
 }
 

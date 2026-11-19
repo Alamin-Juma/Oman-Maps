@@ -1,6 +1,7 @@
 /** Thin, typed client for the DuniaLab API. `fetch` is injectable for tests. */
 import type { ExplanationFeedback, ExplainTask, Locale } from "@dunialab/content";
 import type { AttemptEvent, SkillState } from "@dunialab/mastery";
+import { endsSession } from "./session.js";
 
 export interface ReportLine {
   skillId: string;
@@ -45,6 +46,8 @@ export class DuniaApi {
     private readonly fetchImpl: typeof fetch = (...a) => fetch(...a),
     /** A mission never waits on the network: a stalled check must fail fast to the local checker. */
     private readonly checkTimeoutMs = 6000,
+    /** Called when the server says the sign-in is over (a 401 on a protected call); see lib/session.ts. */
+    private readonly onSessionExpired?: () => void,
   ) {}
 
   private async call<T>(method: string, path: string, body?: unknown, timeoutMs = 15000): Promise<T> {
@@ -57,7 +60,10 @@ export class DuniaApi {
     });
     const text = await res.text();
     const data = text ? JSON.parse(text) : undefined;
-    if (!res.ok) throw new ApiError(res.status, (data && (data.message as string)) || res.statusText);
+    if (!res.ok) {
+      if (endsSession(res.status, path)) this.onSessionExpired?.();
+      throw new ApiError(res.status, (data && (data.message as string)) || res.statusText);
+    }
     return data as T;
   }
 

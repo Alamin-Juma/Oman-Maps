@@ -1,0 +1,14 @@
+{
+  // Type-checks the root acceptance (tests/features) and end-to-end (tests/e2e) suites.
+  // Vitest runs TypeScript without checking types, so without this a wrong argument type in a
+  // test (findings register T3/T4) compiles, runs, and quietly tests the wrong thing.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node", "vite/client"],
+    "jsx": "react-jsx"
+  },
+  "include": ["tests/**/*.ts", "vitest.config.ts"]
+}

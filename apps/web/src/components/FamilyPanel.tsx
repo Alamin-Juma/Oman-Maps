@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import type { ContentPack, Locale } from "@dunialab/content";
 import { ApiError, type DuniaApi, type Profile, type Report } from "../lib/api.js";
 import type { EventQueue } from "../lib/queue.js";
+import { syncInBatches } from "../lib/sync.js";
 
 const POLICY_VERSION = "2026-11";
 const PICTURES = ["lion", "elephant", "giraffe", "zebra", "mango", "banana", "drum", "ball", "sun", "moon", "fish", "boat"];
@@ -116,10 +117,17 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
                 className="primary"
                 onClick={() =>
                   run(async () => {
-                    const pending = queue.unsynced(pack.id, profile.id);
-                    const r = await api.sync(profile.id, pack.id, pending);
-                    queue.markSynced(pending.map((e) => e.eventId));
-                    setMsg(`${locale === "sw" ? "Imesawazishwa" : "Synced"}: ${r.accepted} new, ${r.duplicates} already saved`);
+                    // In batches the server accepts; a failure part-way keeps what was sent (findings register R4).
+                    const r = await syncInBatches(queue, api, pack.id, profile.id);
+                    if (r.error && r.sent === 0) throw r.error;
+                    const done = `${locale === "sw" ? "Imesawazishwa" : "Synced"}: ${r.accepted} new, ${r.duplicates} already saved`;
+                    const left =
+                      r.remaining > 0
+                        ? locale === "sw"
+                          ? `. ${r.remaining} bado zinasubiri; jaribu tena muunganisho ukirudi.`
+                          : `. ${r.remaining} still waiting; try again when the connection is back.`
+                        : "";
+                    setMsg(done + left);
                   })
                 }
               >

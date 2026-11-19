@@ -45,7 +45,8 @@ sequenceDiagram
   participant DB as Postgres learning_events
   participant M as @dunialab/mastery
 
-  Note over Q: Events carry a client UUID (eventId)
+  Note over Q: Events carry a client UUID (eventId).<br/>Saved on the phone first; if the phone cannot save,<br/>kept in memory and the app says "not saved"
+  loop each batch of at most SYNC_MAX_EVENTS (500, shared via @dunialab/mastery)
   Q->>API: {profileId, packId, events[<=500]}
   API->>API: parent owns profile? (else 404)<br/>skills exist in pack? (else 400, whole batch)
   API->>DB: INSERT ... ON CONFLICT (event_id) DO NOTHING
@@ -53,7 +54,8 @@ sequenceDiagram
   API->>DB: SELECT all events for (profile, pack)
   API->>M: computeSkillStates(events, rules)
   API-->>Q: {accepted, duplicates, skills[]}
-  Q->>Q: Drop acknowledged events; adopt server skill states
+  Q->>Q: Mark this batch synced (a failed batch stops the loop; the rest waits for the next try)
+  end
 ```
 
 Retries are safe: re-sent events become `duplicates`, never double counted.

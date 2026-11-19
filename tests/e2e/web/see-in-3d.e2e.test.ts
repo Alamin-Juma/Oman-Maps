@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,7 +11,10 @@ import { launchWebglChromium, screenshotPixels, pixelStats } from "../support/br
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const WEB_ROOT = join(ROOT, "apps/web");
 const ASSETS = "content-assets/ke.g5.sst.kenya-explorer/3d";
-const pointers = isLfsPointer(readFileSync(join(ROOT, ASSETS, "patches/mount-kenya/h.webp")));
+// isLfsPointer takes a PATH. Passing the file's contents (as this line once did) made a real
+// pointer read as "not a pointer", so a checkout without the images ran this suite instead of
+// skipping it (findings register T3). tsconfig.tests.json now type-checks this file.
+const pointers = isLfsPointer(join(ROOT, ASSETS, "patches/mount-kenya/h.webp"));
 
 describe.skipIf(pointers)("E2E: See in 3D (requires real LFS images)", () => {
   let browser: Browser;
@@ -21,6 +24,9 @@ describe.skipIf(pointers)("E2E: See in 3D (requires real LFS images)", () => {
 
   beforeAll(async () => {
     outDir = mkdtempSync(join(tmpdir(), "dunialab-3d-"));
+    // The only pack is still a draft; this is a rehearsal build that allows it, labelled as draft
+    // (findings register S1). tests/e2e/web/approved-content.e2e.test.ts covers the real rule.
+    process.env.VITE_ALLOW_DRAFT_CONTENT = "true";
     const previous = process.env.NODE_ENV;
     process.env.NODE_ENV = "production";
     try { await build({ root: WEB_ROOT, logLevel: "error", build: { outDir, emptyOutDir: true } }); }
@@ -132,7 +138,7 @@ describe.skipIf(pointers)("E2E: See in 3D (requires real LFS images)", () => {
         if (reason === "memory") Object.defineProperty(navigator, "deviceMemory", { value: 1 });
         else {
           const original = HTMLCanvasElement.prototype.getContext;
-          HTMLCanvasElement.prototype.getContext = function (...args: Parameters<typeof original>) {
+          HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, ...args: Parameters<typeof original>) {
             return args[0] === "webgl2" ? null : original.apply(this, args);
           } as typeof original;
         }

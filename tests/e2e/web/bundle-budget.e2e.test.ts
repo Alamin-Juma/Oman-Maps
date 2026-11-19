@@ -35,6 +35,9 @@ describe("E2E (build): first page load stays inside the data budget", () => {
     outDir = mkdtempSync(join(tmpdir(), "dunialab-bundle-"));
     // Vitest sets NODE_ENV=test, which makes the bundle include React's much larger
     // development build (measured: 205.6 kB instead of 143.9 kB). Measure what ships.
+    // The only pack is still a draft; this is a rehearsal build that allows it, labelled as draft
+    // (findings register S1). tests/e2e/web/approved-content.e2e.test.ts covers the real rule.
+    process.env.VITE_ALLOW_DRAFT_CONTENT = "true";
     const previous = process.env.NODE_ENV;
     process.env.NODE_ENV = "production";
     try {

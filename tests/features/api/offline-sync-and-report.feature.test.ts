@@ -7,6 +7,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, expect } from "vitest";
+import { SYNC_MAX_EVENTS } from "@dunialab/mastery";
 import { feature, scenario } from "../support/gherkin.js";
 import { parentToken, startApi, type TestApi } from "../support/api.js";
 
@@ -107,5 +108,31 @@ feature("Offline progress syncs without loss or double counting", () => {
       status = (await api.call("POST", "/v1/sync", { profileId: fam.profileId, packId: PACK, events: [event(fam.profileId, "made.up", "2027-01-11T06:00:00Z")] }, fam.token)).status;
     });
     await then("the whole batch is rejected with 400 so the client can fix and retry", () => expect(status).toBe(400));
+  });
+
+  // Findings register R7: the HTTP body limit (Express's default 100 kB) was smaller than a full
+  // batch, so a 500-event sync failed with 413 before the server even counted the events.
+  scenario("a full batch of the largest events the server accepts gets through", async ({ given, when, then, and }) => {
+    let fam: { token: string; profileId: string };
+    let full = 0;
+    let over = 0;
+    const largest = (profileId: string) => ({
+      ...event(profileId, "features.mountains", "2027-01-11T06:00:00.123456789+03:00", "explain"),
+      // The longest values the event schema allows.
+      taskId: "t".repeat(100),
+    });
+    await given("a family whose child has a full batch waiting", async () => {
+      fam = await familyWithChild();
+    });
+    await when("the phone sends exactly the maximum number of the largest allowed events", async () => {
+      const batch = Array.from({ length: SYNC_MAX_EVENTS }, () => largest(fam.profileId));
+      full = (await api.call("POST", "/v1/sync", { profileId: fam.profileId, packId: PACK, events: batch }, fam.token)).status;
+    });
+    await then("the server accepts it", () => expect(full, "status of the full batch").toBe(200));
+    await and("one event more is refused as a bad request (400), not as an oversized one (413)", async () => {
+      const batch = Array.from({ length: SYNC_MAX_EVENTS + 1 }, () => largest(fam.profileId));
+      over = (await api.call("POST", "/v1/sync", { profileId: fam.profileId, packId: PACK, events: batch }, fam.token)).status;
+      expect(over).toBe(400);
+    });
   });
 });

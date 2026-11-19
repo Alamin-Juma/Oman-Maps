@@ -7,12 +7,13 @@ import { ProgressPanel } from "./components/ProgressPanel.js";
 import { FamilyPanel } from "./components/FamilyPanel.js";
 import { CameraCheck } from "./components/CameraCheck.js";
 import { DuniaApi, type Profile } from "./lib/api.js";
-import { PACKS, t } from "./lib/packs.js";
+import { PACK_SELECTION, PACKS, t } from "./lib/packs.js";
 import { browserStorage, EventQueue } from "./lib/queue.js";
 import { readGuestId, rotateGuestId } from "./lib/guest.js";
 import { device3d } from "./lib/device3d.js";
 import { has3d, supports3d } from "./three/plan.js";
 import { ThreeBoundary } from "./components/ThreeBoundary.js";
+import { SessionScope } from "./lib/session.js";
 
 const Viewer3D = lazy(() => import("./three/Viewer3D.js"));
 
@@ -38,12 +39,22 @@ export function App() {
   const tapHandler = useRef<((f: Feature) => void) | null>(null);
 
   const queue = useMemo(() => new EventQueue(storage), []);
+  // One parent's sign-in on this shared phone (findings register S7, S8): ending it drops any
+  // answer still in flight, and an expired sign-in signs out cleanly with a message.
+  const session = useMemo(() => new SessionScope(), []);
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
+  const expireSession = useRef<() => void>(() => {});
   const setToken = (tk: string | null) => {
     setTokenState(tk);
     if (tk) storage.setItem("dunialab.token", tk);
     else storage.removeItem("dunialab.token");
   };
-  const api = useMemo(() => new DuniaApi(API_URL, () => token), [token]);
+  const api = useMemo(
+    () => new DuniaApi(API_URL, () => token, undefined, undefined, () => expireSession.current()),
+    [token],
+  );
   const onEvents = useCallback(
     (events: AttemptEvent[]) => {
       if (!pack) return;
@@ -53,16 +64,46 @@ export function App() {
     [queue, pack],
   );
 
-  if (!pack) return <main className="empty">No content packs found.</main>;
+  if (!pack) {
+    // Truthful empty state: say WHY there are no lessons (findings register S1, E4).
+    const waiting = PACK_SELECTION.withheld.length;
+    return (
+      <main className="empty" role="status">
+        {waiting > 0 ? (
+          <>
+            <p>No approved lessons yet: {waiting} lesson pack{waiting === 1 ? " is" : "s are"} waiting for teacher approval.</p>
+            <p lang="sw">Hakuna masomo yaliyoidhinishwa bado: yanasubiri kuidhinishwa na mwalimu.</p>
+          </>
+        ) : (
+          <p>No lesson packs found.</p>
+        )}
+      </main>
+    );
+  }
   const activeProfileId = profile?.id ?? guestId;
   const events = queue.all(pack.id, activeProfileId);
   void version;
 
-  const signOut = () => {
+  const endSession = () => {
+    session.end();
     setToken(null);
     setProfile(null);
     setMissionId(null);
     setGuestId(rotateGuestId(storage));
+  };
+  const signOut = () => {
+    endSession();
+    setSessionNotice(null);
+  };
+  expireSession.current = () => {
+    if (tokenRef.current === null) return; // several requests can fail together: end the session once
+    tokenRef.current = null;
+    endSession();
+    setSessionNotice(
+      locale === "sw"
+        ? "Muda wa kuingia umekwisha. Tafadhali ingia tena. Maendeleo ya mtoto kwenye simu hii yako salama."
+        : "Your sign-in has ended. Please sign in again. Progress on this phone is safe.",
+    );
   };
 
   const onTap = (f: Feature) => {
@@ -98,6 +139,22 @@ export function App() {
 
       {pack.review.status !== "approved" && (
         <p className="draft">Draft content: not yet teacher-approved. For development and pilot preparation only.</p>
+      )}
+      {queue.notSaved && (
+        // Findings register R1: never let progress disappear silently.
+        <p className="draft" role="alert">
+          {locale === "sw"
+            ? "Maendeleo hayajahifadhiwa kwenye simu hii (hifadhi imejaa au imezuiwa). Yatabaki hadi ufunge ukurasa huu: sawazisha sasa au futa nafasi."
+            : "Progress is not saved on this phone (storage is full or blocked). It is kept until you close this page: sync now, or free some space."}
+        </p>
+      )}
+      {queue.recoveredDamaged > 0 && (
+        // Findings register R2: damaged saved data was set aside, not silently dropped.
+        <p className="draft" role="status">
+          {locale === "sw"
+            ? `Sehemu ${queue.recoveredDamaged} ya maendeleo yaliyohifadhiwa iliharibika na imewekwa kando. Mengine yako salama.`
+            : `${queue.recoveredDamaged} damaged saved item${queue.recoveredDamaged === 1 ? " was" : "s were"} set aside. The rest of the progress is safe.`}
+        </p>
       )}
 
       <main className="layout">
@@ -156,17 +213,19 @@ export function App() {
             </section>
           )}
           <ProgressPanel pack={pack} events={events} locale={locale} />
+          {sessionNotice && <p className="banner try" role="alert">{sessionNotice}</p>}
           <FamilyPanel
+            key={session.current}
             api={api}
             queue={queue}
             pack={pack}
             locale={locale}
             token={token}
-            setToken={setToken}
+            setToken={(tk) => { setSessionNotice(null); setToken(tk); }}
             onSignOut={signOut}
             guestId={guestId}
             profile={profile}
-            setProfile={(p) => { setProfile(p); setVersion((v) => v + 1); }}
+            setProfile={session.guard((p: Profile | null) => { setProfile(p); setVersion((v) => v + 1); })}
           />
         </aside>
       </main>

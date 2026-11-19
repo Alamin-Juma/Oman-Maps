@@ -16,7 +16,30 @@ const Env = z.object({
   UTC_OFFSET_MINUTES: z.coerce.number().int().default(180),
   /** Explicit override for local/staging E2E. Never set this in real production. */
   ALLOW_DRAFT_CONTENT: z.enum(["true", "false"]).optional(),
+  /**
+   * Set when the API runs behind a reverse proxy, so rate limits see each visitor's address rather
+   * than the proxy's (Express "trust proxy": a hop count such as 1, or "true"). Unset by default.
+   */
+  TRUST_PROXY: z.string().optional(),
 });
+
+export interface RateLimits {
+  /** Wrong passwords per account before sign-in is refused for a while. */
+  loginFailuresPerAccount: { max: number; windowMs: number };
+  /** Sign-in attempts per network address. Generous: a whole school may share one address. */
+  loginAttemptsPerAddress: { max: number; windowMs: number };
+  /** New accounts per network address. */
+  registrationsPerAddress: { max: number; windowMs: number };
+}
+
+const MINUTE = 60_000;
+
+/** Production limits (findings register S9). */
+export const DEFAULT_RATE_LIMITS: RateLimits = {
+  loginFailuresPerAccount: { max: 5, windowMs: 15 * MINUTE },
+  loginAttemptsPerAddress: { max: 30, windowMs: 15 * MINUTE },
+  registrationsPerAddress: { max: 10, windowMs: 60 * MINUTE },
+};
 
 export interface AppConfig {
   env: "development" | "test" | "production";
@@ -32,6 +55,9 @@ export interface AppConfig {
   utcOffsetMinutes: number;
   /** Draft (not teacher-approved) packs may be served only outside production. */
   allowDraftContent: boolean;
+  rateLimits: RateLimits;
+  /** Express "trust proxy" setting; undefined = do not trust forwarded addresses. */
+  trustProxy?: string | number | boolean;
 }
 
 const DEV_JWT_SECRET = "dev-only-secret-change-me-dev-only-secret";
@@ -47,6 +73,7 @@ export const CONFIG_DEFAULTS: AppConfig = {
   consentPolicyVersion: "2026-11",
   utcOffsetMinutes: 180,
   allowDraftContent: true,
+  rateLimits: DEFAULT_RATE_LIMITS,
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
@@ -70,5 +97,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     ...(e.PACKS_DIR ? { packsDir: e.PACKS_DIR } : {}),
     utcOffsetMinutes: e.UTC_OFFSET_MINUTES,
     allowDraftContent: e.ALLOW_DRAFT_CONTENT ? e.ALLOW_DRAFT_CONTENT === "true" : !production,
+    rateLimits: DEFAULT_RATE_LIMITS,
+    ...(e.TRUST_PROXY ? { trustProxy: parseTrustProxy(e.TRUST_PROXY) } : {}),
   };
+}
+
+function parseTrustProxy(value: string): string | number | boolean {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return /^\d+$/.test(value) ? Number(value) : value;
 }

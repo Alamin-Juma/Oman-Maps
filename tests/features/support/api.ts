@@ -3,7 +3,18 @@
  * scripted AI grader, so feature tests exercise the public HTTP contract
  * without Docker. E2E tests (tests/e2e) use Postgres and the built server instead.
  */
-import { createApp, InMemoryStore, type AiGrader } from "@dunialab/api";
+import { createApp, InMemoryStore, type AiGrader, type RateLimits } from "@dunialab/api";
+
+/**
+ * Feature tests register many parents from one address (127.0.0.1). Unless a test is ABOUT rate
+ * limits (it then passes the real DEFAULT_RATE_LIMITS), use limits no test reaches.
+ */
+const UNREACHED = { max: 1_000_000, windowMs: 60_000 };
+const NO_PRACTICAL_LIMITS: RateLimits = {
+  loginFailuresPerAccount: UNREACHED,
+  loginAttemptsPerAddress: UNREACHED,
+  registrationsPerAddress: UNREACHED,
+};
 
 export interface TestApi {
   url: string;
@@ -11,9 +22,17 @@ export interface TestApi {
   call: <T = any>(method: string, path: string, body?: unknown, token?: string) => Promise<{ status: number; body: T }>;
 }
 
-export async function startApi(opts: { aiGrader?: AiGrader; packsDir?: string } = {}): Promise<TestApi> {
+export async function startApi(
+  opts: { aiGrader?: AiGrader; packsDir?: string; rateLimits?: RateLimits; now?: () => number } = {},
+): Promise<TestApi> {
   const app = await createApp({
-    config: { jwtSecret: "test-secret-test-secret-test-secret", aiConfidenceThreshold: 0.75, utcOffsetMinutes: 180 },
+    config: {
+      jwtSecret: "test-secret-test-secret-test-secret",
+      aiConfidenceThreshold: 0.75,
+      utcOffsetMinutes: 180,
+      rateLimits: opts.rateLimits ?? NO_PRACTICAL_LIMITS,
+    },
+    ...(opts.now ? { now: opts.now } : {}),
     store: new InMemoryStore(),
     ...(opts.packsDir ? { packsDir: opts.packsDir } : {}),
     aiGrader: opts.aiGrader ?? null,

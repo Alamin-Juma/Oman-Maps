@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && npm run typecheck:tests",
     "test": "npm run test:features && npm run test:unit",
     "lint": "npm run lint --workspaces --if-present",
     "validate:content": "npm run validate -w @dunialab/content",
@@ -29,7 +29,8 @@
     "dev:phone": "npm run dev:phone -w @dunialab/web",
     "vitest": "node scripts/vitest.mjs",
     "geo:build": "npm run build -w @dunialab/content && npm run build -w @dunialab/geo && npm run generate -w @dunialab/geo --",
-    "geo:verify": "npm run build -w @dunialab/content && npm run build -w @dunialab/geo && npm run verify -w @dunialab/geo --"
+    "geo:verify": "npm run build -w @dunialab/content && npm run build -w @dunialab/geo && npm run verify -w @dunialab/geo --",
+    "typecheck:tests": "tsc -p tsconfig.tests.json"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

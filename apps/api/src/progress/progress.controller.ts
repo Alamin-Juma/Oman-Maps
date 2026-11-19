@@ -9,7 +9,7 @@
  */
 import { BadRequestException, Body, Controller, Get, HttpCode, Inject, NotFoundException, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { z } from "zod";
-import { computeSkillStates, DEFAULT_RULES, localDay, weeklySummary, type MasteryRules } from "@dunialab/mastery";
+import { computeSkillStates, DEFAULT_RULES, localDay, SYNC_MAX_EVENTS, weeklySummary, type MasteryRules } from "@dunialab/mastery";
 import type { AppConfig } from "../config.js";
 import { parse } from "../common/zod.js";
 import { Parent, ParentAuthGuard, type AuthedParent } from "../auth/auth.guard.js";
@@ -17,7 +17,8 @@ import type { ContentRegistry } from "../content/content-registry.js";
 import type { Store } from "../store/store.js";
 import { CONFIG, CONTENT, STORE } from "../tokens.js";
 
-const MAX_BATCH = 500;
+/** Shared with every client through @dunialab/mastery (findings register R4). */
+const MAX_BATCH = SYNC_MAX_EVENTS;
 
 const Event = z
   .object({

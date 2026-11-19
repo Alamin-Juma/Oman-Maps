@@ -41,6 +41,9 @@ describe.skipIf(!reachable)("E2E (browser): Tier C two-day mastery, then parent 
     api = await startApi();
     outDir = mkdtempSync(join(tmpdir(), "dunialab-web-"));
     process.env.VITE_API_URL = api.url;
+    // The only pack is still a draft; this is a rehearsal build that allows it, labelled as draft
+    // (findings register S1). tests/e2e/web/approved-content.e2e.test.ts covers the real rule.
+    process.env.VITE_ALLOW_DRAFT_CONTENT = "true";
     await build({ root: WEB_ROOT, logLevel: "error", build: { outDir, emptyOutDir: true } });
     web = await preview({ root: WEB_ROOT, logLevel: "error", build: { outDir }, preview: { port: 0, host: "127.0.0.1" } });
     browser = await chromium.launch();
