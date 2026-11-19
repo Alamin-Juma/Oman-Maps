@@ -30,7 +30,7 @@ with the child **explaining** what they learned, and a **mastery report** a pare
   return use or payment. Those three are what DuniaLab must prove in the pilot.
 - **Pilot gates** (from the product definition): ≥ 80% of phones run Tier B or better; ≥ 70% complete 3+ missions;
   ≥ 50% return in week 3; ≥ +10 pts on a delayed test; ≥ 85% AI-teacher agreement; parents and schools pay.
-- **Source of truth:** [`docs/product/DuniaLab — Product Definition & Validation.docx`](product/).
+- **Source of truth:** [`docs/product/product-definition.md`](product/product-definition.md). Update it whenever a product decision changes; the `.docx` is the original, kept for reference only.
 
 **The session loop:** scan → explore → mission (3-5 tasks) → explain → feedback → spaced review → report.
 
@@ -256,6 +256,22 @@ What the files are: `tiles/<z>/<x>/<y>/{h,albedo,shade}.webp` (overview and regi
 For Unity: `npm run unity -w @dunialab/geo` writes 16-bit RAW heightmaps to `.cache/geo/unity/` from the committed tiles (not committed, because they are derived).
 
 CI: every run verifies sizes, fingerprints and budgets from the Git LFS pointers without downloading the images. The `content-assets` workflow downloads them and checks the real pixels and viewer when assets, the generator, a pack, the web app or its viewer tests change. Viewer E2E explicitly skips pointer-only checkouts.
+
+**Production behaviour you should know about (findings register, 19 Nov 2026)**
+- **Only approved lessons in production builds.** A production build of the web app offers only packs whose
+  `review.status` is `approved`. Today the Kenya pack is a draft, so `npm run build -w @dunialab/web` shows
+  "waiting for teacher approval". For a pilot rehearsal, build with `VITE_ALLOW_DRAFT_CONTENT=true`; the app
+  then shows the draft banner. `npm run dev:web` always shows drafts.
+- **Packs are validated when the app is built.** An invalid pack fails the build with the reasons (run
+  `npm run validate:content`). The browser no longer ships the validation library.
+- **Sync sends batches of at most 500 events** (`SYNC_MAX_EVENTS` in `@dunialab/mastery`, shared with the
+  API). A failed batch keeps what was not sent for the next try.
+- **If the phone cannot save**, progress stays for the session and the app says "not saved on this phone".
+  Damaged saved data is set aside under `dunialab.events.v1.damaged`, never deleted.
+- **Sign-in and sign-up are rate limited** (5 wrong passwords per account, 30 sign-in attempts per address,
+  10 sign-ups per address per hour; `Retry-After` tells the client when). Behind a reverse proxy, set
+  `TRUST_PROXY` (for example `1`) so the limits see each visitor's address, not the proxy's.
+- **An expired sign-in** signs the parent out with a message; a 401 at the sign-in form is just a wrong password.
 
 **Windows: "Vitest failed to find the runner"**
 Fixed at the root: every test script starts Vitest through `scripts/vitest.mjs`. The cause was not the folder but the path

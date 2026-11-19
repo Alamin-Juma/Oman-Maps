@@ -84,6 +84,49 @@ feature("Mastery is decided by fixed rules, never by the AI", () => {
 - **E2E last** proves the pieces actually connect: phone → sync → database → report.
   It is slow, so there are few E2E tests and they cover whole flows.
 
+## Tests that cannot fail are worse than none (adopted 2026-11-19)
+
+A test that cannot fail reads as coverage while proving nothing. Four habits prevent it:
+
+1. **Break the fix, watch the test fail, restore, `git diff`.** Do this for every new guard or check,
+   and say in the summary that you did. A new control should make something that used to pass start
+   failing; if nothing goes red, suspect it is not connected to anything. Example: the root-test
+   type-check (`npm run typecheck:tests`) failed immediately on the first run, on a real bug (findings
+   register T3), which is how we know it works.
+2. **Positive controls.** Before asserting "a stranger cannot see this report", assert that the
+   parent *can*. Otherwise the test also passes when nobody can see it, when a field is renamed, or
+   when the fixture has no data.
+3. **Fail closed.** Database-backed E2E suites skip locally when Postgres is down (and say so on
+   stderr), but `E2E_REQUIRE_DB=1`, which CI sets, turns a missing database into a failure. A skipped
+   run never satisfies the definition of done. Proven by `tests/e2e/tooling/fail-closed-database.e2e.test.ts`.
+4. **Type-check the tests.** Vitest runs TypeScript without checking it. `npm run typecheck` includes
+   `typecheck:tests` (`tsconfig.tests.json`) for `tests/features` and `tests/e2e`.
+
+**Break the code the test actually runs.** Feature tests load the *built* API (`@dunialab/api`
+from `dist/`), so sabotaging only the source proves nothing: rebuild after breaking it and after
+restoring it. This was learned the hard way (findings register R7): a first sabotage check passed
+while the fix was removed, because the test was still running the old build.
+
+**Test builds of the web app build what ships.** Under Vitest `NODE_ENV` is `test`, which makes a
+Vite build bundle React's development mode (bigger, and StrictMode runs effects twice). Browser E2E
+tests set `NODE_ENV=production` around `build()`; tests that play the (still draft) Kenya pack also
+set `VITE_ALLOW_DRAFT_CONTENT=true`, and `tests/e2e/web/approved-content` checks the real rule.
+
+**Budgets assert a ceiling, never an exact value** (`<= N`): the budget is what we protect, not
+today's number.
+
+**Truthful screens.** Every screen distinguishes loading, failed, refused, empty, partial, truncated
+and "not saved on this phone". Each state gets a component test that renders it and asserts the
+user-visible text. Check failed **before** empty: `items.length === 0` after a failed load reads as
+"your progress is gone".
+
+## Manual guides and the walkthrough
+
+Automated tests prove the pieces; a person proves the product. After code review (not before), each
+feature gets a guide in `docs/manual-tests/` from the template there. One standing walkthrough
+(`docs/manual-tests/00-walkthrough.md`) carries one child from guest play to the parent's report and
+the 3D view; run it before every release and every demo.
+
 ## Exceptions
 
 - Pure refactors with no behaviour change: existing tests must stay green; no new feature test needed.

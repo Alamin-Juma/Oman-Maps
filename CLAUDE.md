@@ -2,7 +2,9 @@
 
 DuniaLab turns printed, curriculum-mapped maps into guided learning missions on any Android phone.
 MVP: Kenya Grade 5 Social Studies, Strand 1 (sub-strands 1.1 and 1.3), six missions.
-**Source of truth:** `docs/product/DuniaLab — Product Definition & Validation.docx`.
+**Source of truth:** `docs/product/product-definition.md`. Keep it current: when a decision changes the product
+(scope, roadmap, features, pricing, data rules), update this file in the same change. The `.docx` beside it is the
+original, kept for reference only; never edit it.
 **Start here:** `docs/technical-guide.md`, then `docs/architecture/`.
 
 ## Non-negotiable rules
@@ -36,6 +38,25 @@ Schema changes always update `docs/architecture/data-model.md`.
 - Every online step has an offline fallback; a mission never waits on the network.
 - Only `review.status = "approved"` packs ship to children in production.
 
+### 5. How we work: briefs, reviews, git (adopted 2026-11-19; reasons in `docs/engineering/findings-register.md` §5)
+- **Brief before build.** A feature is written up from `docs/briefs/_template.md` and reviewed for *product*
+  pass/fail before any agent implements it. Fixing a wrong design in prose costs an edit; in code, a rewrite.
+- **Every review finding gets a status** in `docs/engineering/findings-register.md`: fixed (with the test
+  that fails without it), declined (with a reason from this codebase), or deferred (with cost and trigger).
+  Silence is not a status. Verify a finding against the code before agreeing or disagreeing.
+- **Prove a new check can fail.** Break it on purpose, watch its test go red, restore it, then `git diff`
+  to confirm the restore. Every "X is hidden or refused" test first asserts X is visible to someone allowed.
+- **Every screen tells the truth.** Loading, failed, refused, empty, partial, truncated and "not saved on
+  this phone" never look alike; each gets a component test.
+- **Git:** stage files **by name** (never `git add -A` or `git add .`); check `git diff --cached --stat`
+  before every commit; agents do not push: a human reviews, runs the code, then pushes.
+- **Main is stable.** Shipped behaviour changes only on an explicit product decision. Never weaken or skip
+  a failing test, widen a permission, or remove a guard to make new work fit. If existing behaviour is
+  wrong, say so and stop on that part.
+- **Leave no server running**, and stop only the processes your task started. A stale server can imitate
+  a permission or data bug; check for one before changing code.
+- **Manual guides are written after code review** (`docs/manual-tests/`), from what shipped, not from the brief.
+
 ## Repo map
 ```
 packages/content   pack schema, validator, offline rubric checker, packs/*.json
@@ -63,7 +84,8 @@ npm install
 npm run build                 # all workspaces
 npm test                      # feature + unit tests
 npm run db:up                 # Postgres on :5433 (docker compose)
-npm run test:e2e              # E2E (spawns built API against Postgres)
+npm run test:e2e              # E2E (spawns built API against Postgres); E2E_REQUIRE_DB=1 fails instead of skipping
+npm run typecheck             # all workspaces + the root tests (typecheck:tests)
 npm run validate:content      # validate content packs
 npm run dev:api               # API on :3000
 npm run dev:web               # web on :5173
@@ -79,6 +101,9 @@ docker compose --profile app up -d --build   # API image + Postgres; then E2E_AP
 - TypeScript 7, ESM, `strict` + `noUncheckedIndexedAccess`. Relative imports end in `.js`.
 - Nest DI uses explicit `@Inject(TOKEN)`. Validate all input with zod (`common/zod.ts#parse`).
 - Claude API: default model `claude-opus-5-5`, configurable via `AI_MODEL`; structured outputs; never send child identity.
+- Production web builds offer approved packs only; `VITE_ALLOW_DRAFT_CONTENT=true` is for rehearsals and tests.
+  Browser E2E builds set `NODE_ENV=production` (under Vitest it is `test`, which bundles React's dev mode).
+- The sync batch limit is `SYNC_MAX_EVENTS` (`@dunialab/mastery`); never hard-code 500 anywhere.
 - Data budgets live in `DELIVERY_BUDGET` (`packages/content/src/delivery-budget.ts`); never hard-code a size limit elsewhere.
 - Tests always start through `scripts/vitest.mjs` (all `npm test*` scripts do). On Windows, a terminal in
   `c:\...` (lower-case drive, VS Code's default) makes a directly started Vitest load itself twice and fail

@@ -65,3 +65,7 @@ playwright-report/
 *.log
 # Agent / editor working folders
 .claude/
+# Imported starter kit from an earlier project: it contains another product's architecture and
+# domain material, so it never enters this repository. Our adapted practices live in
+# docs/engineering/ (findings-register.md E9).
+docs/STARTER_KIT/
