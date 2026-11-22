@@ -68,16 +68,30 @@ export function sample(g: GeoGrid<GridData>, lon: number, lat: number): number {
   return top * (1 - ty) + bottom * ty;
 }
 
-/** Half-resolution copy: each cell is the mean of a 2 x 2 block. */
+/**
+ * Half-resolution copy: each cell is the mean of a 2 x 2 block. An odd width or height rounds UP,
+ * and the edge blocks average only the cells that exist, so the last row and column are kept
+ * (findings register CR68: they were dropped, and with them any land that was only there).
+ */
 export function halve<T extends GridData>(g: GeoGrid<T>): GeoGrid<T> {
-  const width = Math.max(1, Math.floor(g.width / 2));
-  const height = Math.max(1, Math.floor(g.height / 2));
+  const width = Math.max(1, Math.ceil(g.width / 2));
+  const height = Math.max(1, Math.ceil(g.height / 2));
   const data = new (g.data.constructor as new (n: number) => T)(width * height);
   for (let j = 0; j < height; j++) {
     for (let i = 0; i < width; i++) {
-      const a = (j * 2) * g.width + i * 2;
-      const b = a + g.width;
-      data[j * width + i] = (g.data[a]! + g.data[a + 1]! + g.data[b]! + g.data[b + 1]!) / 4;
+      let sum = 0;
+      let count = 0;
+      for (let dj = 0; dj < 2; dj++) {
+        const sj = j * 2 + dj;
+        if (sj >= g.height) continue;
+        for (let di = 0; di < 2; di++) {
+          const si = i * 2 + di;
+          if (si >= g.width) continue;
+          sum += g.data[sj * g.width + si]!;
+          count++;
+        }
+      }
+      data[j * width + i] = sum / count;
     }
   }
   return { width, height, west: g.west, north: g.north, cell: g.cell * 2, data };
@@ -109,9 +123,48 @@ export function cropGrid(g: GeoGrid, bounds: Bounds): GeoGrid {
   const i1 = Math.min(g.width, Math.ceil((bounds[1][0] - g.west) / g.cell));
   const j0 = Math.max(0, Math.floor((g.north - bounds[1][1]) / g.cell));
   const j1 = Math.min(g.height, Math.ceil((g.north - bounds[0][1]) / g.cell));
-  const width = Math.max(1, i1 - i0);
-  const height = Math.max(1, j1 - j0);
+  // Bounds outside the grid used to become a one-cell crop of the wrong place (findings register CR69).
+  if (i1 <= i0 || j1 <= j0) throw new Error(`cropGrid: the bounds ${JSON.stringify(bounds)} do not overlap the grid`);
+  const width = i1 - i0;
+  const height = j1 - j0;
   const data = new Float32Array(width * height);
   for (let j = 0; j < height; j++) data.set(g.data.subarray((j0 + j) * g.width + i0, (j0 + j) * g.width + i0 + width), j * width);
   return { width, height, west: g.west + i0 * g.cell, north: g.north - j0 * g.cell, cell: g.cell, data };
 }
+
+/**
+ * The sea: cells at or below `seaLevel` that connect, through such cells, to the edge of the data.
+ * A basin below sea level that dry land walls off from the edge is land (a depression), not sea
+ * (findings register CR59, CR67). 1 = sea.
+ */
+export function oceanMask(g: GeoGrid, seaLevel: number): Uint8Array {
+  const { width, height, data } = g;
+  const mask = new Uint8Array(width * height);
+  const queue = new Int32Array(width * height);
+  let tail = 0;
+  const seed = (c: number) => {
+    if (!mask[c] && data[c]! <= seaLevel) {
+      mask[c] = 1;
+      queue[tail++] = c;
+    }
+  };
+  for (let i = 0; i < width; i++) {
+    seed(i);
+    seed((height - 1) * width + i);
+  }
+  for (let j = 0; j < height; j++) {
+    seed(j * width);
+    seed(j * width + width - 1);
+  }
+  for (let head = 0; head < tail; head++) {
+    const c = queue[head]!;
+    const i = c % width;
+    const j = (c - i) / width;
+    if (i > 0) seed(c - 1);
+    if (i < width - 1) seed(c + 1);
+    if (j > 0) seed(c - width);
+    if (j < height - 1) seed(c + width);
+  }
+  return mask;
+}
+

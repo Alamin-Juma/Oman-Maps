@@ -5,19 +5,16 @@
  *
  * In a production build only teacher-approved packs are offered (findings register S1), unless the
  * build sets VITE_ALLOW_DRAFT_CONTENT=true, which is for pilot rehearsals and tests and shows the
- * draft banner. See lib/pack-selection.ts.
+ * draft banner. The build makes the choice (lib/pack-selection.ts), so a withheld pack's content is
+ * never in the shipped files.
  */
 import type { ContentPack, LocalizedText, Locale } from "@dunialab/content";
-// Validated once by the build (vite.config.ts), so the browser does not ship the validator.
-import validPacks from "virtual:dunialab-packs";
-import { selectPacks } from "./pack-selection.js";
+// Validated and selected once by the build (vite.config.ts): the browser ships neither the
+// validator nor the content of packs it does not offer (findings register CR2).
+import selection from "virtual:dunialab-packs";
+import type { PackSelection } from "./pack-selection.js";
 
-const valid: ContentPack[] = validPacks;
-
-export const PACK_SELECTION = selectPacks(valid, {
-  production: import.meta.env.PROD,
-  allowDraft: import.meta.env.VITE_ALLOW_DRAFT_CONTENT === "true",
-});
+export const PACK_SELECTION: PackSelection = selection;
 
 export const PACKS: ContentPack[] = PACK_SELECTION.packs;
 

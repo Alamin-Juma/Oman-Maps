@@ -11,7 +11,7 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
-import { AiGradeSchema, type AiGrade, type AiGradeInput, type AiGrader } from "./ai-grader.js";
+import { AiGradeSchema, type AiGrade, type AiGradeInput, type AiGradeOptions, type AiGrader } from "./ai-grader.js";
 
 const SYSTEM = `You grade short explanations written by Kenyan Grade 5 learners (about 10-11 years old) for a Social Studies learning app.
 
@@ -38,7 +38,7 @@ export class ClaudeGrader implements AiGrader {
     this.client = opts.client ?? new Anthropic({ maxRetries: 1, timeout: opts.timeoutMs });
   }
 
-  async grade({ task, locale, answer }: AiGradeInput): Promise<AiGrade> {
+  async grade({ task, locale, answer }: AiGradeInput, options: AiGradeOptions = {}): Promise<AiGrade> {
     const taskForModel = {
       question: task.prompt[locale],
       rubric: {
@@ -64,7 +64,7 @@ export class ClaudeGrader implements AiGrader {
           },
         ],
       },
-      { timeout: this.opts.timeoutMs },
+      { timeout: this.opts.timeoutMs, ...(options.signal ? { signal: options.signal } : {}) },
     );
 
     if (response.stop_reason === "refusal") throw new Error("model declined to grade");

@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
 import { createServer } from "vite";
 import { Assets3dManifest, DELIVERY_BUDGET, LakesFile, RiversFile, validatePack } from "@dunialab/content";
-import { chooseTier, has3d, plannedFiles, planScene, supports3d } from "../../../apps/web/src/three/plan.js";
+import { chooseTier, has3d, plannedFiles, planScene, supports3d, waterFilesToLoad } from "../../../apps/web/src/three/plan.js";
 import { feature, scenario } from "../support/gherkin.js";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
@@ -196,4 +196,30 @@ feature("See the map in 3D", () => {
     });
     await then("none is found: behaviour comes from the feature's kind and the data", () => expect(offenders).toEqual([]));
   });
+
+  scenario("a town's regional view shows the lake and river nearby (findings register CR39)", async ({ given, when, then }) => {
+    const ask = { pack, manifest, tier: "medium" as const, reducedMotion: false };
+    let files: string[] = [];
+    let kisumu: string[] = [];
+    let nairobi: string[] = [];
+    await given("a child opens the 3D view of Kisumu, on Lake Victoria's shore, and of Nairobi, near the Tana", () => {});
+    await when("the app decides what to fetch before it knows where the water is", () => {
+      files = waterFilesToLoad(planScene({ ...ask, featureId: "kisumu" }), manifest);
+    });
+    await then("it fetches the lake and river outlines, and the scene then includes them", () => {
+      expect(files.sort()).toEqual([manifest.lakes.file, manifest.rivers.file].sort());
+      kisumu = planScene({ ...ask, featureId: "kisumu", lakes, rivers }).lakeIds;
+      nairobi = planScene({ ...ask, featureId: "nairobi", lakes, rivers }).riverIds;
+      expect(kisumu).toContain("lake-victoria");
+      expect(nairobi).toContain("tana-river");
+    });
+  });
+
+  scenario("positive control: the whole-country view still fetches its water as before", async ({ then }) => {
+    await then("both outline files are fetched for the overview", () => {
+      const overview = planScene({ ...base, lakes: undefined, rivers: undefined, featureId: null });
+      expect(waterFilesToLoad(overview, manifest).sort()).toEqual([manifest.lakes.file, manifest.rivers.file].sort());
+    });
+  });
 });
+

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { Assets3dManifest, validatePack, type ContentPack } from "@dunialab/content";
 import { haversineKm, latToTileY, localFrame, lonToTileX, tileXToLon, tileYToLat, type LonLat } from "../src/three/geo.js";
-import { chooseTier, has3d, plannedFiles, planScene, supports3d, tileBounds } from "../src/three/plan.js";
+import { chooseTier, has3d, plannedFiles, planScene, supports3d, tileBounds, waterFilesToLoad } from "../src/three/plan.js";
 import { buildGrid, buildRibbon, decodeHeights, lakeShapePoints, sampleGrid } from "../src/three/terrain.js";
 
 const pack = validatePack(JSON.parse(readFileSync(new URL("../../../packages/content/packs/kenya-explorer.json", import.meta.url), "utf8"))).pack!;
@@ -176,5 +176,18 @@ describe("terrain arrays", () => {
     const pts = lakeShapePoints([[0.4, 0.4], [0.6, 0.4], [0.6, 0.6], [0.4, 0.4]], frame.toLocal);
     expect(pts).toHaveLength(3);
     expect(pts[2]![1]).toBeGreaterThan(0); // north becomes +y on the shape
+  });
+});
+
+describe("waterFilesToLoad (findings register CR39)", () => {
+  it("fetches every outline file for a regional view, before nearby water is known", () => {
+    const initial = planScene({ ...base, featureId: "kisumu" });
+    expect(initial.mode).toBe("region");
+    expect(waterFilesToLoad(initial, manifest).sort()).toEqual([manifest.lakes.file, manifest.rivers.file].sort());
+  });
+
+  it("fetches nothing extra for a mountain patch, which shows no nearby water", () => {
+    const initial = planScene({ ...base, featureId: "mount-kenya" });
+    expect(waterFilesToLoad(initial, manifest)).toEqual([]);
   });
 });

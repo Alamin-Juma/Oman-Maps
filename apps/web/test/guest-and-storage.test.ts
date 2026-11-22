@@ -54,3 +54,25 @@ describe("safeStorage", () => {
     expect(s.getItem("k")).toBeNull();
   });
 });
+
+describe("guest id rotation when saving fails (findings register CR8)", () => {
+  it("removes the old id when the new one cannot be written", () => {
+    const m = new Map<string, string>([[GUEST_KEY, "old-guest"]]);
+    const full: KeyValueStorage = {
+      getItem: (k) => m.get(k) ?? null,
+      setItem: () => { throw new Error("QuotaExceededError"); },
+      removeItem: (k) => void m.delete(k),
+    };
+    const fresh = rotateGuestId(full);
+    expect(fresh).not.toBe("old-guest");
+    expect(m.has(GUEST_KEY)).toBe(false);
+    expect(readGuestId(full)).not.toBe("old-guest");
+  });
+
+  it("positive control: a successful rotation saves the new id", () => {
+    const s = memory();
+    s.m.set(GUEST_KEY, "old-guest");
+    const fresh = rotateGuestId(s);
+    expect(s.m.get(GUEST_KEY)).toBe(fresh);
+  });
+});

@@ -38,3 +38,23 @@ describe("createMapProjection", () => {
     expect(scaleBar.px).toBeLessThan(300);
   });
 });
+
+describe("scale bar (findings register CR38)", () => {
+  it("is positive, and the same rule, for a map that touches the 180 degree meridian", () => {
+    const near180 = createMapProjection([[179, -1], [180, 1]], extent);
+    expect(near180.scaleBar.px).toBeGreaterThan(0);
+    const halfDegreeEast = near180.project([179.5, 0])[0] - near180.project([179, 0])[0];
+    const kmPerHalfDegree = 0.5 * 111.32;
+    expect(near180.scaleBar.px).toBeCloseTo((halfDegreeEast / kmPerHalfDegree) * 200, 0);
+  });
+
+  it("positive control: Kenya's 200 km bar is unchanged in size", () => {
+    const kenya = createMapProjection(KENYA_BOUNDS, extent);
+    const a = kenya.project([37.75, 0.25]);
+    const lat = 0.25;
+    const dLon = 200 / (111.32 * Math.cos((lat * Math.PI) / 180));
+    const b = kenya.project([37.75 + dLon, 0.25]);
+    expect(kenya.scaleBar.px).toBeCloseTo(b[0] - a[0], 6);
+  });
+});
+

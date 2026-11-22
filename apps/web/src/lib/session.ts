@@ -35,3 +35,12 @@ export class SessionScope {
 export function endsSession(status: number, path: string): boolean {
   return status === 401 && !path.startsWith("/v1/auth/");
 }
+
+/**
+ * Does a 401 for the sign-in `failedToken` end the session that is current now (findings register
+ * CR10)? Only if it is the same sign-in: a late answer to a request sent with an older token must
+ * not sign out the parent who signed in since. Nothing to end when nobody is signed in.
+ */
+export function expiryApplies(failedToken: string | null, currentToken: string | null): boolean {
+  return currentToken !== null && failedToken === currentToken;
+}

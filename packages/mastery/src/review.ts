@@ -37,7 +37,7 @@ export function buildReviewQueue(
   // ordering buckets by their most overdue skill.
   const buckets = new Map<string, SkillState[]>();
   for (const s of due) {
-    const t = topics[s.skillId] ?? "_";
+    const t = Object.hasOwn(topics, s.skillId) ? topics[s.skillId]! : "_";
     if (!buckets.has(t)) buckets.set(t, []);
     buckets.get(t)!.push(s);
   }

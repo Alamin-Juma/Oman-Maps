@@ -21,7 +21,7 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node ../../scripts/vitest.mjs run",
-    "validate": "node dist/cli/validate.js packs"
+    "validate": "node ../../scripts/validate-content.mjs packs"
   },
   "dependencies": {
     "zod": "^4.6.7"

@@ -88,4 +88,54 @@ describe("MissionSession", () => {
     expect(s.events()[0]!.context).toBe("review");
     expect(s.events()[0]!.eventId).toMatch(/^[0-9a-f-]{36}$/);
   });
+
+  const good = "without a key you do not know what the symbols mean and without a scale you cannot tell the distance";
+  const toExplain = (opts: { checkerTimeoutMs?: number } = {}) => {
+    let i = 0;
+    const s = createMissionSession({ pack, missionId: "m1-broken-map", profileId: "p", now: () => "2027-01-11T06:00:00Z", newId: () => `id-${++i}`, ...opts });
+    s.answerChoice(["title"]);
+    s.answerChoice(["key"]);
+    s.answerChoice(["compass"]);
+    return s;
+  };
+
+  it("ends a stalled checker wait at the time limit with the local result (findings register CR27)", async () => {
+    const s = toExplain({ checkerTimeoutMs: 20 });
+    const r = await s.answerExplain(good, "en", () => new Promise(() => {}));
+    expect(r.feedback.checkedBy).toBe("local");
+    expect(s.state().phase).toBe("done");
+  });
+
+  it("uses a checker that answers in time", async () => {
+    const s = toExplain({ checkerTimeoutMs: 1000 });
+    const r = await s.answerExplain(good, "en", async () => ({ outcome: "accepted", hintId: null, criteriaMet: ["key", "scale"], confidence: 0.9, checkedBy: "ai", flagForTeacher: false }));
+    expect(r.feedback.checkedBy).toBe("ai");
+  });
+
+  it("refuses a time limit that is not a positive number", () => {
+    expect(() => toExplain({ checkerTimeoutMs: 0 })).toThrow(/checkerTimeoutMs/);
+  });
+
+  it("gives an overlapping submission the in-flight result instead of a second attempt (findings register CR26)", async () => {
+    const s = toExplain();
+    let calls = 0;
+    const checker = async () => {
+      calls++;
+      await new Promise((r) => setTimeout(r, 10));
+      return { outcome: "accepted" as const, hintId: null, criteriaMet: ["key", "scale"], confidence: 0.9, checkedBy: "ai" as const, flagForTeacher: false };
+    };
+    const [a, b] = await Promise.all([s.answerExplain(good, "en", checker), s.answerExplain(good, "en", checker)]);
+    expect(calls).toBe(1);
+    expect(a).toBe(b);
+    expect(s.events().filter((e) => e.kind === "explain")).toHaveLength(1);
+  });
+
+  it("keeps the hint-then-retry flow: the claim is released after each check", async () => {
+    const s = toExplain();
+    await s.answerExplain("without a key you do not know what the symbols mean", "en"); // one criterion: one hint
+    expect(s.state().phase).toBe("hint");
+    const r = await s.answerExplain(good, "en");
+    expect(r.feedback.outcome).toBe("accepted");
+  });
 });
+

@@ -127,6 +127,22 @@ describe("grids", () => {
     expect(pickLevel(chain, 1e-9).cell).toBeCloseTo(1 / 32);
   });
 
+  it("keeps the last row and column when halving an odd-sized grid (findings register CR68)", () => {
+    // 3 x 3 cells; the only land is in the last column.
+    const odd = { width: 3, height: 3, west: 0, north: 3, cell: 1, data: Float32Array.from([0, 0, 90, 0, 0, 90, 0, 0, 90]) };
+    const half = halve(odd);
+    expect([half.width, half.height]).toEqual([2, 2]);
+    expect(half.data[1]).toBeCloseTo(90); // the edge block averages only the cells that exist
+    expect(half.data[3]).toBeCloseTo(90);
+    expect(half.data[0]).toBeCloseTo(0);
+  });
+
+  it("refuses a crop that does not touch the grid (findings register CR69)", () => {
+    const g = { width: 3, height: 3, west: 0, north: 3, cell: 1, data: new Float32Array(9) };
+    expect(() => cropGrid(g, [[4, 0], [5, 3]])).toThrow(/not overlap the grid/);
+    expect(() => cropGrid(g, [[0, 4], [3, 5]])).toThrow(/not overlap the grid/);
+  });
+
   it("crops to whole cells and keeps positions", () => {
     const crop = cropGrid(ramp, [[1, 0.5], [2.6, 1.5]]);
     expect([crop.west, crop.north, crop.width, crop.height]).toEqual([1, 1.5, 4, 2]);

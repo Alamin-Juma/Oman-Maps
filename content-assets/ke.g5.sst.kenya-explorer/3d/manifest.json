@@ -373,8 +373,8 @@
   "items": [
    {
     "featureId": "tana-river",
-    "lengthKm": 750.8,
-    "points": 586,
+    "lengthKm": 758.9,
+    "points": 591,
     "endsIn": "sea",
     "guided": true,
     "maxOffGuideKm": 17.5,
@@ -596,8 +596,8 @@
   },
   {
    "path": "previews/overview.jpg",
-   "bytes": 492340,
-   "sha256": "b98b03a5c47eb95fb405026714c8a2f960501d2a17455b02286b82c72015744e",
+   "bytes": 492401,
+   "sha256": "766943ff6e6d5853a28a895bf172cbd1938678244b4b398e898698dc2eb92fec",
    "role": "preview",
    "sources": []
   },
@@ -631,15 +631,15 @@
   },
   {
    "path": "previews/river-tana-river.jpg",
-   "bytes": 282159,
-   "sha256": "ec8cd6a26ad47e0e6fa4c2937bdc67851b0a9ba76c0a2c1513b687fa6b4b007f",
+   "bytes": 279300,
+   "sha256": "73345e9b3cf9c009a3530b6d14f62dd7f1151c399d736329442c2d9fe5ec2d4f",
    "role": "preview",
    "sources": []
   },
   {
    "path": "rivers.json",
-   "bytes": 21856,
-   "sha256": "88eb146c7b55911eabdd11566860912d15e0163354427d84bbd1f73f3d52d21f",
+   "bytes": 22122,
+   "sha256": "39a7070ea6c2c4d9b10dc2ec694ea6132c03f8fc3b7ea9d2f0924899340c6e64",
    "role": "manifest-data",
    "sources": [
     "copernicus-dem-glo-30",
@@ -688,7 +688,7 @@
   {
    "path": "tiles/6/37/32/h.webp",
    "bytes": 3546,
-   "sha256": "69cc878e195791610d429948ec36127376e6ebe43f093faeb4189bed63724227",
+   "sha256": "e92f0ab4a299006b728929ba1dbb9c9eb6c1820912d06153ac510a9c137b05b0",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -734,7 +734,7 @@
   {
    "path": "tiles/6/38/32/albedo.webp",
    "bytes": 31364,
-   "sha256": "b95da16f3bf3ecb366b8661edea0bb30c737ac5b1e239b6521f078d922e9a735",
+   "sha256": "56bcc23077cc3c94d5d6e8f9402b76755eb0ec2f5021218201a2f3bfe75fd3ff",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -743,8 +743,8 @@
   },
   {
    "path": "tiles/6/38/32/h.webp",
-   "bytes": 62256,
-   "sha256": "53ff72be70f9553d8b481775879c8fdd9ceeb091bfe8fade6c1c9c2259520635",
+   "bytes": 62238,
+   "sha256": "af7aea56427e665bb9b52b170cdb9b2a6d450e7e1c5e31c6b645b28a7adbec1d",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -752,8 +752,8 @@
   },
   {
    "path": "tiles/6/38/32/shade.webp",
-   "bytes": 40372,
-   "sha256": "c1a6dd3d1b01586adbab01792118b4e1b3166ca17187a9b4f10e365e497d2e0b",
+   "bytes": 40314,
+   "sha256": "bc41f96aaf330ee0b2a8b1ed900678edb3c3f62f9807c9dfed837288f272c4b4",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -761,8 +761,8 @@
   },
   {
    "path": "tiles/6/39/31/albedo.webp",
-   "bytes": 4314,
-   "sha256": "2e73efbff375bb09115762b255a9532f4b64b56783b490c6e43ad38c8ddb18f4",
+   "bytes": 4616,
+   "sha256": "16cb236a3e3ed2311613c536d9065b02cf362db9e320c41ad241afe338974f23",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -771,8 +771,8 @@
   },
   {
    "path": "tiles/6/39/31/h.webp",
-   "bytes": 26628,
-   "sha256": "43c935a29dc98d808711009ad6f8f7892a72ffb8c0708ea423984115b84536ee",
+   "bytes": 26712,
+   "sha256": "a45d458ec4f918dded93eae8e8f8b74c6c9a1b516b94a585cb2bc72cb374319b",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -780,8 +780,8 @@
   },
   {
    "path": "tiles/6/39/31/shade.webp",
-   "bytes": 11796,
-   "sha256": "ac751126fae3cd3b4fb73fb7ebb783cc4edff9b6b065b2f54ea3407228921008",
+   "bytes": 11976,
+   "sha256": "90af8dac3a7d8c3b1ed8706504daddd192fe457e52d386c41c3ce65b88987952",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -789,8 +789,8 @@
   },
   {
    "path": "tiles/6/39/32/albedo.webp",
-   "bytes": 6964,
-   "sha256": "da3dacec3e4e23bdf8adb7805e5e0a7d98375d9f4038d36dbc5a6e0c79b3db98",
+   "bytes": 7004,
+   "sha256": "730b40511e7b7179e7e687e2563defb0e0453201f59a1584baee15c5d356dce1",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -799,8 +799,8 @@
   },
   {
    "path": "tiles/6/39/32/h.webp",
-   "bytes": 9454,
-   "sha256": "c0f4d5c7ee18849a12406ba605132fcab5aa8809d604ac36f79a585625761f4b",
+   "bytes": 9462,
+   "sha256": "08182345fba398fbe9f5d184c61c0878b522421c640a36ed1612e5df0dafa8ed",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -808,8 +808,8 @@
   },
   {
    "path": "tiles/6/39/32/shade.webp",
-   "bytes": 1938,
-   "sha256": "5b08cde29c3edb7732ca9e689ef5626c8ec8a438af0632d1ed282353912b4ac5",
+   "bytes": 1946,
+   "sha256": "cd0f81c80c57ff4a0e6fc6a50e5bb02465cccfa20904fe8e57590e53804f22a6",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -1601,8 +1601,8 @@
   },
   {
    "path": "tiles/8/154/128/albedo.webp",
-   "bytes": 272470,
-   "sha256": "c49a2a4558648775aa12df90342d237fa3df6b8e54741eee4510a0b60466d489",
+   "bytes": 272472,
+   "sha256": "eda5a230be524771ee54253a17df8f7113021304d00f126e4173b71e0e84f1fc",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -1611,8 +1611,8 @@
   },
   {
    "path": "tiles/8/154/128/h.webp",
-   "bytes": 61334,
-   "sha256": "2bb4de88c1f46f001325f6637aaa0b1c99265e3626fe4640f9ef76250c90b600",
+   "bytes": 61318,
+   "sha256": "cdbb3a1fbcbd3f7f47e684b69d139528e2d6d669e40ef00b651ced9ce574d02f",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -1620,8 +1620,8 @@
   },
   {
    "path": "tiles/8/154/128/shade.webp",
-   "bytes": 246922,
-   "sha256": "2bff14cbc1713a56497f78c33bd567b0e4b1732945e6105b2c0074a96b4fc7ac",
+   "bytes": 246080,
+   "sha256": "62d3782747dd81eebb93a4088d195e6945baeb78f7d0fb5c6ca11a46977ed21d",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -1825,8 +1825,8 @@
   },
   {
    "path": "tiles/8/155/128/albedo.webp",
-   "bytes": 154442,
-   "sha256": "1f7d71e1a1657ffc97797dd160609fc617edfb5e032dba9bf5d8ada0a669ae3a",
+   "bytes": 154342,
+   "sha256": "d843676632df93fdd37077d24e5bd0f593839d3b512a3770fae8724106de898e",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -1835,8 +1835,8 @@
   },
   {
    "path": "tiles/8/155/128/h.webp",
-   "bytes": 42528,
-   "sha256": "c9c38e1d7af45bd129d2564fa255ee6f14c811be47d9123fa4a5bc2989503d40",
+   "bytes": 42522,
+   "sha256": "4dd45127bcd218a4f51f567a93f4c83238956f329d4f9d6a47e1355c15163fb4",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -1844,8 +1844,8 @@
   },
   {
    "path": "tiles/8/155/128/shade.webp",
-   "bytes": 89916,
-   "sha256": "ebbe85c2cc7ae1ae2fa5ce9ef95d5b71ca884a2f7854acff95e6d8ff7b18dc40",
+   "bytes": 89926,
+   "sha256": "dd596ba25dbc3e77704354ec75084696e728915f22ef1c2e8fcd52bca72a123a",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -2049,8 +2049,8 @@
   },
   {
    "path": "tiles/8/156/128/albedo.webp",
-   "bytes": 77946,
-   "sha256": "6a6d4f1c523720d8b1bf2332bcf1dea8556522b5e631009fb630cce03254ef6c",
+   "bytes": 77948,
+   "sha256": "052848df856824f04db62bcea8c503952284008914cfc48df8f91077399dd6c6",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2059,8 +2059,8 @@
   },
   {
    "path": "tiles/8/156/128/h.webp",
-   "bytes": 21010,
-   "sha256": "bf96ad55c6b8109334c039d49d5762a5e976576711fd97e9240ad99e9b388d56",
+   "bytes": 20968,
+   "sha256": "249f8fd8264dea2489a2a862e5ad258b6b82b07b553b161b94038f206abd9487",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -2068,8 +2068,8 @@
   },
   {
    "path": "tiles/8/156/128/shade.webp",
-   "bytes": 8414,
-   "sha256": "2bf453737ff1fb035b4639ca88f61330322a28deda6459e7be586eac5e6f570c",
+   "bytes": 8368,
+   "sha256": "f8ce29facd1aa7ebb6993c3ece23204f9f06c30949237fa0fa3e82b561c5c6db",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -2077,8 +2077,8 @@
   },
   {
    "path": "tiles/8/156/129/albedo.webp",
-   "bytes": 129712,
-   "sha256": "97a324b50a6ebdfba7c75fe81319f68be0caf0eeb736322832f4c9a06b870a30",
+   "bytes": 129748,
+   "sha256": "b82535528bf327ffedd5535896b26897ebc3aea82778d366dddfb875ba039ade",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2087,8 +2087,8 @@
   },
   {
    "path": "tiles/8/156/129/h.webp",
-   "bytes": 22156,
-   "sha256": "4c686df13a5439db333fcb65eb4d323351f51bc575629dcf29eadc9ac597eb17",
+   "bytes": 22134,
+   "sha256": "53d733e4b333d171fd9e4c3e7a9d5a9080d8efb1fdc49c05540b5e148d2835d7",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -2096,8 +2096,8 @@
   },
   {
    "path": "tiles/8/156/129/shade.webp",
-   "bytes": 17158,
-   "sha256": "c08c440c65ed339ec7315047549ea754eb277191bda4ff0b88ee4e0fe9e87a33",
+   "bytes": 17130,
+   "sha256": "cbdf58b9d40c0f393f11c19423990302d0b609b94eaea9747190dab08966444f",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90"
@@ -2329,8 +2329,8 @@
   }
  ],
  "delivery": {
-  "first3dOpenBytes": 496725,
-  "pack3dTotalBytes": 17358155,
+  "first3dOpenBytes": 497537,
+  "pack3dTotalBytes": 17357915,
   "hdFeaturePatchBytes": {
    "great-rift-valley": 583780,
    "kilimanjaro": 505336,
@@ -2351,7 +2351,7 @@
    },
    {
     "id": "river-course:tana-river",
-    "message": "Traced course, 750.8 km. Compare previews/river-tana-river.jpg with a trusted map before approval."
+    "message": "Traced course, 758.9 km. Compare previews/river-tana-river.jpg with a trusted map before approval."
    }
   ]
  }

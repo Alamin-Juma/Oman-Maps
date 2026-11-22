@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bridgeGuides,
   carveChannel,
+  cellOf,
   detectLake,
   findFlatRegion,
   gridFromFunction,
@@ -26,9 +27,13 @@ describe("MinHeap", () => {
     keys.forEach((k, i) => heap.push(k, i));
     let last = -Infinity;
     let count = 0;
+    const seen = new Set<number>();
     while (heap.size > 0) {
       const key = heap.topKey;
       const id = heap.pop();
+      // Many entries share a key: each id must still come out exactly once (findings register CR58).
+      expect(seen.has(id)).toBe(false);
+      seen.add(id);
       expect(key).toBeGreaterThanOrEqual(last);
       expect(keys[id]).toBe(key);
       last = key;
@@ -95,6 +100,18 @@ describe("traceRiver", () => {
     const inland = gridFromFunction(BOX, CELL, (lon, lat) => 100 + lon * 50 + lat * 20);
     expect(() => traceRiver({ dem: inland, roughPath: [[0.2, 0.5], [0.8, 0.5]], guides: [] })).toThrow(/no sea or lake/);
   });
+
+  it("says so when there IS a sea, but the start is cut off from it (findings register CR57)", () => {
+    // The sea is there (east of 0.9 E), but the surveyed line only covers the last stretch, so the
+    // corridor around it never reaches the start far to the west.
+    let message = "";
+    try {
+      traceRiver({ dem: tilted, roughPath: [[0.05, 0.5], [0.95, 0.5]], guides: [[[0.75, 0.5], [0.95, 0.5]]], options: { guidedCorridorKm: 5 } });
+    } catch (e) {
+      message = (e as Error).message;
+    }
+    expect(message).toMatch(/does not drain/);
+  });
 });
 
 describe("bridgeGuides", () => {
@@ -138,11 +155,23 @@ describe("carveChannel", () => {
     const dem = gridFromFunction(BOX, CELL, () => 100);
     const river: RiverPoint[] = [[0.2, 0.5, 90, 0, 0.5], [0.8, 0.5, 60, 66, 1]];
     carveChannel(dem, river, 1);
-    expect(sample(dem, 0.2, 0.5)).toBeLessThanOrEqual(90.5);
-    expect(sample(dem, 0.8, 0.5)).toBeLessThanOrEqual(61);
-    // Half-way along, the water is half-way between 90 and 60 (the channel is a cell or two wide).
-    expect(Math.abs(sample(dem, 0.5, 0.5) - 75)).toBeLessThan(1.5);
-    expect(sample(dem, 0.5, 0.8)).toBe(100);
+    // The requirement (ledger TC1, re-audited): along the whole river the water is never buried
+    // (bed at or below the water level), and the channel stays shallow (at most a cell or two of
+    // the river's drop below the water). Checked at every cell the river crosses, not one sample.
+    const dropPerCellMetres = (90 - 60) / ((0.8 - 0.2) / CELL);
+    const waterAt = (lon: number) => 90 + ((60 - 90) * (lon - 0.2)) / (0.8 - 0.2);
+    const [, row] = cellOf(dem, [0.5, 0.5]);
+    let checked = 0;
+    for (let i = 0; i < dem.width; i++) {
+      const lon = dem.west + (i + 0.5) * CELL;
+      if (lon < 0.2 || lon > 0.8) continue;
+      const bed = dem.data[row * dem.width + i]!;
+      expect(bed, `bed at ${lon.toFixed(3)} is above the water`).toBeLessThanOrEqual(waterAt(lon) + 1e-6);
+      expect(bed, `channel at ${lon.toFixed(3)} is too deep`).toBeGreaterThanOrEqual(waterAt(lon) - 2 * dropPerCellMetres);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(60);
+    expect(sample(dem, 0.5, 0.8)).toBe(100); // land away from the river is untouched
   });
 
   it("never raises terrain that is already below the water", () => {
@@ -252,3 +281,69 @@ describe("outlines and line clean-up", () => {
     expect(smooth[1]![1]).toBeCloseTo(1 / 3);
   });
 });
+
+describe("first CodeRabbit review: rivers and lakes (findings register CR59-CR63)", () => {
+  it("does not take an inland basin below sea level for the sea (CR59)", () => {
+    // Land falls east to a sea at 0.9 E. An inland basin at 0.3-0.4 E is below sea level but
+    // walled off from the sea by dry land.
+    const dem = gridFromFunction(BOX, CELL, (lon, lat) => {
+      if (lon >= 0.9) return 0;
+      if (lon > 0.3 && lon < 0.4 && Math.abs(lat - 0.5) < 0.05) return -50;
+      return (0.9 - lon) * 1000 + 2;
+    });
+    const river = traceRiver({ dem, roughPath: [[0.1, 0.5], [0.95, 0.5]], guides: [] });
+    expect(river.endsIn).toBe("sea");
+    expect(river.points.at(-1)![0]).toBeGreaterThan(0.85); // it reaches the real coast
+  });
+
+  it("keeps the outlet of a river only a step or two long (CR60)", () => {
+    // Cells about 5.5 m apart: a start one cell from the sea.
+    const tiny: Bounds = [[0, 0], [0.002, 0.001]];
+    const dem = gridFromFunction(tiny, 0.00005, (lon) => (lon >= 0.001 ? 0 : (0.001 - lon) * 100000 + 1));
+    const river = traceRiver({ dem, roughPath: [[0.00092, 0.0005], [0.0011, 0.0005]], guides: [] });
+    expect(river.points.length).toBeGreaterThanOrEqual(2);
+    expect(river.points.at(-1)![2]).toBe(0); // the outlet is still there, at sea level
+  });
+
+  it("meets a lake at its surface, not at a hollow upstream of it (CR61)", () => {
+    // Downhill to a lake at 100 m (flat, east of 0.8 E); on the way, a hollow at 90 m.
+    const dem = gridFromFunction(BOX, CELL, (lon) => {
+      if (lon >= 0.8) return 100;
+      if (lon > 0.6 && lon < 0.7) return 90;
+      return 100 + (0.8 - lon) * 200;
+    });
+    const river = traceRiver({ dem, roughPath: [[0.1, 0.5], [0.85, 0.5]], guides: [] });
+    expect(river.endsIn).toBe("lake");
+    expect(river.points.at(-1)![2]).toBe(100);
+    for (let k = 1; k < river.points.length; k++) expect(river.points[k]![2]).toBeLessThanOrEqual(river.points[k - 1]![2]);
+  });
+
+  it("finds the nearest lake by distance in km, not by square rings (CR62)", () => {
+    // Two lakes: one diagonal (3-5 cells east and north: on square ring 3, but about 4.2 cells away)
+    // and one straight south (4-6 cells: ring 4, but only 4 cells away). Nearest in km wins.
+    const cellKm = CELL * 110.574;
+    const anchor: LonLat = [60.5 * CELL, 60.5 * CELL]; // a cell centre, so offsets are whole cells
+    const dem = gridFromFunction(BOX, CELL, (lon, lat) => {
+      const di = Math.round((lon - anchor[0]) / CELL);
+      const dj = Math.round((lat - anchor[1]) / CELL);
+      if (di >= 3 && di <= 5 && dj >= 3 && dj <= 5) return 300; // diagonal lake, ring 3, about 4.2 cells away
+      if (Math.abs(di) <= 1 && dj <= -4 && dj >= -6) return 250; // straight lake, 3 cells wide: ring 4, 4 cells away
+      return 400 + lon * 10 + lat * 7;
+    });
+    const region = findFlatRegion(dem, anchor, 6 * cellKm)!;
+    expect(region.levelMetres).toBe(250); // the nearer one in km, although its ring comes later
+    expect(findFlatRegion(dem, anchor, 3.9 * cellKm)).toBeNull(); // the diagonal one is beyond 3.9 cells
+  });
+
+  it("looks past a puddle that is too small to the lake behind it (CR63)", () => {
+    const dem = gridFromFunction(BOX, CELL, (lon, lat) => {
+      if (Math.abs(lon - 0.52) < CELL && Math.abs(lat - 0.5) < CELL) return 350; // a flat puddle, 2 x 2 cells (about 3.4 km2)
+      if (Math.hypot(lon - 0.58, lat - 0.5) < 0.04) return 300; // a real lake, farther away
+      return 400 + lon * 10 + lat * 7;
+    });
+    const lake = detectLake(dem, [0.5, 0.5], 12, 5);
+    expect(lake).not.toBeNull();
+    expect(lake!.surfaceMetres).toBe(300);
+  });
+});
+

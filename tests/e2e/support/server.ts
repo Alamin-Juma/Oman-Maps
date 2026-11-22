@@ -36,11 +36,15 @@ export async function databaseReachable(): Promise<boolean> {
   }
 }
 
-/** A database address safe to print: the password is replaced (findings register T7). */
+/**
+ * A database address safe to print: the password is replaced (findings register T7), including a
+ * password given as a query parameter, which the pg driver also accepts (CR14).
+ */
 export function withoutPassword(url: string): string {
   try {
     const parsed = new URL(url);
     if (parsed.password) parsed.password = "***";
+    for (const key of [...parsed.searchParams.keys()]) if (key.toLowerCase() === "password") parsed.searchParams.set(key, "***");
     return parsed.toString();
   } catch {
     return "<unparseable database address>";
@@ -65,12 +69,16 @@ export interface RunningApi {
   stop: () => Promise<void>;
 }
 
-async function waitForHealth(url: string, ms = 20_000) {
+/**
+ * Poll /health until it answers or `ms` pass. Each request carries the remaining time as its own
+ * deadline, so a server that accepts the connection and never answers cannot hold the loop (CR54).
+ */
+export async function waitForHealth(url: string, ms = 20_000) {
   const until = Date.now() + ms;
   let last = "";
   while (Date.now() < until) {
     try {
-      const r = await fetch(`${url}/health`);
+      const r = await fetch(`${url}/health`, { signal: AbortSignal.timeout(Math.max(1, until - Date.now())) });
       if (r.ok) return;
       last = `HTTP ${r.status}`;
     } catch (e) {
@@ -79,6 +87,18 @@ async function waitForHealth(url: string, ms = 20_000) {
     await new Promise((r) => setTimeout(r, 250));
   }
   throw new Error(`API did not become healthy at ${url}: ${last}`);
+}
+
+/**
+ * Stop a child process and wait for it to exit. A child that already exited, normally OR from a
+ * signal (then `exitCode` stays null and `signalCode` is set), is done: waiting for its "exit"
+ * event, which has already fired, would hang forever (findings register CR53).
+ */
+export async function stopChild(child: ChildProcess): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  const exited = new Promise((r) => child.once("exit", r));
+  child.kill();
+  await exited;
 }
 
 export async function startApi(): Promise<RunningApi> {
@@ -117,10 +137,7 @@ export async function startApi(): Promise<RunningApi> {
   };
 
   const stop = async () => {
-    if (!child || child.exitCode !== null) return;
-    const exited = new Promise((r) => child!.once("exit", r));
-    child.kill();
-    await exited;
+    if (child) await stopChild(child);
   };
 
   await launch();

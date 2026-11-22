@@ -13,7 +13,7 @@ import { readGuestId, rotateGuestId } from "./lib/guest.js";
 import { device3d } from "./lib/device3d.js";
 import { has3d, supports3d } from "./three/plan.js";
 import { ThreeBoundary } from "./components/ThreeBoundary.js";
-import { SessionScope } from "./lib/session.js";
+import { expiryApplies, SessionScope } from "./lib/session.js";
 
 const Viewer3D = lazy(() => import("./three/Viewer3D.js"));
 
@@ -45,14 +45,14 @@ export function App() {
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const tokenRef = useRef(token);
   tokenRef.current = token;
-  const expireSession = useRef<() => void>(() => {});
+  const expireSession = useRef<(failedToken: string | null) => void>(() => {});
   const setToken = (tk: string | null) => {
     setTokenState(tk);
     if (tk) storage.setItem("dunialab.token", tk);
     else storage.removeItem("dunialab.token");
   };
   const api = useMemo(
-    () => new DuniaApi(API_URL, () => token, undefined, undefined, () => expireSession.current()),
+    () => new DuniaApi(API_URL, () => token, undefined, undefined, (failed) => expireSession.current(failed)),
     [token],
   );
   const onEvents = useCallback(
@@ -95,8 +95,10 @@ export function App() {
     endSession();
     setSessionNotice(null);
   };
-  expireSession.current = () => {
-    if (tokenRef.current === null) return; // several requests can fail together: end the session once
+  expireSession.current = (failedToken) => {
+    // Only the sign-in the failed request used (findings register CR10). Several requests can fail
+    // together: after the first, the token is gone and the rest do nothing.
+    if (!expiryApplies(failedToken, tokenRef.current)) return;
     tokenRef.current = null;
     endSession();
     setSessionNotice(
@@ -119,7 +121,7 @@ export function App() {
         </div>
         <div className="row">
           {PACKS.length > 1 && (
-            <select value={pack.id} onChange={(e) => { setPackId(e.target.value); setMissionId(null); setSelected(null); setView3d(null); }}>
+            <select aria-label={locale === "sw" ? "Kifurushi cha masomo" : "Lesson pack"} value={pack.id} onChange={(e) => { setPackId(e.target.value); setMissionId(null); setSelected(null); setView3d(null); }}>
               {PACKS.map((p) => <option key={p.id} value={p.id}>{t(p.title, locale)} · Grade {p.grade}</option>)}
             </select>
           )}
@@ -221,7 +223,7 @@ export function App() {
             pack={pack}
             locale={locale}
             token={token}
-            setToken={(tk) => { setSessionNotice(null); setToken(tk); }}
+            setToken={session.guard((tk: string | null) => { setSessionNotice(null); setToken(tk); })}
             onSignOut={signOut}
             guestId={guestId}
             profile={profile}

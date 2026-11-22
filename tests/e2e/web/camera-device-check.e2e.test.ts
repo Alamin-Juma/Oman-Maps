@@ -18,6 +18,18 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const WEB_ROOT = fileURLToPath(new URL("../../../apps/web", import.meta.url));
 
+/** True when a request carries image data, in its address or its body (findings register CR13). */
+function carriesImage(request: Request): boolean {
+  let url = request.url();
+  try {
+    url = decodeURIComponent(url);
+  } catch {
+    /* keep it as sent */
+  }
+  const body = request.postData() ?? "";
+  return [url, body].some((text) => /data:image\/|image\/jpeg|\/9j\/4/.test(text));
+}
+
 describe("E2E (browser): camera device check", () => {
   let web: PreviewServer;
   let browser: Browser;
@@ -78,13 +90,58 @@ describe("E2E (browser): camera device check", () => {
     expect(still.length).toBeGreaterThan(1000);
     expect(still.decoded).toBeGreaterThan(0);
 
-    // Privacy boundary: nothing was posted anywhere, and no request carried image data.
+    // Privacy boundary: nothing was posted anywhere, and no request carried image data, in its body
+    // OR its address (findings register CR13: a GET with the picture in a query passed before).
     const uploads = requests.filter((r) => r.method() !== "GET");
     expect(uploads.map((r) => `${r.method()} ${r.url()}`)).toEqual([]);
-    for (const request of requests) expect(request.postData() ?? "").not.toContain("image/jpeg");
+    expect(requests.filter(carriesImage).map((r) => r.url().slice(0, 80))).toEqual([]);
+
+    // Negative control: the same check DOES catch a picture smuggled into a query string.
+    await context.route("**/collect**", (route) => route.fulfill({ status: 204 }));
+    const smuggled: Request[] = [];
+    page.on("request", (r) => smuggled.push(r));
+    await page.evaluate(async (src) => {
+      await fetch(`/collect?frame=${encodeURIComponent(src)}`).catch(() => {});
+    }, (await page.locator("img[alt='Captured on this device']").getAttribute("src")) ?? "");
+    await expect.poll(() => smuggled.filter(carriesImage).length).toBe(1);
 
     await context.close();
   }, 120_000);
+
+  it("a camera that opens after the panel was closed is switched off at once (findings register CR12)", async () => {
+    const context = await browser.newContext({ permissions: ["camera"] });
+    // Slow the camera down, and keep every stream it hands out so the test can see its tracks.
+    await context.addInitScript(() => {
+      const w = window as unknown as { __streams: MediaStream[] };
+      w.__streams = [];
+      const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async (constraints) => {
+        await new Promise((r) => setTimeout(r, 800));
+        const stream = await real(constraints);
+        w.__streams.push(stream);
+        return stream;
+      };
+    });
+    const page = await context.newPage();
+    await page.goto(`${web.resolvedUrls!.local[0]!}?check=camera`);
+    await page.getByRole("button", { name: "Start camera" }).click();
+    await page.getByRole("button", { name: "Close" }).click(); // closed while the camera is still opening
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __streams: MediaStream[] }).__streams.length), { timeout: 10_000 }).toBeGreaterThan(0);
+    const live = await page.evaluate(() =>
+      (window as unknown as { __streams: MediaStream[] }).__streams.flatMap((s) => s.getTracks()).filter((t) => t.readyState === "live").length,
+    );
+    expect(live).toBe(0);
+    await context.close();
+  }, 60_000);
+
+  it("positive control: a camera that opens while the panel is open stays live", async () => {
+    const context = await browser.newContext({ permissions: ["camera"] });
+    const page = await context.newPage();
+    await page.goto(`${web.resolvedUrls!.local[0]!}?check=camera`);
+    await page.getByRole("button", { name: "Start camera" }).click();
+    await expect.poll(() => page.getByText(/Camera is live/).isVisible(), { timeout: 20_000 }).toBe(true);
+    await context.close();
+  }, 60_000);
 
   it("tells the tester to use HTTPS when the page is opened on a plain-HTTP LAN address", async () => {
     // A non-loopback host over http is not a secure context, so the camera API is absent.

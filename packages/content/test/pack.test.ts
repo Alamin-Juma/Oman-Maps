@@ -54,6 +54,30 @@ describe("validatePack catches cross-reference errors", () => {
     expect(msgs).toMatch(/must end in an explanation/);
     expect(msgs).toMatch(/unknown feature "atlantis"/);
   });
+
+  const explainOf = (pack: ContentPack) => pack.missions.flatMap((m) => m.tasks).find((t) => t.type === "explain")!;
+
+  it("rejects a repeated criterion id inside one task (findings register CR30)", () => {
+    const broken = structuredClone(raw) as ContentPack;
+    const t = explainOf(broken);
+    if (t.type !== "explain") throw new Error("unreachable");
+    t.rubric.criteria.push({ ...t.rubric.criteria[0]! });
+    expect(validatePack(broken).issues.map((i) => i.message)).toContain(`duplicate criterion id "${t.rubric.criteria[0]!.id}"`);
+  });
+
+  it("rejects a repeated hint id inside one task, but allows it across tasks (findings register CR31)", () => {
+    const broken = structuredClone(raw) as ContentPack;
+    const t = explainOf(broken);
+    if (t.type !== "explain") throw new Error("unreachable");
+    t.hints.push({ ...t.hints[0]!, criterionId: t.rubric.criteria.at(-1)!.id });
+    expect(validatePack(broken).issues.map((i) => i.message)).toContain(`duplicate hint id "${t.hints[0]!.id}"`);
+  });
+
+  it("requires an upper-case two-letter country code (findings register CR32)", () => {
+    expect(validatePack({ ...structuredClone(raw), country: "ke" }).ok).toBe(false);
+    expect(validatePack({ ...structuredClone(raw), country: "K1" }).ok).toBe(false);
+    expect(validatePack({ ...structuredClone(raw), country: "KE" }).ok).toBe(true);
+  });
 });
 
 describe("offline explanation checker", () => {

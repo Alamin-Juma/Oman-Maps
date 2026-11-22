@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "title": { "en": "Kenya Explorer", "sw": "Mvumbuzi wa Kenya" },
   "country": "KE",
+  "countryIsoNumeric": "404",
   "grade": 5,
   "subject": "Social Studies",
   "strand": {

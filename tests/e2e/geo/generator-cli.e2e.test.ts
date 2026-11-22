@@ -147,9 +147,16 @@ describe("E2E: geodata generator command", () => {
 
   const PARAMS = JSON.stringify({ heightSize: 65, textureSize: 64, regionalTextureSize: 64, patchHeightSize: 65, patchTextureSize: 1024, regionalMetresPerPixel: 371 });
   const dir = () => join(work, "assets", "zz.e2e.island", "3d");
+  /**
+   * The first build, run once by whichever test needs it first. Later tests (cache, verify, Unity)
+   * call it too, so each can be run on its own (findings register CR55); the dropped-connection
+   * assertions stay with this first build's result.
+   */
+  let first: ReturnType<typeof run> | undefined;
+  const firstBuild = () => (first ??= run("build", "--no-landcover", "--params", PARAMS));
 
   it("generates verified assets for a new pack, surviving a dropped connection", async () => {
-    const result = await run("build", "--no-landcover", "--params", PARAMS);
+    const result = await firstBuild();
     expect(result.stderr).toBe("");
     expect(result.status, result.stdout).toBe(0);
 
@@ -175,6 +182,7 @@ describe("E2E: geodata generator command", () => {
   }, 180_000);
 
   it("runs a second time from the cache, without touching the network, and writes the same files", async () => {
+    expect((await firstBuild()).status).toBe(0);
     const before = readFileSync(join(dir(), "manifest.json"), "utf8");
     const seen = { ...requests };
     const result = await run("build", "--no-landcover", "--params", PARAMS);
@@ -185,6 +193,7 @@ describe("E2E: geodata generator command", () => {
   }, 180_000);
 
   it("verifies sound assets, and fails loudly when a file was changed", async () => {
+    expect((await firstBuild()).status).toBe(0);
     const ok = await run("verify");
     expect(ok.status, ok.stdout + ok.stderr).toBe(0);
     expect(ok.stdout).toMatch(/: ok/);
@@ -200,6 +209,7 @@ describe("E2E: geodata generator command", () => {
   }, 120_000);
 
   it("exports 16-bit RAW heightmaps for Unity from the generated assets", async () => {
+    expect((await firstBuild()).status).toBe(0);
     const to = join(work, "unity");
     const result = await run("unity", "--to", to);
     expect(result.status, result.stdout + result.stderr).toBe(0);

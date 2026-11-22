@@ -4,7 +4,7 @@
  * (ADR-0004). Pure.
  */
 import type { AssetSource, ContentPack } from "@dunialab/content";
-import { squareAround, tilesForBounds, zoomForTileCount, type Bounds, type LonLat } from "./geo-math.js";
+import { squareAround, tileCountForBounds, tilesForBounds, zoomForTileCount, type Bounds, type LonLat } from "./geo-math.js";
 import type { GeoGrid } from "./grid.js";
 import { gridFromFunction } from "./grid.js";
 import { KM_PER_DEG_LAT } from "./geo-math.js";
@@ -12,8 +12,13 @@ import { KM_PER_DEG_LAT } from "./geo-math.js";
 export interface GeoParams {
   /** The country overview is the deepest zoom that needs at most this many tiles (keeps the first 3D open small). */
   maxOverviewTiles: number;
-  /** Regional tiles are this many zoom levels deeper than the overview. */
+  /** Regional tiles are this many zoom levels deeper than the overview (an integer, at least 1). */
   regionalZoomOffset: number;
+  /**
+   * Most regional tiles one pack may have: a guard on the generator's memory and run time against a
+   * mistyped `--params`, not a delivery budget (those are DELIVERY_BUDGET, checked after generation).
+   */
+  maxRegionalTiles: number;
   /** Height image size per tile (2^n + 1, so neighbours share an edge and meshes can be built adaptively). */
   heightSize: number;
   /** Colour and relief-light image size per overview tile. */
@@ -44,6 +49,7 @@ export interface GeoParams {
 export const DEFAULT_PARAMS: GeoParams = {
   maxOverviewTiles: 9,
   regionalZoomOffset: 2,
+  maxRegionalTiles: 1024,
   heightSize: 257,
   textureSize: 512,
   regionalTextureSize: 1024,
@@ -78,10 +84,33 @@ export interface GenerationPlan {
   lakes: { featureId: string; anchor: LonLat }[];
 }
 
+/**
+ * Refuse parameters that would produce broken assets (findings register CR64-CR66). `--params` comes
+ * from the command line, so this runs in `buildPlan`, BEFORE generatePack deletes the old assets.
+ */
+export function checkParams(params: GeoParams): void {
+  const isInt = (v: unknown, min: number) => typeof v === "number" && Number.isInteger(v) && v >= min;
+  const twoPowerPlusOne = (v: unknown) => isInt(v, 3) && Number.isInteger(Math.log2((v as number) - 1));
+  if (!isInt(params.maxOverviewTiles, 1)) throw new Error(`maxOverviewTiles must be a whole number of at least 1, got ${String(params.maxOverviewTiles)}`);
+  // 0 would put overview and regional tiles at the same paths with different contents (CR65).
+  if (!isInt(params.regionalZoomOffset, 1)) throw new Error(`regionalZoomOffset must be a whole number of at least 1, got ${String(params.regionalZoomOffset)}`);
+  if (!isInt(params.maxRegionalTiles, 1)) throw new Error(`maxRegionalTiles must be a whole number of at least 1, got ${String(params.maxRegionalTiles)}`);
+  for (const key of ["heightSize", "patchHeightSize"] as const) {
+    // Heights are sampled at size - 1 intervals: 1 divides by zero (CR66).
+    if (!twoPowerPlusOne(params[key])) throw new Error(`${key} must be 2^n + 1 with n >= 1 (3, 5, 9, ..., 257), got ${String(params[key])}`);
+  }
+}
+
 export function buildPlan(pack: ContentPack, params: GeoParams = DEFAULT_PARAMS): GenerationPlan {
+  checkParams(params);
   const bounds = pack.printTarget.bounds as Bounds;
   const overviewZoom = zoomForTileCount(bounds, params.maxOverviewTiles);
   const regionalZoom = overviewZoom + params.regionalZoomOffset;
+  // Count before building the list: a mistyped offset would otherwise allocate millions (CR64).
+  const regionalCount = tileCountForBounds(bounds, regionalZoom);
+  if (regionalCount > params.maxRegionalTiles) {
+    throw new Error(`${regionalCount} regional tiles at zoom ${regionalZoom} is more than maxRegionalTiles (${params.maxRegionalTiles}); lower regionalZoomOffset`);
+  }
   const byId = [...pack.features].sort((a, b) => a.id.localeCompare(b.id, "en"));
   return {
     bounds,

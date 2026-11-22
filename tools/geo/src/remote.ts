@@ -6,6 +6,7 @@
  * gitignored), so a second run is offline and fast. Files are Cloud-Optimised GeoTIFFs read
  * with HTTP range requests: we fetch the overview level or window we need, not whole files.
  */
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fromArrayBuffer, fromUrl } from "geotiff";
@@ -37,7 +38,11 @@ export function installRetryingFetch(stats: NetworkStats, maxRetries = 5): () =>
       const started = performance.now();
       try {
         const response = await original(input, init);
-        if (response.status >= 500 && attempt < maxRetries) throw new Error(`HTTP ${response.status}`);
+        if (response.status >= 500 && attempt < maxRetries) {
+          // Release the failed answer's body first: an unread body holds the connection (CR74).
+          await response.body?.cancel().catch(() => {});
+          throw new Error(`HTTP ${response.status}`);
+        }
         const body = init?.method === "HEAD" ? null : await response.arrayBuffer();
         stats.requests++;
         stats.bytes += body?.byteLength ?? 0;
@@ -88,9 +93,21 @@ interface CogRequest {
   wholeFileMaxBytes?: number;
 }
 
-async function readCog<T extends Float32Array | Uint8Array>(r: CogRequest): Promise<Raster<T> | null> {
+/**
+ * Nothing could be read, and that must NOT be remembered: an access refusal (403) may be a mirror's
+ * misconfigured policy, so a later run has to ask again (findings register CR70).
+ */
+export const REFUSED = Symbol("refused");
+
+async function readCog<T extends Float32Array | Uint8Array>(r: CogRequest, log?: (m: string) => void): Promise<Raster<T> | null | typeof REFUSED> {
   const head = await fetch(r.url, { method: "HEAD" });
-  if (head.status === 404 || head.status === 403) return null; // no file here: open sea
+  if (head.status === 404) return null; // confirmed: no file here, open sea
+  if (head.status === 403) {
+    // Some public buckets also answer 403 for a missing file, so this run treats it as empty; but it
+    // is not cached, and it is said out loud.
+    log?.(`  warning: access refused (403) for ${r.url}; treated as empty for this run only, not cached`);
+    return REFUSED;
+  }
   if (!head.ok) throw new Error(`HEAD ${r.url}: HTTP ${head.status}`);
 
   // A small file is fetched whole in one request: much faster than the many small range
@@ -132,12 +149,14 @@ async function readCog<T extends Float32Array | Uint8Array>(r: CogRequest): Prom
  * small index remembers, per request, which cache entry answered it. A warm run then needs
  * no network at all, not even the HEAD request.
  */
-function memo<T extends Float32Array | Uint8Array>(cacheDir: string) {
+function memo<T extends Float32Array | Uint8Array>(rootDir: string, source: string) {
+  const cacheDir = sourceScopedDir(rootDir, source);
   const indexFile = join(cacheDir, "index.json");
   const index: Record<string, { file: string; width: number; height: number; box: [number, number, number, number] } | null> = existsSync(indexFile)
     ? JSON.parse(readFileSync(indexFile, "utf8"))
     : {};
-  return async (id: string, bytesPerSample: 1 | 4, load: () => Promise<Raster<T> | null>, cacheFile: string): Promise<Raster<T> | null> => {
+  return async (id: string, bytesPerSample: 1 | 4, load: () => Promise<Raster<T> | null | typeof REFUSED>, name: string): Promise<Raster<T> | null> => {
+    const cacheFile = join(cacheDir, name);
     const hit = index[id];
     if (hit === null) return null;
     if (hit && existsSync(hit.file)) {
@@ -146,6 +165,7 @@ function memo<T extends Float32Array | Uint8Array>(cacheDir: string) {
       return { data, width: hit.width, height: hit.height, box: hit.box };
     }
     const raster = await load();
+    if (raster === REFUSED) return null; // empty for this run, never remembered
     if (raster) {
       const file = `${cacheFile}_${id.replace(/[^a-zA-Z0-9]+/g, "_").slice(-80)}.bin`;
       writeFileSync(file, Buffer.from(raster.data.buffer, raster.data.byteOffset, raster.data.byteLength));
@@ -156,6 +176,22 @@ function memo<T extends Float32Array | Uint8Array>(cacheDir: string) {
     writeFileSync(indexFile, JSON.stringify(index));
     return raster;
   };
+}
+
+/**
+ * The cache folder for one data source (findings register CR71). A cache filled from one mirror
+ * must never answer for another: the first source to use a folder is recorded in it, and any other
+ * source gets its own sub-folder, named by a hash of its address. Switching back reuses the first.
+ */
+export function sourceScopedDir(rootDir: string, source: string): string {
+  mkdirSync(rootDir, { recursive: true });
+  const stamp = join(rootDir, "source.txt");
+  if (!existsSync(stamp)) writeFileSync(stamp, source);
+  if (readFileSync(stamp, "utf8") === source) return rootDir;
+  const dir = join(rootDir, "by-source", createHash("sha256").update(source).digest("hex").slice(0, 16));
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "source.txt"), source);
+  return dir;
 }
 
 /** Copy a raster into the part of a grid it covers. */
@@ -243,12 +279,13 @@ export function copernicusTileName(lon: number, lat: number, arcsec: 10 | 30): s
 }
 
 export function copernicusDem(options: RemoteOptions & { baseUrl30?: string; baseUrl90?: string }): ElevationSource {
-  const dir = join(options.cacheDir, "copernicus");
-  mkdirSync(dir, { recursive: true });
-  const cached = memo<Float32Array>(dir);
+  const url90 = options.baseUrl90 ?? "https://copernicus-dem-90m.s3.amazonaws.com";
+  const url30 = options.baseUrl30 ?? "https://copernicus-dem-30m.s3.amazonaws.com";
+  const cached = memo<Float32Array>(join(options.cacheDir, "copernicus"), `${url30} ${url90}`);
   const usedProducts = new Set<string>();
-  const base = (c: DemChoice) =>
-    c.product === "GLO-90" ? (options.baseUrl90 ?? "https://copernicus-dem-90m.s3.amazonaws.com") : (options.baseUrl30 ?? "https://copernicus-dem-30m.s3.amazonaws.com");
+  const base = (c: DemChoice) => (c.product === "GLO-90" ? url90 : url30);
+  /** GLO-90 at full detail: the stand-in where the public GLO-30 set leaves out a land tile. */
+  const FALLBACK_90 = DEM_CHOICES.find((c) => c.product === "GLO-90" && c.level === 0)!;
 
   return {
     used: () =>
@@ -264,7 +301,6 @@ export function copernicusDem(options: RemoteOptions & { baseUrl30?: string; bas
       ),
     async read(bounds, metresPerPixel) {
       const choice = chooseDem(metresPerPixel);
-      usedProducts.add(choice.product);
       const grid = snappedGrid(bounds, 2 ** choice.level / choice.pixelsPerDegree);
       const tiles: { lon: number; lat: number }[] = [];
       for (let lat = Math.floor(bounds[0][1]); lat < bounds[1][1]; lat++) for (let lon = Math.floor(bounds[0][0]); lon < bounds[1][0]; lon++) tiles.push({ lon, lat });
@@ -274,13 +310,29 @@ export function copernicusDem(options: RemoteOptions & { baseUrl30?: string; bas
         // Overview levels are small: read them whole. Full detail: only the window we need.
         const want: Bounds | null = choice.level === 0 && choice.product === "GLO-30" ? bounds : null;
         const id = `${name}|L${choice.level}|${want ? want.flat().map((v) => v.toFixed(4)).join(",") : "all"}`;
-        const raster = await cached(
+        let raster = await cached(
           id,
           4,
-          () => readCog<Float32Array>({ url: `${base(choice)}/${name}/${name}.tif`, level: choice.level, want, snap: 512, bytesPerSample: 4, wholeFileMaxBytes: 16_000_000 }),
-          join(dir, name),
+          () => readCog<Float32Array>({ url: `${base(choice)}/${name}/${name}.tif`, level: choice.level, want, snap: 512, bytesPerSample: 4, wholeFileMaxBytes: 16_000_000 }, options.log),
+          name,
         );
-        if (raster) blit(grid, raster, true);
+        let product = choice.product;
+        if (!raster && choice.product === "GLO-30") {
+          // Copernicus documents that the public GLO-30 set omits some land tiles that GLO-90 has.
+          // Without this, that land would be drawn as sea (findings register CR72).
+          const name90 = copernicusTileName(lon, lat, FALLBACK_90.arcsec);
+          raster = await cached(
+            `${name90}|L0|all`,
+            4,
+            () => readCog<Float32Array>({ url: `${base(FALLBACK_90)}/${name90}/${name90}.tif`, level: 0, want: null, snap: 512, bytesPerSample: 4, wholeFileMaxBytes: 16_000_000 }, options.log),
+            name90,
+          );
+          product = FALLBACK_90.product;
+        }
+        if (raster) {
+          usedProducts.add(product);
+          blit(grid, raster, true);
+        }
         if (++done % 10 === 0 || done === tiles.length) options.log?.(`  elevation ${choice.product} level ${choice.level}: ${done}/${tiles.length} files`);
       });
       return grid;
@@ -297,10 +349,8 @@ export function worldCoverTileName(lon: number, lat: number): string {
 }
 
 export function worldCover(options: RemoteOptions): LandCoverSource {
-  const dir = join(options.cacheDir, "worldcover");
-  mkdirSync(dir, { recursive: true });
-  const cached = memo<Uint8Array>(dir);
   const base = options.baseUrl ?? "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map";
+  const cached = memo<Uint8Array>(join(options.cacheDir, "worldcover"), base);
   let wasUsed = false;
   return {
     used: () =>
@@ -331,7 +381,7 @@ export function worldCover(options: RemoteOptions): LandCoverSource {
         // Coarse levels are small: read them whole, so every tile that needs the file shares one download.
         const want: Bounds | null = level >= 3 ? null : bounds;
         const id = `${name}|L${level}|${want ? want.flat().map((v) => v.toFixed(4)).join(",") : "all"}`;
-        const raster = await cached(id, 1, () => readCog<Uint8Array>({ url: `${base}/${name}.tif`, level, want, snap: 1024, bytesPerSample: 1 }), join(dir, name));
+        const raster = await cached(id, 1, () => readCog<Uint8Array>({ url: `${base}/${name}.tif`, level, want, snap: 1024, bytesPerSample: 1 }, options.log), name);
         if (raster) blit(grid, raster, false);
         options.log?.(`  land cover level ${level}: ${++done}/${tiles.length} files`);
       });
@@ -373,8 +423,34 @@ export function linesNearPath(lines: readonly LonLat[][], roughPath: readonly Lo
   });
 }
 
+/**
+ * Parse and check guide lines from an untrusted file (findings register CR73): a feature list, and
+ * every position a pair of finite numbers. Throws with the reason; never returns partial data.
+ */
+export function parseGuideLines(text: string): LonLat[][] {
+  let geojson: unknown;
+  try {
+    geojson = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`Natural Earth rivers: not valid JSON (${(e as Error).message})`);
+  }
+  const features = (geojson as { features?: unknown }).features;
+  if (!Array.isArray(features)) throw new Error("Natural Earth rivers: no feature list");
+  const lines = linesOf(geojson as GeoJsonLines);
+  for (const line of lines) {
+    if (!Array.isArray(line)) throw new Error("Natural Earth rivers: a line is not a list of positions");
+    for (const p of line) {
+      if (!Array.isArray(p) || p.length < 2 || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) {
+        throw new Error(`Natural Earth rivers: a line has an invalid position (${JSON.stringify(p)})`);
+      }
+    }
+  }
+  return lines;
+}
+
 export function naturalEarthRivers(options: RemoteOptions & { file?: string }): GuideRiverSource {
-  const dir = join(options.cacheDir, "natural-earth");
+  const url = options.baseUrl ?? NATURAL_EARTH_RIVERS_URL;
+  const dir = options.file ? "" : sourceScopedDir(join(options.cacheDir, "natural-earth"), url);
   const file = options.file ?? join(dir, "rivers.geojson");
   let lines: LonLat[][] | undefined;
   let wasUsed = false;
@@ -394,14 +470,24 @@ export function naturalEarthRivers(options: RemoteOptions & { file?: string }): 
         : [],
     async linesNear(roughPath, km) {
       if (!lines) {
-        if (!existsSync(file)) {
-          options.log?.("  downloading Natural Earth river lines");
-          mkdirSync(dir, { recursive: true });
-          const response = await fetch(options.baseUrl ?? NATURAL_EARTH_RIVERS_URL);
-          if (!response.ok) throw new Error(`Natural Earth rivers: HTTP ${response.status}`);
-          writeFileSync(file, Buffer.from(await response.arrayBuffer()));
+        let cachedLines: LonLat[][] | undefined;
+        if (existsSync(file)) {
+          try {
+            cachedLines = parseGuideLines(readFileSync(file, "utf8"));
+          } catch (e) {
+            if (options.file) throw e; // a file the operator named is reported, not replaced
+            options.log?.(`  the cached river lines are damaged (${(e as Error).message}); downloading again`);
+          }
         }
-        lines = linesOf(JSON.parse(readFileSync(file, "utf8")) as GeoJsonLines);
+        if (!cachedLines) {
+          options.log?.("  downloading Natural Earth river lines");
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`Natural Earth rivers: HTTP ${response.status}`);
+          const text = Buffer.from(await response.arrayBuffer()).toString("utf8");
+          cachedLines = parseGuideLines(text); // checked BEFORE it is cached
+          writeFileSync(file, text);
+        }
+        lines = cachedLines;
       }
       const found = linesNearPath(lines, roughPath, km);
       if (found.length) wasUsed = true;

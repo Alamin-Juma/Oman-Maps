@@ -29,6 +29,14 @@ export function MissionPlayer({ pack, missionId, profileId, locale, checker, onE
   const [answer, setAnswer] = useState("");
   const [busy, setBusy] = useState(false);
   const emitted = useRef(0);
+  /** False once this mission's scope has ended (unmounted: mission or child changed). */
+  const live = useRef(true);
+  useEffect(() => {
+    live.current = true;
+    return () => {
+      live.current = false;
+    };
+  }, []);
   const state = session.state();
   const task = state.task;
 
@@ -67,13 +75,16 @@ export function MissionPlayer({ pack, missionId, profileId, locale, checker, onE
     setBusy(true);
     try {
       const { feedback, hint } = await session.answerExplain(answer, locale, checker);
+      // The child or mission changed while this was being checked: the result belongs to nobody on
+      // screen now. Showing or saving it could credit the wrong child (findings register CR24).
+      if (!live.current) return;
       if (feedback.outcome === "accepted") setBanner({ tone: "good", text: locale === "sw" ? "✓ Maelezo mazuri!" : "✓ Great explanation!" });
       else if (feedback.outcome === "hint" && hint) setBanner({ tone: "try", text: `💡 ${t(hint.text, locale)}` });
       else setBanner({ tone: "info", text: locale === "sw" ? "Tujaribu swali hili." : "Let's try this question instead." });
       setAnswer("");
       flush();
     } finally {
-      setBusy(false);
+      if (live.current) setBusy(false);
     }
   };
 

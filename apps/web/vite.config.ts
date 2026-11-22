@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin, type ResolvedConfig } from "vite";
 import { copyFile, mkdir, readFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +19,8 @@ const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 /** The content packs to build with. DUNIALAB_PACKS_DIR overrides it, for tests only. */
 const PACKS_DIR = process.env.DUNIALAB_PACKS_DIR ?? join(repoRoot, "packages", "content", "packs");
 const VIRTUAL_PACKS = "virtual:dunialab-packs";
+/** Generated 3D assets. DUNIALAB_ASSETS_DIR overrides it, for tests only. */
+const ASSETS_DIR = process.env.DUNIALAB_ASSETS_DIR ?? join(repoRoot, "content-assets");
 
 /**
  * Every content pack, validated once by the build, never by the browser.
@@ -40,15 +42,31 @@ async function loadValidatedPacks(): Promise<ContentPack[]> {
   return packs;
 }
 
+/** True when the build explicitly allows draft packs (`VITE_ALLOW_DRAFT_CONTENT=true`, rehearsals and tests). */
+function draftOptIn(config: ResolvedConfig): boolean {
+  return loadEnv(config.mode, config.envDir || config.root, "VITE_").VITE_ALLOW_DRAFT_CONTENT === "true" || process.env.VITE_ALLOW_DRAFT_CONTENT === "true";
+}
+
+/**
+ * The app's pack selection, decided by the build (findings register S1, CR2). Only the packs the
+ * app offers are written into the bundle; a withheld draft ships as its id alone, so the app can say
+ * truthfully that lessons are waiting for approval without carrying their content.
+ */
 function validatedPacks(): Plugin {
   const resolved = `\0${VIRTUAL_PACKS}`; // the \0 prefix marks a virtual module for Vite
+  let production = false;
+  let allowDraft = false;
   return {
     name: "dunialab-validated-packs",
+    configResolved(config) {
+      production = config.isProduction;
+      allowDraft = draftOptIn(config);
+    },
     resolveId: (id) => (id === VIRTUAL_PACKS ? resolved : undefined),
     async load(id) {
       if (id !== resolved) return undefined;
       for (const file of await readdir(PACKS_DIR)) if (file.endsWith(".json")) this.addWatchFile(join(PACKS_DIR, file));
-      return `export default ${JSON.stringify(await loadValidatedPacks())};`;
+      return `export default ${JSON.stringify(selectPacks(await loadValidatedPacks(), { production, allowDraft }))};`;
     },
   };
 }
@@ -67,13 +85,22 @@ function contentAssets(): Plugin {
     return new Set(selectPacks(await loadValidatedPacks(), { production, allowDraft }).packs.map((p) => p.id));
   }
   async function files() {
-    const root = join(repoRoot, "content-assets");
+    const root = ASSETS_DIR;
     const offered = await offeredPackIds();
     const allowed = new Map<string, string>();
     for (const dir of await readdir(root, { withFileTypes: true })) {
       if (!dir.isDirectory() || !offered.has(dir.name)) continue;
       const source = join(root, dir.name, "3d");
-      const manifest = Assets3dManifest.parse(JSON.parse(await readFile(join(source, "manifest.json"), "utf8")));
+      let raw: string;
+      try {
+        raw = await readFile(join(source, "manifest.json"), "utf8");
+      } catch {
+        // One incomplete pack folder must not stop the app or the other packs. The viewer already
+        // treats a missing manifest as "3D unavailable" and keeps the 2D map (findings register CR40).
+        console.warn(`[dunialab] ${dir.name}: no 3d/manifest.json, so this pack ships without 3D. Run "npm run geo:build -- --pack ${dir.name}".`);
+        continue;
+      }
+      const manifest = Assets3dManifest.parse(JSON.parse(raw));
       for (const path of ["manifest.json", ...manifest.files.filter((f) => f.role !== "preview").map((f) => f.path)]) {
         allowed.set(`${dir.name}/3d/${path}`, join(source, path));
       }
@@ -86,7 +113,7 @@ function contentAssets(): Plugin {
       outDir = resolve(config.root, config.build.outDir);
       base = config.base;
       production = config.isProduction;
-      allowDraft = loadEnv(config.mode, config.envDir || config.root, "VITE_").VITE_ALLOW_DRAFT_CONTENT === "true" || process.env.VITE_ALLOW_DRAFT_CONTENT === "true";
+      allowDraft = draftOptIn(config);
     },
     async configureServer(server) {
       const allowed = await files();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cameraFailure, cameraSupport, isLoopback, shouldRetryWithAnyCamera } from "../src/lib/camera.js";
+import { cameraFailure, cameraSupport, isLoopback, shouldRetryWithAnyCamera, keepIfStillWanted } from "../src/lib/camera.js";
 
 const env = (over: Partial<Parameters<typeof cameraSupport>[0]> = {}) =>
   cameraSupport({ secureContext: true, hasCameraApi: true, hostname: "localhost", ...over });
@@ -69,5 +69,24 @@ describe("shouldRetryWithAnyCamera", () => {
     expect(shouldRetryWithAnyCamera({ name: "OverconstrainedError" })).toBe(true);
     expect(shouldRetryWithAnyCamera({ name: "NotAllowedError" })).toBe(false);
     expect(shouldRetryWithAnyCamera(null)).toBe(false);
+  });
+});
+
+describe("keepIfStillWanted (findings register CR12)", () => {
+  const stream = () => {
+    const stopped: number[] = [];
+    return { stopped, getTracks: () => [0, 1].map((i) => ({ stop: () => stopped.push(i) })) };
+  };
+
+  it("stops every track of a stream nobody wants any more", () => {
+    const s = stream();
+    expect(keepIfStillWanted(s, false)).toBeNull();
+    expect(s.stopped).toEqual([0, 1]);
+  });
+
+  it("positive control: keeps a wanted stream running", () => {
+    const s = stream();
+    expect(keepIfStillWanted(s, true)).toBe(s);
+    expect(s.stopped).toEqual([]);
   });
 });

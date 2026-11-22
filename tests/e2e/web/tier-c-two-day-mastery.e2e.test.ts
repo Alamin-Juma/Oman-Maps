@@ -61,9 +61,14 @@ describe.skipIf(!reachable)("E2E (browser): Tier C two-day mastery, then parent 
     const url = web.resolvedUrls!.local[0]!;
     const now = Date.now();
 
-    // Day 1 (yesterday)
+    // Day 1 (yesterday). The app loads, then the network is CUT for both days of play: a mission must
+    // never need the network (product rule; findings register CR50, part of T2).
     await page.clock.setFixedTime(new Date(now - 25 * HOUR));
     await page.goto(url);
+    const sentWhileOffline: string[] = [];
+    const offlineListener = (r: { url(): string }) => sentWhileOffline.push(r.url());
+    await page.context().setOffline(true);
+    page.on("request", offlineListener);
     await playBrokenMap(page);
     const skill = page.locator(".skills li", { hasText: "Knows the parts of a map" });
     await expect.poll(() => skill.textContent()).toContain("Practising");
@@ -72,6 +77,9 @@ describe.skipIf(!reachable)("E2E (browser): Tier C two-day mastery, then parent 
     await page.clock.setFixedTime(new Date(now - 1 * HOUR));
     await playBrokenMap(page);
     await expect.poll(() => skill.textContent()).toContain("Mastered");
+    page.off("request", offlineListener);
+    expect(sentWhileOffline.filter((u) => !u.startsWith("data:"))).toEqual([]); // nothing even tried the network
+    await page.context().setOffline(false); // reconnect before the parent signs up and syncs
 
     // Parent signs up, consents, adds the child, and syncs the offline events.
     await page.getByPlaceholder("email").fill(`web-e2e-${now}@example.com`);

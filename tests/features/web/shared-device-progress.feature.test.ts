@@ -70,18 +70,56 @@ feature("Siblings sharing one phone keep their own progress", () => {
     });
   });
 
-  scenario("after sign-out, a new family cannot adopt the previous family's guest play", async ({ given, when, then }) => {
-    const q = new EventQueue(memory());
-    await given("guest events from the previous session's guest id remain on the device", () => q.add(PACK, [play("guest-old")]));
-    let adopted = -1;
-    await when("a new family signs in and links the phone using the new session's guest id", () => {
-      adopted = q.adoptGuestEvents("guest-new", "wanjiru");
+  scenario("after sign-out, a new family cannot adopt the previous family's guest play (findings register CR48)", async ({ given, when, then, and }) => {
+    // The real guest-id lifecycle on one storage, not literal ids.
+    const storage = memory();
+    const q = new EventQueue(storage);
+    let oldGuest = "";
+    let newGuest = "";
+    await given("the previous family's child played as a guest on this phone", () => {
+      oldGuest = readGuestId(storage);
+      q.add(PACK, [play(oldGuest)]);
     });
-    await then("nothing is adopted", () => {
-      expect(adopted).toBe(0);
-      expect(q.unsynced(PACK, "wanjiru")).toEqual([]);
+    await when("the parent signs out and the app reopens for the next family, whose child also plays", () => {
+      rotateGuestId(storage);
+      newGuest = readGuestId(storage); // what a reload reads back
+      q.add(PACK, [play(newGuest)]);
+    });
+    await then("the next family's guest id is new, and linking adopts only their own play", () => {
+      expect(newGuest).not.toBe(oldGuest);
+      expect(q.adoptGuestEvents(newGuest, "wanjiru")).toBe(1);
+      expect(q.unsynced(PACK, "wanjiru").map((e) => e.profileId)).toEqual(["wanjiru"]);
+    });
+    await and("the previous family's play keeps its owner", () => {
+      expect(q.unsynced(PACK, oldGuest)).toHaveLength(1);
     });
   });
+
+  scenario("when the new guest id cannot be saved, a reload still never brings back the old one (findings register CR8)", async ({ given, when, then }) => {
+    // A full phone: writes fail, but reads and removals work (the usual quota case).
+    const m = new Map<string, string>();
+    let full = false;
+    const storage: KeyValueStorage = {
+      getItem: (k) => m.get(k) ?? null,
+      setItem: (k, v) => {
+        if (full) throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+        m.set(k, v);
+      },
+      removeItem: (k) => void m.delete(k),
+    };
+    let oldGuest = "";
+    let afterReload = "";
+    await given("the previous family's guest id was saved, and then the phone filled up", () => {
+      oldGuest = readGuestId(storage);
+      full = true;
+    });
+    await when("the parent signs out and the page is reloaded", () => {
+      rotateGuestId(storage);
+      afterReload = readGuestId(storage);
+    });
+    await then("the guest id after the reload is not the previous family's", () => expect(afterReload).not.toBe(oldGuest));
+  });
+
   scenario("sign-out still issues a new guest id when the phone's storage is full or blocked", async ({ given, when, then }) => {
     const storage = blocked();
     let first = "";

@@ -19,6 +19,7 @@ First product: **Kenya Explorer**, Kenya Grade 5 Social Studies, Strand 1 (Eleme
 npm install && npm run build
 npm test                 # feature + unit tests
 npm run db:up            # Postgres (Docker)
+npx playwright install chromium   # first time only, for the browser E2E
 npm run test:e2e         # API + Postgres + browser end-to-end
 npm run dev:api          # http://localhost:3000
 npm run dev:web          # http://localhost:5173  (Tier C 2D map)

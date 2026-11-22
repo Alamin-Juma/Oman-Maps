@@ -7,9 +7,8 @@ earlier project these practices come from was found by someone clicking after a 
 - A guide is written **after code review**, from what shipped, not from the brief. By then you know
   which shortcuts were taken and which findings were declined; those are where a tester should look.
 - One guide per feature: `NN-feature.md`, copied from [`_template.md`](_template.md).
-- One standing walkthrough, `00-walkthrough.md`: one child from guest play to the parent's report and
-  the 3D view. Run it before every release and every demo. *(To be written next, from the running app;
-  findings register E5.)*
+- One standing walkthrough, [`00-walkthrough.md`](00-walkthrough.md): one child from guest play to the
+  parent's report and the 3D view. Run it before every release and every demo.
 - The person testing starts the app themselves, and stops it afterwards.
 
 ## The kinds of "nothing on screen", and how to tell them apart

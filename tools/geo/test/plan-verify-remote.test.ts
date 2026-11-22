@@ -1,4 +1,5 @@
-import { mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import sharp from "sharp";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -13,8 +14,12 @@ import {
   lfsBytes,
   readLfsPointer,
   syntheticElevation,
+  tileBounds,
+  tileCountForBounds,
+  tilesForBounds,
   verifyAssets,
 } from "../src/index.js";
+import type { Bounds } from "../src/geo-math.js";
 import { chooseDem, copernicusTileName, linesNearPath, linesOf, worldCoverTileName } from "../src/remote.js";
 
 const kenya = JSON.parse(readFileSync(new URL("../../../packages/content/packs/kenya-explorer.json", import.meta.url), "utf8")) as ContentPack;
@@ -36,6 +41,28 @@ const pack: ContentPack = {
 
 describe("buildPlan", () => {
   const plan = buildPlan(pack);
+
+  it("refuses parameters that would break the assets, before anything is written (CR64, CR65, CR66)", () => {
+    const bad: Array<[Partial<typeof DEFAULT_PARAMS>, RegExp]> = [
+      [{ regionalZoomOffset: 0 }, /regionalZoomOffset/],
+      [{ regionalZoomOffset: 1.5 }, /regionalZoomOffset/],
+      [{ heightSize: 1 }, /heightSize/],
+      [{ heightSize: 100 }, /heightSize/],
+      [{ patchHeightSize: 2 }, /patchHeightSize/],
+      [{ maxOverviewTiles: 0 }, /maxOverviewTiles/],
+      [{ regionalZoomOffset: 20 }, /regional tiles/],
+    ];
+    for (const [params, message] of bad) expect(() => buildPlan(pack, { ...DEFAULT_PARAMS, ...params }), JSON.stringify(params)).toThrow(message);
+  });
+
+  it("positive control: the defaults and other 2^n + 1 sizes are accepted", () => {
+    expect(() => buildPlan(pack, { ...DEFAULT_PARAMS, heightSize: 65, patchHeightSize: 129, regionalZoomOffset: 1 })).not.toThrow();
+  });
+
+  it("counts a level's tiles without building the list (CR64)", () => {
+    expect(tileCountForBounds(pack.printTarget.bounds as Bounds, 8)).toBe(tilesForBounds(pack.printTarget.bounds as Bounds, 8).length);
+    expect(tileCountForBounds(pack.printTarget.bounds as Bounds, 26)).toBeGreaterThan(1e9); // instant, no allocation
+  });
 
   it("derives zooms from the map size, not from a list of places", () => {
     expect(plan.overviewTiles.length).toBeLessThanOrEqual(DEFAULT_PARAMS.maxOverviewTiles);
@@ -73,6 +100,111 @@ describe("generate, read back and verify", () => {
     manifest = await generatePack({ pack, outDir: dir, sources: { elevation: syntheticElevation(hill) }, params: small });
   }, 120_000);
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  /** A private copy of the generated folder that a test may damage. */
+  const copy = () => {
+    const to = mkdtempSync(join(tmpdir(), "dunialab-geo-copy-"));
+    cpSync(dir, to, { recursive: true });
+    return to;
+  };
+  const readManifest = (at: string) => JSON.parse(readFileSync(join(at, "manifest.json"), "utf8"));
+  // Written exactly as the generator writes it, so its byte length only changes when the content does.
+  const writeManifest = (at: string, m: unknown) => writeFileSync(join(at, "manifest.json"), `${JSON.stringify(m, null, 1)}\n`);
+
+  it("reports a manifest that is not JSON at all, instead of crashing (CR77)", async () => {
+    const at = copy();
+    try {
+      writeFileSync(join(at, "manifest.json"), "{");
+      const problems = await verifyAssets(at);
+      expect(problems.join("\n")).toMatch(/manifest\.json: not valid JSON/);
+    } finally {
+      rmSync(at, { recursive: true, force: true });
+    }
+  });
+
+  it("checks that every tile the manifest names has its three files, listed and on disk (CR78)", async () => {
+    const at = copy();
+    try {
+      const m = readManifest(at);
+      const tile = m.overview.tiles[0];
+      const prefix = `tiles/${m.overview.zoom}/${tile.x}/${tile.y}/`;
+      m.files = m.files.filter((f: { path: string }) => !f.path.startsWith(prefix));
+      rmSync(join(at, prefix), { recursive: true, force: true });
+      writeManifest(at, m);
+      const problems = (await verifyAssets(at)).join("\n");
+      expect(problems).toMatch(new RegExp(`${prefix}h\\.webp: named by the manifest's overview tiles but not listed`));
+    } finally {
+      rmSync(at, { recursive: true, force: true });
+    }
+  });
+
+  it("compares every recorded delivery figure with what is measured (CR79)", async () => {
+    const at = copy();
+    try {
+      const m = readManifest(at);
+      // Same number of digits, so the manifest's own size (and the pack total) does not change.
+      const bump = (n: number) => Number(String(n).replace(/\d$/, (d) => String((Number(d) + 1) % 10)));
+      m.delivery.first3dOpenBytes = bump(m.delivery.first3dOpenBytes);
+      const firstPatch = Object.keys(m.delivery.hdFeaturePatchBytes)[0]!;
+      m.delivery.hdFeaturePatchBytes[firstPatch] = bump(m.delivery.hdFeaturePatchBytes[firstPatch]);
+      writeManifest(at, m);
+      const problems = (await verifyAssets(at)).join("\n");
+      expect(problems).toMatch(/first 3D open/);
+      expect(problems).toMatch(new RegExp(`patch "${firstPatch}"`));
+    } finally {
+      rmSync(at, { recursive: true, force: true });
+    }
+  });
+
+  it("names a patch the figures list but the manifest does not have, and one they leave out (CR79)", async () => {
+    const at = copy();
+    try {
+      const m = readManifest(at);
+      const [first] = Object.keys(m.delivery.hdFeaturePatchBytes);
+      const bytes = m.delivery.hdFeaturePatchBytes[first!];
+      delete m.delivery.hdFeaturePatchBytes[first!];
+      m.delivery.hdFeaturePatchBytes["zz-ghost"] = bytes; // same text length as most ids? not needed: the set is compared
+      writeManifest(at, m);
+      const problems = (await verifyAssets(at)).join("\n");
+      expect(problems).toMatch(/zz-ghost/);
+      expect(problems).toMatch(new RegExp(first!));
+    } finally {
+      rmSync(at, { recursive: true, force: true });
+    }
+  });
+
+  it("lets a failed tile read be retried once the file is back (CR75)", async () => {
+    const at = copy();
+    try {
+      const reader = createAssetReader(at);
+      const t = reader.manifest.regional.tiles.find(() => true)!;
+      const z = reader.manifest.regional.zoom;
+      const file = join(at, "tiles", String(z), String(t.x), String(t.y), "h.webp");
+      const saved = readFileSync(file);
+      unlinkSync(file);
+      const lon = ((t.x + 0.5) / 2 ** z) * 360 - 180;
+      const n = Math.PI - (2 * Math.PI * (t.y + 0.5)) / 2 ** z;
+      const lat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+      await expect(reader.heightAt([lon, lat])).rejects.toThrow();
+      writeFileSync(file, saved);
+      await expect(reader.heightAt([lon, lat])).resolves.toEqual(expect.any(Number));
+    } finally {
+      rmSync(at, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses a patch image whose size does not match the manifest, instead of giving NaN positions (CR76)", async () => {
+    const at = copy();
+    try {
+      const reader = createAssetReader(at);
+      const patch = reader.manifest.patches[0]!;
+      const tiny = await sharp({ create: { width: 1, height: 1, channels: 3, background: { r: 1, g: 134, b: 160 } } }).webp({ lossless: true }).toBuffer();
+      writeFileSync(join(at, patch.dir, "h.webp"), tiny);
+      await expect(createAssetReader(at).patchHeights(patch.featureId)).rejects.toThrow(/patch .* is 1 x 1/);
+    } finally {
+      rmSync(at, { recursive: true, force: true });
+    }
+  });
 
   it("produces identical files when run twice, so fingerprints are stable", async () => {
     const again = mkdtempSync(join(tmpdir(), "dunialab-geo-unit-2-"));
@@ -202,3 +334,33 @@ describe("remote sources: names and choices", () => {
     expect(linesNearPath([along, crossing, farAway, [[0, 0]]], rough, 30)).toEqual([along]);
   });
 });
+
+describe("open sea is decided by the sea, not by height (findings register CR67)", () => {
+  it("stores the tiles of land below sea level that is walled off from the sea", async () => {
+    const out = mkdtempSync(join(tmpdir(), "dunialab-geo-depression-"));
+    try {
+      // A map whose middle is a dry depression 100 m below sea level, ringed by land, with sea only at the edges.
+      const depression = (lon: number, lat: number) => {
+        const d = Math.max(Math.abs(lon - 1), Math.abs(lat - 1));
+        if (d > 0.9) return 0; // sea
+        if (d > 0.6) return 50; // a ring of dry land
+        return -100; // land below sea level
+      };
+      const small = { heightSize: 17, textureSize: 16, regionalTextureSize: 16, patchHeightSize: 17, patchTextureSize: 32, regionalMetresPerPixel: 4000 };
+      const m = await generatePack({ pack: { ...pack, features: [] }, outDir: out, sources: { elevation: syntheticElevation(depression) }, params: small });
+      // The regional tiles lying wholly inside the dry depression: every one must be stored.
+      const plan = buildPlan({ ...pack, features: [] }, { ...DEFAULT_PARAMS, ...small });
+      const inside = plan.regionalTiles.filter(({ x, y }) => {
+        const [[w, so], [e, n]] = tileBounds(plan.regionalZoom, x, y);
+        return [w, e].every((lon) => Math.abs(lon - 1) < 0.6) && [so, n].every((lat) => Math.abs(lat - 1) < 0.6);
+      });
+      expect(inside.length).toBeGreaterThan(0);
+      const stored = new Set(m.regional.tiles.map((t) => `${t.x}/${t.y}`));
+      expect(inside.filter((t) => !stored.has(`${t.x}/${t.y}`))).toEqual([]);
+      expect(m.regional.tiles.length).toBeLessThan(buildPlan({ ...pack, features: [] }, { ...DEFAULT_PARAMS, ...small }).regionalTiles.length); // open sea still left out
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  }, 120_000);
+});
+

@@ -96,7 +96,11 @@ export function createAssetReader(dir: string): AssetReader {
     async patchHeights(featureId) {
       const patch: TerrainPatch | undefined = manifest.patches.find((p) => p.featureId === featureId);
       if (!patch) throw new Error(`no patch for feature "${featureId}"`);
-      const { data, width } = await readHeightWebp(join(dir, patch.dir, "h.webp"));
+      const { data, width, height } = await readHeightWebp(join(dir, patch.dir, "h.webp"));
+      // A wrong-sized image would map samples to the wrong places, or to NaN for 1 x 1 (CR76).
+      if (width !== height || width !== patch.heightSize || width < 2) {
+        throw new Error(`patch "${featureId}": the height image is ${width} x ${height}, the manifest says ${patch.heightSize} x ${patch.heightSize} (at least 2)`);
+      }
       const [[w, s], [e, n]] = patch.bounds;
       return {
         data,
@@ -112,7 +116,12 @@ export function createAssetReader(dir: string): AssetReader {
       const y = Math.floor(fy);
       if (!listed.has(`${x}/${y}`)) return 0;
       const key = `${x}/${y}`;
-      if (!tiles.has(key)) tiles.set(key, readHeightWebp(join(dir, tilePath(z, x, y, "h"))));
+      if (!tiles.has(key)) {
+        const read = readHeightWebp(join(dir, tilePath(z, x, y, "h")));
+        // Share pending and successful reads; forget a failed one so a later call can retry (CR75).
+        read.catch(() => tiles.delete(key));
+        tiles.set(key, read);
+      }
       const tile = await tiles.get(key)!;
       const px = (fx - x) * (tile.width - 1);
       const py = (fy - y) * (tile.height - 1);

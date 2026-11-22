@@ -2,7 +2,7 @@
  * Parent area: account, consent, child profiles, sync and the weekly report.
  * Consent comes before any child profile (enforced by the API too).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ContentPack, Locale } from "@dunialab/content";
 import { ApiError, type DuniaApi, type Profile, type Report } from "../lib/api.js";
 import type { EventQueue } from "../lib/queue.js";
@@ -26,15 +26,30 @@ interface Props {
   setProfile: (p: Profile | null) => void;
 }
 
+/**
+ * The children list is loading, failed, or loaded (possibly empty). Each looks different: a parent
+ * whose list has not arrived must never be offered "Add child" (findings register CR33, E4).
+ */
+type ChildList = { kind: "loading" } | { kind: "failed"; message: string } | { kind: "ready"; profiles: Profile[] };
+
 export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignOut, guestId, profile, setProfile }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [consented, setConsented] = useState(false);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [children, setChildren] = useState<ChildList>({ kind: "loading" });
+  const [reloadChildren, setReloadChildren] = useState(0);
   const [nickname, setNickname] = useState("");
   const [pin, setPin] = useState<string[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
-  const [report, setReport] = useState<Report | null>(null);
+  /** A report and the child and pack it belongs to (findings register CR34). */
+  const [report, setReport] = useState<{ scope: string; data: Report } | null>(null);
+  /** One sign-in or sign-up at a time: a second press must not send a second request (CR6). */
+  const [signingIn, setSigningIn] = useState(false);
+  const signingInRef = useRef(false);
+  const scope = profile ? `${profile.id}|${pack.id}` : null;
+  const scopeRef = useRef(scope);
+  scopeRef.current = scope;
+  const profiles = children.kind === "ready" ? children.profiles : [];
 
   const run = async (fn: () => Promise<void>) => {
     setMsg(null);
@@ -46,9 +61,29 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
   };
 
   useEffect(() => {
-    if (token) void run(async () => setProfiles(await api.profiles()));
+    if (!token) return;
+    let current = true;
+    setChildren({ kind: "loading" });
+    api.profiles().then(
+      (list) => current && setChildren({ kind: "ready", profiles: list }),
+      (e: unknown) => current && setChildren({ kind: "failed", message: e instanceof ApiError ? `${e.status}: ${e.message}` : "Network error: are you online?" }),
+    );
+    return () => {
+      current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, reloadChildren]);
+
+  /** Run one sign-in or sign-up; further presses are ignored until it finishes. */
+  const signInWith = (request: () => Promise<{ token: string }>) => {
+    if (signingInRef.current) return;
+    signingInRef.current = true;
+    setSigningIn(true);
+    void run(async () => setToken((await request()).token)).finally(() => {
+      signingInRef.current = false;
+      setSigningIn(false);
+    });
+  };
 
   if (!token) {
     return (
@@ -58,8 +93,8 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
         <input type="email" placeholder="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
         <input type="password" placeholder={locale === "sw" ? "nenosiri (herufi 10+)" : "password (10+ characters)"} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
         <div className="row">
-          <button className="primary" onClick={() => run(async () => setToken((await api.login(email, password)).token))}>{locale === "sw" ? "Ingia" : "Sign in"}</button>
-          <button onClick={() => run(async () => setToken((await api.register(email, password)).token))}>{locale === "sw" ? "Fungua akaunti" : "Create account"}</button>
+          <button className="primary" disabled={signingIn} onClick={() => signInWith(() => api.login(email, password))}>{locale === "sw" ? "Ingia" : "Sign in"}</button>
+          <button disabled={signingIn} onClick={() => signInWith(() => api.register(email, password))}>{locale === "sw" ? "Fungua akaunti" : "Create account"}</button>
         </div>
         {msg && <p className="banner try">{msg}</p>}
       </section>
@@ -70,7 +105,19 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
     <section className="panel">
       <h3>{locale === "sw" ? "Eneo la mzazi" : "Parent area"}</h3>
 
-      {profiles.length === 0 && (
+      {children.kind === "loading" && (
+        <p className="muted" role="status">{locale === "sw" ? "Inapakia watoto..." : "Loading children..."}</p>
+      )}
+      {children.kind === "failed" && (
+        <div className="stack">
+          <p className="banner try" role="alert">
+            {locale === "sw" ? "Hatukuweza kupakia watoto wako." : "We could not load your children."} {children.message}
+          </p>
+          <button onClick={() => setReloadChildren((n) => n + 1)}>{locale === "sw" ? "Jaribu tena" : "Try again"}</button>
+        </div>
+      )}
+
+      {children.kind === "ready" && profiles.length === 0 && (
         <div className="stack">
           <label className="consent">
             <input type="checkbox" checked={consented} onChange={(e) => setConsented(e.target.checked)} />
@@ -94,7 +141,7 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
               run(async () => {
                 await api.consent(POLICY_VERSION);
                 const p = await api.addProfile(nickname, pack.grade, pin);
-                setProfiles([p]);
+                setChildren({ kind: "ready", profiles: [p] });
                 queue.adoptGuestEvents(guestId, p.id);
                 setProfile(p);
               })
@@ -107,7 +154,7 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
 
       {profiles.length > 0 && (
         <div className="stack">
-          <select value={profile?.id ?? ""} onChange={(e) => { const p = profiles.find((x) => x.id === e.target.value) ?? null; if (p) queue.adoptGuestEvents(guestId, p.id); setProfile(p); }}>
+          <select aria-label={locale === "sw" ? "Mtoto" : "Child"} value={profile?.id ?? ""} onChange={(e) => { const p = profiles.find((x) => x.id === e.target.value) ?? null; if (p) queue.adoptGuestEvents(guestId, p.id); setProfile(p); }}>
             <option value="">{locale === "sw" ? "Chagua mtoto" : "Choose child"}</option>
             {profiles.map((p) => <option key={p.id} value={p.id}>{p.nickname} (Grade {p.grade})</option>)}
           </select>
@@ -133,21 +180,32 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
               >
                 {locale === "sw" ? "Sawazisha" : "Sync now"} ({queue.unsynced(pack.id, profile.id).length})
               </button>
-              <button onClick={() => run(async () => setReport(await api.report(profile.id, pack.id, locale)))}>{locale === "sw" ? "Ripoti ya wiki" : "Weekly report"}</button>
+              <button
+                onClick={() =>
+                  run(async () => {
+                    const asked = scope;
+                    const data = await api.report(profile.id, pack.id, locale);
+                    // A late answer for a child or pack no longer selected is dropped (CR34).
+                    if (asked !== null && asked === scopeRef.current) setReport({ scope: asked, data });
+                  })
+                }
+              >
+                {locale === "sw" ? "Ripoti ya wiki" : "Weekly report"}
+              </button>
             </div>
           )}
         </div>
       )}
 
-      {report && (
+      {report && report.scope === scope && (
         <div className="report">
-          <h4>{report.profile.nickname}: {report.fromDay} → {report.toDay}</h4>
+          <h4>{report.data.profile.nickname}: {report.data.fromDay} → {report.data.toDay}</h4>
           <p>
-            {locale === "sw" ? "Ujuzi uliofahamika wiki hii" : "Skills mastered this week"}: <strong>{report.skillsMasteredThisWeek}</strong> ·{" "}
-            {locale === "sw" ? "Siku za kujifunza" : "Active days"}: <strong>{report.activeDays}</strong>
+            {locale === "sw" ? "Ujuzi uliofahamika wiki hii" : "Skills mastered this week"}: <strong>{report.data.skillsMasteredThisWeek}</strong> ·{" "}
+            {locale === "sw" ? "Siku za kujifunza" : "Active days"}: <strong>{report.data.activeDays}</strong>
           </p>
           <ul className="skills">
-            {report.lines.filter((l) => l.status !== "not-started").map((l) => (
+            {report.data.lines.filter((l) => l.status !== "not-started").map((l) => (
               <li key={l.skillId}>
                 <span>{l.label}</span>
                 <span className={`status ${l.status}`}>{l.masteredThisWeek ? "★ " : ""}{l.status}{l.needsSupport ? (locale === "sw" ? " · inahitaji msaada" : " · needs support") : ""}</span>
@@ -163,7 +221,7 @@ export function FamilyPanel({ api, queue, pack, locale, token, setToken, onSignO
         onClick={() => {
           // Shared device: nothing from this parent may carry over to the next one,
           // in particular the consent tick (consent must be a fresh, explicit act).
-          setProfiles([]);
+          setChildren({ kind: "loading" });
           setConsented(false);
           setNickname("");
           setPin([]);

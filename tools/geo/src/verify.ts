@@ -7,7 +7,7 @@
  */
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { Assets3dManifest, deliveryBudgetViolations, type AssetFile } from "@dunialab/content";
+import { Assets3dManifest, deliveryBudgetViolations, tilePath, type AssetFile } from "@dunialab/content";
 import { readLfsPointer, sha256 } from "./images.js";
 
 /** @returns one plain-language message per problem; empty when the folder is sound. */
@@ -15,7 +15,13 @@ export async function verifyAssets(dir: string): Promise<string[]> {
   const manifestPath = join(dir, "manifest.json");
   if (!existsSync(manifestPath)) return [`${manifestPath}: missing (run "npm run geo:build")`];
   const manifestText = readFileSync(manifestPath, "utf8");
-  const parsed = Assets3dManifest.safeParse(JSON.parse(manifestText));
+  let json: unknown;
+  try {
+    json = JSON.parse(manifestText);
+  } catch (e) {
+    return [`manifest.json: not valid JSON (${(e as Error).message})`]; // findings register CR77
+  }
+  const parsed = Assets3dManifest.safeParse(json);
   if (!parsed.success) return parsed.error.issues.map((i) => `manifest.json ${i.path.join(".")}: ${i.message}`);
   const manifest = parsed.data;
   const problems: string[] = [];
@@ -40,6 +46,22 @@ export async function verifyAssets(dir: string): Promise<string[]> {
     if (path !== "manifest.json" && !listed.has(path)) problems.push(`${path}: on disk but not listed in the manifest`);
   }
 
+  // Every tile the manifest names must have its three files, listed and present: the viewer asks for
+  // them by these paths (findings register CR78).
+  const levels = [
+    ["overview", manifest.overview.zoom, manifest.overview.tiles],
+    ["regional", manifest.regional.zoom, manifest.regional.tiles],
+  ] as const;
+  for (const [level, z, tiles] of levels) {
+    for (const t of tiles) {
+      for (const kind of ["h", "albedo", "shade"] as const) {
+        const path = tilePath(z, t.x, t.y, kind);
+        if (!listed.has(path)) problems.push(`${path}: named by the manifest's ${level} tiles but not listed in its files`);
+        else if (!existsSync(join(dir, path))) problems.push(`${path}: named by the manifest's ${level} tiles but missing`);
+      }
+    }
+  }
+
   // Budgets are judged on what is really on disk, not on what the manifest claims.
   const manifestBytes = Buffer.byteLength(manifestText);
   const size = (f: AssetFile) => actual.get(f.path) ?? 0;
@@ -51,8 +73,23 @@ export async function verifyAssets(dir: string): Promise<string[]> {
     hdFeaturePatchBytes: Object.fromEntries(manifest.patches.map((p) => [p.featureId, sum(shipped.filter((f) => f.path.startsWith(`${p.dir}/`)))])),
   };
   problems.push(...deliveryBudgetViolations(delivery));
-  if (problems.length === 0 && delivery.pack3dTotalBytes !== manifest.delivery.pack3dTotalBytes) {
-    problems.push(`manifest.json: records ${manifest.delivery.pack3dTotalBytes} bytes in total, the files add up to ${delivery.pack3dTotalBytes}`);
+  if (problems.length === 0) {
+    // Every recorded figure must match what was measured, not only the total (findings register CR79).
+    const recorded = manifest.delivery;
+    if (delivery.pack3dTotalBytes !== recorded.pack3dTotalBytes) {
+      problems.push(`manifest.json: records ${recorded.pack3dTotalBytes} bytes in total, the files add up to ${delivery.pack3dTotalBytes}`);
+    }
+    if (delivery.first3dOpenBytes !== recorded.first3dOpenBytes) {
+      problems.push(`manifest.json: records ${recorded.first3dOpenBytes} bytes for the first 3D open, the files add up to ${delivery.first3dOpenBytes}`);
+    }
+    const ids = new Set([...Object.keys(recorded.hdFeaturePatchBytes), ...Object.keys(delivery.hdFeaturePatchBytes)]);
+    for (const id of [...ids].sort()) {
+      const was = recorded.hdFeaturePatchBytes[id];
+      const is = delivery.hdFeaturePatchBytes[id];
+      if (was === undefined) problems.push(`manifest.json: has no recorded size for the HD patch "${id}"`);
+      else if (is === undefined) problems.push(`manifest.json: records a size for an HD patch "${id}" that it does not have`);
+      else if (was !== is) problems.push(`manifest.json: records ${was} bytes for the HD patch "${id}", its files add up to ${is}`);
+    }
   }
   return problems;
 }

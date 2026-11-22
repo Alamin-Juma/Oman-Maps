@@ -3,17 +3,20 @@
  * scripted AI grader, so feature tests exercise the public HTTP contract
  * without Docker. E2E tests (tests/e2e) use Postgres and the built server instead.
  */
-import { createApp, InMemoryStore, type AiGrader, type RateLimits } from "@dunialab/api";
+import { createApp, InMemoryStore, type AiGrader, type RateLimits, type Store } from "@dunialab/api";
 
 /**
  * Feature tests register many parents from one address (127.0.0.1). Unless a test is ABOUT rate
  * limits (it then passes the real DEFAULT_RATE_LIMITS), use limits no test reaches.
  */
 const UNREACHED = { max: 1_000_000, windowMs: 60_000 };
-const NO_PRACTICAL_LIMITS: RateLimits = {
+export const TEST_RATE_LIMITS: RateLimits = {
   loginFailuresPerAccount: UNREACHED,
   loginAttemptsPerAddress: UNREACHED,
   registrationsPerAddress: UNREACHED,
+  aiChecksPerParent: UNREACHED,
+  aiChecksPerDeployment: UNREACHED,
+  aiConcurrentPerParent: 1_000_000,
 };
 
 export interface TestApi {
@@ -23,17 +26,19 @@ export interface TestApi {
 }
 
 export async function startApi(
-  opts: { aiGrader?: AiGrader; packsDir?: string; rateLimits?: RateLimits; now?: () => number } = {},
+  opts: { aiGrader?: AiGrader; packsDir?: string; rateLimits?: RateLimits; now?: () => number; store?: Store; aiTimeoutMs?: number; allowDraftContent?: boolean } = {},
 ): Promise<TestApi> {
   const app = await createApp({
     config: {
       jwtSecret: "test-secret-test-secret-test-secret",
       aiConfidenceThreshold: 0.75,
       utcOffsetMinutes: 180,
-      rateLimits: opts.rateLimits ?? NO_PRACTICAL_LIMITS,
+      rateLimits: opts.rateLimits ?? TEST_RATE_LIMITS,
+      ...(opts.aiTimeoutMs ? { aiTimeoutMs: opts.aiTimeoutMs } : {}),
+      ...(opts.allowDraftContent === undefined ? {} : { allowDraftContent: opts.allowDraftContent }),
     },
     ...(opts.now ? { now: opts.now } : {}),
-    store: new InMemoryStore(),
+    store: opts.store ?? new InMemoryStore(),
     ...(opts.packsDir ? { packsDir: opts.packsDir } : {}),
     aiGrader: opts.aiGrader ?? null,
     logger: false,

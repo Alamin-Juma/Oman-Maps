@@ -164,6 +164,24 @@ What this tells Phase 1:
 7. Expect a first full generation for the Kenya pack to download a few hundred MB and take tens of minutes on this
    connection. It runs once; results are cached.
 
+## What Phase 1 built (recorded 21 November 2026)
+
+- **Generator:** `tools/geo` (`npm run geo:build`, `geo:verify`, `unity`). Rivers are traced with option B:
+  flood upward from the sea or lake, inside a corridor around the Natural Earth line, with gaps in the
+  surveyed line bridged.
+- **Kenya Explorer assets:**
+  - the Tana traced **751 km** from the pack's start point to the Indian Ocean, never more than 17.5 km from
+    the surveyed line (**758.9 km** after the generator fixes of 22 November 2026, findings register CR59-CR61:
+    short steps now measured from the last point kept, and the water level filled from the mouth upward). Natural Earth's surveyed line over the same stretch is about 704 km, and about 760 km
+    for the whole river at its level of detail. The often-quoted ~1,000 km is the whole river in full detail
+    and is not comparable;
+  - Lake Turkana at 362 m and Lake Victoria at 1,133 m;
+  - HD patches made from the 30 m data;
+  - 17.36 MB shipped against 25 MB, and 0.50 MB to open 3D for the first time.
+- **Storage:** images in Git LFS (20.2 MB). CI verifies sizes and fingerprints from the LFS pointers.
+- **Tests:** `tests/features/geo/kenya-3d-assets.feature.test.ts` compares the traced length with the surveyed
+  line, using the committed public-domain fixture `tests/features/fixtures/natural-earth-tana.geojson`.
+
 ## Consequences
 - New top-level folders: `tools/geo` (now, spike only) and `content-assets/` (Phase 1). `.cache/` is gitignored.
 - Git LFS holds the images under `content-assets/**` (`*.webp`, `*.jpg`); JSON and Markdown stay ordinary text so they

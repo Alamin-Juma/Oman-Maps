@@ -59,6 +59,19 @@ describe("AttemptLimiter", () => {
     l.record("fresh", rule); // over the sweep threshold: expired keys are dropped
     expect(l.size).toBe(1);
   });
+
+  it("a sweep started by a short rule keeps a long rule's live history (findings register CR18)", () => {
+    const c = clock();
+    const l = new AttemptLimiter(c.now);
+    const hour = { max: 1, windowMs: 60 * 60_000 };
+    const quarter = { max: 30, windowMs: 15 * 60_000 };
+    l.record("register:1.2.3.4", hour); // one sign-up: this address is at its hourly limit
+    for (let i = 0; i < 10_001; i++) l.record(`login:${i}`, quarter);
+    c.advance(20 * 60_000); // past the 15-minute window, inside the hour
+    l.record("login:trigger", quarter); // the sweep runs with the 15-minute rule
+    expect(l.retryAfterSeconds("register:1.2.3.4", hour)).toBeGreaterThan(0);
+    expect(l.size).toBe(2); // the expired 15-minute keys are gone
+  });
 });
 
 describe("rate limit configuration", () => {

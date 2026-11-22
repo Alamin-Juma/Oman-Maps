@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "title": { "en": "East Africa Explorer", "sw": "Mvumbuzi wa Afrika Mashariki" },
   "country": "KE",
+  "countryIsoNumeric": "404",
   "grade": 6,
   "subject": "Social Studies",
   "strand": { "code": "1.0", "title": { "en": "Natural and Built Environments", "sw": "Mazingira Asilia na Yaliyojengwa" } },

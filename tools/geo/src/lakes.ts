@@ -31,31 +31,49 @@ function isFlat(dem: GeoGrid, i: number, j: number): boolean {
 }
 
 /**
- * The flat region at a point, or the nearest one within `searchKm`.
+ * The flat region at a point, or the nearest one within `searchKm` that `accept`s.
  * Sea (at or below `seaLevel`) is never a lake.
+ *
+ * Candidates are ranked by their distance in kilometres from the point, not by square rings of
+ * cells (a diagonal cell on an earlier ring can be farther away, findings register CR62). A region
+ * that `accept` refuses (a puddle too small to be the lake) does not end the search: the next
+ * candidate outside it is tried (CR63).
  */
-export function findFlatRegion(dem: GeoGrid, point: LonLat, searchKm: number, seaLevel = 0.01): FlatRegion | null {
+export function findFlatRegion(dem: GeoGrid, point: LonLat, searchKm: number, seaLevel = 0.01, accept: (region: FlatRegion) => boolean = () => true): FlatRegion | null {
   const [ci, cj] = cellOf(dem, point);
-  const cellKm = dem.cell * KM_PER_DEG_LAT;
-  const reach = Math.max(0, Math.ceil(searchKm / cellKm));
+  const kmX = dem.cell * kmPerDegLon(point[1]);
+  const kmY = dem.cell * KM_PER_DEG_LAT;
+  const reachX = Math.max(0, Math.ceil(searchKm / kmX));
+  const reachY = Math.max(0, Math.ceil(searchKm / kmY));
 
-  let seed = -1;
-  search: for (let r = 0; r <= reach; r++) {
-    for (let dj = -r; dj <= r; dj++) {
-      for (let di = -r; di <= r; di++) {
-        if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue; // ring by ring, nearest first
-        const i = ci + di;
-        const j = cj + dj;
-        if (i < 0 || j < 0 || i >= dem.width || j >= dem.height) continue;
-        if (dem.data[j * dem.width + i]! > seaLevel && isFlat(dem, i, j)) {
-          seed = j * dem.width + i;
-          break search;
-        }
-      }
+  const candidates: { c: number; km: number }[] = [];
+  for (let dj = -reachY; dj <= reachY; dj++) {
+    for (let di = -reachX; di <= reachX; di++) {
+      const km = Math.hypot(di * kmX, dj * kmY);
+      if (km > searchKm + 1e-9 && !(di === 0 && dj === 0)) continue;
+      const i = ci + di;
+      const j = cj + dj;
+      if (i < 0 || j < 0 || i >= dem.width || j >= dem.height) continue;
+      candidates.push({ c: j * dem.width + i, km });
     }
   }
-  if (seed < 0) return null;
+  candidates.sort((a, b) => a.km - b.km || a.c - b.c);
 
+  const tried = new Uint8Array(dem.width * dem.height);
+  for (const { c } of candidates) {
+    if (tried[c]) continue;
+    const i = c % dem.width;
+    const j = (c - i) / dem.width;
+    if (dem.data[c]! <= seaLevel || !isFlat(dem, i, j)) continue;
+    const region = growRegion(dem, c, seaLevel);
+    if (accept(region)) return region;
+    for (let k = 0; k < region.mask.length; k++) if (region.mask[k]) tried[k] = 1;
+  }
+  return null;
+}
+
+/** The connected flat region around a seed cell. */
+function growRegion(dem: GeoGrid, seed: number, seaLevel: number): FlatRegion {
   const level = dem.data[seed]!;
   const mask = new Uint8Array(dem.width * dem.height);
   const queue: number[] = [seed]; // grows with the lake, not with the map
@@ -179,11 +197,10 @@ export interface DetectedLake {
 
 /** Find the lake at (or within `searchKm` of) an anchor point. */
 export function detectLake(dem: GeoGrid, anchor: LonLat, searchKm = 10, minAreaKm2 = 1): DetectedLake | null {
-  const region = findFlatRegion(dem, anchor, searchKm);
-  if (!region) return null;
   const cellAreaKm2 = dem.cell * KM_PER_DEG_LAT * dem.cell * kmPerDegLon(anchor[1]);
+  const region = findFlatRegion(dem, anchor, searchKm, 0.01, (r) => r.cells * cellAreaKm2 >= minAreaKm2);
+  if (!region) return null;
   const areaKm2 = region.cells * cellAreaKm2;
-  if (areaKm2 < minAreaKm2) return null;
 
   const ring = traceOutline(region.mask, dem.width, dem.height);
   const simplified = simplifyLine(ring, 0.75); // three quarters of a cell

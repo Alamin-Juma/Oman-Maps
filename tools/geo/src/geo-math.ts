@@ -102,6 +102,14 @@ export function tileBounds(z: number, x: number, y: number): Bounds {
 }
 
 /** Every tile at zoom `z` that overlaps the bounds, row by row from the north-west. */
+/** How many tiles `tilesForBounds` would return, without building the list (findings register CR64). */
+export function tileCountForBounds(b: Bounds, z: number): number {
+  const eps = 1e-9;
+  const columns = Math.floor(lonToTileX(b[1][0], z) - eps) - Math.floor(lonToTileX(b[0][0], z) + eps) + 1;
+  const rows = Math.floor(latToTileY(b[0][1], z) - eps) - Math.floor(latToTileY(b[1][1], z) + eps) + 1;
+  return Math.max(0, columns) * Math.max(0, rows);
+}
+
 export function tilesForBounds(b: Bounds, z: number): { x: number; y: number }[] {
   const eps = 1e-9;
   const x0 = Math.floor(lonToTileX(b[0][0], z) + eps);

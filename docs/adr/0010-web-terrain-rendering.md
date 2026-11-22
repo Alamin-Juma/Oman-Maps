@@ -1,6 +1,7 @@
 # 0010. Phase 2 terrain grids and stable depth at map scale
 
-- **Status:** Accepted for Phase 2 implementation within ADR-0008
+- **Status:** Accepted for Phase 2 implementation within [ADR-0008](0008-3d-rendering-stack.md); replaces its
+  adaptive RTIN meshing (and the `@mapbox/martini` dependency) with strided grids
 - **Date:** 2026-11-17
 
 ## Context

@@ -36,7 +36,7 @@ import {
   type Bounds,
   type LonLat,
 } from "./geo-math.js";
-import { cellOf, mipChain, pickLevel, sample, type GeoGrid } from "./grid.js";
+import { cellOf, mipChain, oceanMask, pickLevel, sample, type GeoGrid } from "./grid.js";
 import { carveChannel, traceRiver, type TracedRiver } from "./hydro.js";
 import { greyWebp, heightWebp, previewJpeg, rgbWebp, sha256 } from "./images.js";
 import { detectLake, type DetectedLake } from "./lakes.js";
@@ -123,6 +123,13 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
   // ---- 4. surface colour for the whole map, then coarser copies for clean shrinking ----
   const colour = colourGrids(dem, cover);
   const demLevels = mipChain(dem);
+  // Open sea is water connected to the edge of the data, not "anything at or below 0 m": land below
+  // sea level keeps its tiles (findings register CR67).
+  const ocean = oceanMask(dem, SEA_LEVEL);
+  const isSea = (lon: number, lat: number) => {
+    const [i, j] = cellOf(dem, [lon, lat]);
+    return ocean[j * dem.width + i] === 1;
+  };
   const colourLevels = colour.map((c) => mipChain(c));
   const elevationSources = () => sources.elevation.used();
   const coverSources = () => sources.landCover?.used() ?? [];
@@ -132,7 +139,7 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
   const overviewTiles: { x: number; y: number }[] = [];
   for (const { x, y } of plan.overviewTiles) {
     const z = plan.overviewZoom;
-    const heights = tileHeights(z, x, y, params.heightSize, demLevels);
+    const heights = tileHeights(z, x, y, params.heightSize, demLevels, isSea);
     if (!heights) continue; // open sea: nothing to store
     const ts = params.textureSize;
     const tex = tileTexturesFromMap(z, x, y, ts, demLevels, colourLevels, params.shadeZFactor.overview);
@@ -148,7 +155,7 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
   const regionalTiles: { x: number; y: number }[] = [];
   for (const { x, y } of plan.regionalTiles) {
     const z = plan.regionalZoom;
-    const heights = tileHeights(z, x, y, params.heightSize, demLevels);
+    const heights = tileHeights(z, x, y, params.heightSize, demLevels, isSea);
     if (!heights) continue;
     const ts = params.regionalTextureSize;
     const [[tw, tsouth], [te, tn]] = tileBounds(z, x, y);
@@ -333,21 +340,22 @@ function coverAt(cover: GeoGrid<Uint8Array>, lon: number, lat: number): number {
   return cover.data[j * cover.width + i]!;
 }
 
-/** Mesh heights of one tile from the whole-map data, or null when the tile is open sea. */
-function tileHeights(z: number, x: number, y: number, hs: number, demLevels: Levels<Float32Array>): Float32Array | null {
+/** Mesh heights of one tile from the whole-map data, or null when every sample is open sea. */
+function tileHeights(z: number, x: number, y: number, hs: number, demLevels: Levels<Float32Array>, isSea: (lon: number, lat: number) => boolean): Float32Array | null {
   const [[west], [east]] = tileBounds(z, x, y);
   const level = pickLevel(demLevels, (east - west) / (hs - 1));
   const heights = new Float32Array(hs * hs);
-  let highest = -Infinity;
+  let allSea = true;
   for (let r = 0; r < hs; r++) {
     const lat = tileYToLat(y + r / (hs - 1), z);
     for (let c = 0; c < hs; c++) {
-      const h = sample(level, tileXToLon(x + c / (hs - 1), z), lat);
+      const lon = tileXToLon(x + c / (hs - 1), z);
+      const h = sample(level, lon, lat);
       heights[r * hs + c] = h;
-      if (h > highest) highest = h;
+      if (allSea && (h > SEA_LEVEL || !isSea(lon, lat))) allSea = false;
     }
   }
-  return highest <= SEA_LEVEL ? null : heights;
+  return allSea ? null : heights;
 }
 
 /** Colour and baked light of one tile from the whole-map data, averaged down to the tile's detail. */

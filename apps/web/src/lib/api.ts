@@ -46,8 +46,11 @@ export class DuniaApi {
     private readonly fetchImpl: typeof fetch = (...a) => fetch(...a),
     /** A mission never waits on the network: a stalled check must fail fast to the local checker. */
     private readonly checkTimeoutMs = 6000,
-    /** Called when the server says the sign-in is over (a 401 on a protected call); see lib/session.ts. */
-    private readonly onSessionExpired?: () => void,
+    /**
+     * Called when the server says a sign-in is over (a 401 on a protected call), with the token the
+     * failed request was sent with, so the app ends only that sign-in (lib/session.ts, CR10).
+     */
+    private readonly onSessionExpired?: (failedToken: string | null) => void,
   ) {}
 
   private async call<T>(method: string, path: string, body?: unknown, timeoutMs = 15000): Promise<T> {
@@ -59,11 +62,21 @@ export class DuniaApi {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     const text = await res.text();
-    const data = text ? JSON.parse(text) : undefined;
-    if (!res.ok) {
-      if (endsSession(res.status, path)) this.onSessionExpired?.();
-      throw new ApiError(res.status, (data && (data.message as string)) || res.statusText);
+    // Decode leniently: a proxy can answer with plain text or HTML. An error keeps its real status,
+    // and a 401 still ends the session whatever the body looks like (findings register CR11).
+    let data: unknown;
+    let readable = true;
+    try {
+      data = text ? JSON.parse(text) : undefined;
+    } catch {
+      readable = false;
     }
+    if (!res.ok) {
+      if (endsSession(res.status, path)) this.onSessionExpired?.(token);
+      const message = readable && data && typeof (data as { message?: unknown }).message === "string" ? (data as { message: string }).message : "";
+      throw new ApiError(res.status, message || res.statusText || `HTTP ${res.status}`);
+    }
+    if (!readable) throw new ApiError(res.status, "The server sent an answer the app cannot read");
     return data as T;
   }
 

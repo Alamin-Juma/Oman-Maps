@@ -70,15 +70,15 @@ feature("Only teacher-approved lessons reach children in production", () => {
     });
   });
 
-  scenario("today's Kenya pack is a draft, so a plain production build offers no lessons yet", async ({ when, then }) => {
+  scenario("the real Kenya pack is offered in production exactly when a teacher has approved it (findings register CR44)", async ({ when, then }) => {
     let result = selectPacks([], { production: false, allowDraft: false });
     await when("the real Kenya Explorer pack goes through a production build", () => {
       result = selectPacks([kenya], { production: true, allowDraft: false });
     });
-    await then("it is held back until a teacher approves it", () => {
-      expect(kenya.review.status).not.toBe("approved");
-      expect(result.packs).toEqual([]);
-      expect(result.withheld).toEqual([kenya.id]);
+    await then("it is offered if approved and held back otherwise, so approving it changes the app, not the tests", () => {
+      const approvedNow = kenya.review.status === "approved";
+      expect(result.packs.map((p) => p.id)).toEqual(approvedNow ? [kenya.id] : []);
+      expect(result.withheld).toEqual(approvedNow ? [] : [kenya.id]);
     });
   });
 });

@@ -37,6 +37,9 @@ Forces, from the product definition and our rules:
    | `@react-three/drei` | 10.7.9 | 2026-09-25 | MIT | `react ^19`, `three >=0.159`, `@react-three/fiber ^9` |
    | `@mapbox/martini` | 0.2.0 | 2020-01-31 | ISC | none (adaptive terrain meshing, RTIN) |
 
+   **Superseded in part by [ADR-0010](0010-web-terrain-rendering.md):** Phase 2 builds strided grids instead
+   of adaptive RTIN meshes, so `@mapbox/martini` is not used.
+
    They are **installed in Phase 2**, not now, so Phase 0 changes nothing a learner downloads.
    Note for upgrades: `@react-three/fiber` 9.8.2 caps React below 19.4.
 

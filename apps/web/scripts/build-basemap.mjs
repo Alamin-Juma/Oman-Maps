@@ -7,6 +7,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { feature } from "topojson-client";
+import { overlapsBox } from "./basemap-filter.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -22,12 +23,9 @@ for (const f of readdirSync(packsDir).filter((f) => f.endsWith(".json"))) {
 [w, s, e, n] = [w - MARGIN, s - MARGIN, e + MARGIN, n + MARGIN];
 
 const round = (x) => Math.round(x * 1000) / 1000;
-const touches = (coords) => coords.some(([x, y]) => x >= w && x <= e && y >= s && y <= n);
-const rings = (g) => (g.type === "Polygon" ? g.coordinates : g.coordinates.flat());
-
 const all = feature(world, world.objects.countries).features;
 const kept = all
-  .filter((f) => f.geometry && rings(f.geometry).some(touches))
+  .filter((f) => f.geometry && overlapsBox(f.geometry, [w, s, e, n]))
   .map((f) => ({
     type: "Feature",
     id: f.id,

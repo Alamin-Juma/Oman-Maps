@@ -1,6 +1,6 @@
 import { Assets3dManifest, LakesFile, RiversFile, type ContentPack } from "@dunialab/content";
 import { NoColorSpace, TextureLoader, type Texture } from "three";
-import { planScene, plannedFiles, type QualityTier, type ScenePlan } from "./plan.js";
+import { planScene, plannedFiles, waterFilesToLoad, type QualityTier, type ScenePlan } from "./plan.js";
 import { decodeHeights } from "./terrain.js";
 
 export const UNAVAILABLE = "3D is not available for this map yet";
@@ -78,9 +78,10 @@ export async function loadScene(pack: ContentPack, featureId: string | null, tie
       if (!allowed.has(path)) throw new Error(`Unlisted asset: ${path}`);
       return base + path;
     };
+    const water = new Set(waterFilesToLoad(initial, manifest));
     const [lakes, rivers] = await Promise.all([
-      initial.lakeIds.length ? json(url(manifest.lakes.file), signal).then((value) => LakesFile.parse(value)) : Promise.resolve({ schemaVersion: 1 as const, lakes: [] }),
-      initial.riverIds.length ? json(url(manifest.rivers.file), signal).then((value) => RiversFile.parse(value)) : Promise.resolve({ schemaVersion: 1 as const, rivers: [] }),
+      water.has(manifest.lakes.file) ? json(url(manifest.lakes.file), signal).then((value) => LakesFile.parse(value)) : Promise.resolve({ schemaVersion: 1 as const, lakes: [] }),
+      water.has(manifest.rivers.file) ? json(url(manifest.rivers.file), signal).then((value) => RiversFile.parse(value)) : Promise.resolve({ schemaVersion: 1 as const, rivers: [] }),
     ]);
     const plan = planScene({ ...input, lakes, rivers });
     const grids = new Map<string, HeightGrid>();

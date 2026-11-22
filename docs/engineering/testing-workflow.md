@@ -60,11 +60,14 @@ feature("Mastery is decided by fixed rules, never by the AI", () => {
 
 ## Definition of done (checklist for every PR)
 
-- [ ] Feature test written first and seen failing (red)
-- [ ] Unit tests cover the code paths and edge cases
+- [ ] Feature test written first and seen failing (red), for the right reason
+- [ ] Unit test written next and seen failing, then the implementation
 - [ ] E2E test covers the user-visible slice
-- [ ] `npm test` (features + unit) and `npm run test:e2e` pass
-- [ ] Docs updated if behaviour or a decision changed (`docs/technical-guide.md`, ADRs)
+- [ ] All of these are **files** in `tests/features/`, `packages/*/test` / `apps/*/test` and `tests/e2e/` (no session-only checks)
+- [ ] No test was changed to fit the code; any test changed after a failure has a row with evidence in the ledger (§1)
+- [ ] `npm test` (features + unit), `npm run typecheck` and `npm run test:e2e` (with `E2E_REQUIRE_DB=1`) pass
+- [ ] Ledger entry added (`docs/engineering/ledger.md`)
+- [ ] Docs updated: technical guide, architecture, findings register, `CLAUDE.md`; then the weekly plan, and the product definition if a decision changed
 
 ## Commands
 
@@ -83,6 +86,37 @@ feature("Mastery is decided by fixed rules, never by the AI", () => {
   edge cases that hurt children's trust: a wrong "Mastered", a lost result.
 - **E2E last** proves the pieces actually connect: phone → sync → database → report.
   It is slow, so there are few E2E tests and they cover whole flows.
+
+## The test is the specification: fix the code, not the test (founder's rule, 19 Nov 2026)
+
+This is the strictest rule in the repo, and it has no exceptions for convenience.
+
+**Order, every time:**
+1. Write the **feature test** and run it: it must **fail for the right reason** (the behaviour is
+   missing, not a typo or an import error). That failure is the validation that the test can see
+   the problem.
+2. Write the **unit test** for the code you are about to write. See it fail too.
+3. Write the **implementation**: the smallest code that makes both pass.
+4. Write or extend the **E2E test** against the real system.
+5. Record it in the **ledger** (`docs/engineering/ledger.md`) and update the docs (`CLAUDE.md` rule 6).
+
+**When a test fails, the code is wrong until proven otherwise.**
+- Find where the code fails the requirement, and change the code.
+- A test may change **only** when it is shown to be wrong *as a test*:
+  - it asserts something no requirement (product definition, ADR, brief) asks for; or
+  - it is broken as a test: wrong argument, wrong setup, flaky timing, measuring the wrong build.
+- "The code returns X, so the test should expect X" is **never** a reason.
+- Every test changed after a failure gets a row in the ledger's §1 ("Test changes after a failure"):
+  the test, what failed, the **evidence** that the test was wrong, and what changed. Reviewers can
+  challenge each row.
+- Never weaken a test to get green: no loosened number, deleted assertion, added skip, raised budget
+  or widened tolerance without that recorded evidence.
+
+**Every test is a file in the repo.** The failing feature test, the failing unit assertions and the
+final E2E test are written into `tests/features/`, `packages/*/test` or `apps/*/test`, and `tests/e2e/`,
+and committed with the change. A one-off probe run only in an agent's session (a `curl`, a throwaway
+script, a background command) can guide an investigation but is **never** evidence. If a result
+matters, it becomes a test file first, and the ledger names that file.
 
 ## Tests that cannot fail are worse than none (adopted 2026-11-19)
 
@@ -124,7 +158,7 @@ user-visible text. Check failed **before** empty: `items.length === 0` after a f
 
 Automated tests prove the pieces; a person proves the product. After code review (not before), each
 feature gets a guide in `docs/manual-tests/` from the template there. One standing walkthrough
-(`docs/manual-tests/00-walkthrough.md`) carries one child from guest play to the parent's report and
+([`docs/manual-tests/00-walkthrough.md`](../manual-tests/00-walkthrough.md)) carries one child from guest play to the parent's report and
 the 3D view; run it before every release and every demo.
 
 ## Exceptions

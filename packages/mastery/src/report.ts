@@ -3,7 +3,7 @@
  * Reports learning (skills), not screen time. Deliberately no minutes.
  */
 import { addDays, localDay } from "./days.js";
-import { computeSkillStates } from "./engine.js";
+import { computeSkillStates, dedupe } from "./engine.js";
 import { DEFAULT_RULES, type AttemptEvent, type MasteryRules, type SkillStatus } from "./types.js";
 
 export interface WeeklySkillLine {
@@ -34,7 +34,9 @@ export function weeklySummary(
   rules: MasteryRules = DEFAULT_RULES,
 ): WeeklySummary {
   const fromDay = addDays(toDay, -6);
-  const upTo = events.filter((e) => localDay(e.occurredAt, rules.utcOffsetMinutes) <= toDay);
+  // The same event can arrive twice (a retried sync); count it once, as the state replay does
+  // (findings register CR28).
+  const upTo = dedupe(events).filter((e) => localDay(e.occurredAt, rules.utcOffsetMinutes) <= toDay);
   const states = computeSkillStates(upTo, rules, skillIds);
   const inWeek = upTo.filter((e) => localDay(e.occurredAt, rules.utcOffsetMinutes) >= fromDay);
 

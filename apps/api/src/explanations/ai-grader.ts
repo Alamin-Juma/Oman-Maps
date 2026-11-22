@@ -25,6 +25,11 @@ export interface AiGradeInput {
   answer: string;
 }
 
+export interface AiGradeOptions {
+  /** Aborted when the server stops waiting: the provider request must stop too (findings register CR7). */
+  signal?: AbortSignal;
+}
+
 export interface AiGrader {
-  grade(input: AiGradeInput): Promise<AiGrade>;
+  grade(input: AiGradeInput, options?: AiGradeOptions): Promise<AiGrade>;
 }

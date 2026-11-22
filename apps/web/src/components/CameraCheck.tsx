@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "@dunialab/content";
-import { cameraFailure, cameraSupport, shouldRetryWithAnyCamera } from "../lib/camera.js";
+import { cameraFailure, cameraSupport, keepIfStillWanted, shouldRetryWithAnyCamera } from "../lib/camera.js";
 
 const COPY = {
   title: { en: "Camera check", sw: "Ukaguzi wa kamera" },
@@ -34,6 +34,8 @@ export function CameraCheck({ locale, onClose }: { locale: Locale; onClose: () =
   const t = <K extends keyof typeof COPY>(k: K) => COPY[k][locale];
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  /** Changes on every stop and on close: a camera request from an earlier one is no longer wanted. */
+  const attempt = useRef(0);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [still, setStill] = useState<string | null>(null);
   const [info, setInfo] = useState("");
@@ -45,6 +47,7 @@ export function CameraCheck({ locale, onClose }: { locale: Locale; onClose: () =
   });
 
   const stop = useCallback(() => {
+    attempt.current++;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -55,16 +58,20 @@ export function CameraCheck({ locale, onClose }: { locale: Locale; onClose: () =
   useEffect(() => stop, [stop]);
 
   const start = async () => {
+    const mine = ++attempt.current;
     setStatus({ kind: "starting" });
     setStill(null);
     try {
-      let stream: MediaStream;
+      let opened: MediaStream;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
+        opened = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } });
       } catch (first) {
         if (!shouldRetryWithAnyCamera(first)) throw first;
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        opened = await navigator.mediaDevices.getUserMedia({ video: true });
       }
+      // Closed or stopped while the camera was opening: switch it off and do nothing else (CR12).
+      const stream = keepIfStillWanted(opened, mine === attempt.current);
+      if (!stream) return;
       streamRef.current = stream;
       const video = videoRef.current;
       if (video) {
@@ -78,6 +85,7 @@ export function CameraCheck({ locale, onClose }: { locale: Locale; onClose: () =
       setInfo([track?.label, s?.width && s?.height ? `${s.width}x${s.height}` : null].filter(Boolean).join(" · "));
       setStatus({ kind: "live" });
     } catch (error) {
+      if (mine !== attempt.current) return; // a failure for a request nobody wants any more
       stop();
       setStatus({ kind: "error", message: cameraFailure(error, locale) });
     }

@@ -26,11 +26,17 @@ describe.skipIf(pointers)("E2E: See in 3D (requires real LFS images)", () => {
     outDir = mkdtempSync(join(tmpdir(), "dunialab-3d-"));
     // The only pack is still a draft; this is a rehearsal build that allows it, labelled as draft
     // (findings register S1). tests/e2e/web/approved-content.e2e.test.ts covers the real rule.
-    process.env.VITE_ALLOW_DRAFT_CONTENT = "true";
+    // Restore both afterwards, so no later build in this process inherits them (findings register CR52).
     const previous = process.env.NODE_ENV;
+    const previousDraft = process.env.VITE_ALLOW_DRAFT_CONTENT;
+    process.env.VITE_ALLOW_DRAFT_CONTENT = "true";
     process.env.NODE_ENV = "production";
     try { await build({ root: WEB_ROOT, logLevel: "error", build: { outDir, emptyOutDir: true } }); }
-    finally { process.env.NODE_ENV = previous; }
+    finally {
+      process.env.NODE_ENV = previous;
+      if (previousDraft === undefined) delete process.env.VITE_ALLOW_DRAFT_CONTENT;
+      else process.env.VITE_ALLOW_DRAFT_CONTENT = previousDraft;
+    }
     web = await preview({ root: WEB_ROOT, logLevel: "error", build: { outDir }, preview: { host: "127.0.0.1", port: 0 } });
     origin = web.resolvedUrls!.local[0]!;
     browser = await launchWebglChromium();
@@ -57,13 +63,16 @@ describe.skipIf(pointers)("E2E: See in 3D (requires real LFS images)", () => {
     expect(await page.locator('[data-scene-ready="true"]').count(), await page.locator(".map-wrap").innerText()).toBe(1);
     console.info(`[3d] ready in ${Date.now() - start} ms`);
   }
-  async function pixels(page: Page) {
-    // Text overlays must not make an otherwise blank terrain pass the colour threshold.
+  /** The canvas without the text overlays, captured the same way every time (findings register CR51). */
+  async function terrainOnly(page: Page) {
     const overlays = page.locator(".viewer3d-labels, .viewer3d-actions");
     await overlays.evaluateAll((elements) => elements.forEach((element) => { (element as HTMLElement).style.visibility = "hidden"; }));
-    let image: Awaited<ReturnType<typeof screenshotPixels>>;
-    try { image = await screenshotPixels(page, page.locator(".viewer3d canvas")); }
+    try { return await screenshotPixels(page, page.locator(".viewer3d canvas")); }
     finally { await overlays.evaluateAll((elements) => elements.forEach((element) => { (element as HTMLElement).style.visibility = ""; })); }
+  }
+  async function pixels(page: Page) {
+    // Text overlays must not make an otherwise blank terrain pass the colour threshold.
+    const image = await terrainOnly(page);
     const stats = pixelStats(image.rgba, image.width, image.height);
     expect(stats.distinctColors).toBeGreaterThan(500);
     expect(stats.variance).toBeGreaterThan(150);
@@ -83,7 +92,8 @@ describe.skipIf(pointers)("E2E: See in 3D (requires real LFS images)", () => {
     await page.getByRole("button", { name: "See in 3D", exact: true }).click();
     await ready(page);
     const early = await page.locator(".viewer3d").getAttribute("data-exaggeration");
-    const before = await screenshotPixels(page, page.locator(".viewer3d canvas"));
+    // Same capture as "after": otherwise removing the overlays alone could make the frames differ.
+    const before = await terrainOnly(page);
     await expect.poll(() => page.locator(".viewer3d").getAttribute("data-exaggeration"), { timeout: 30_000 }).toBe("1.50");
     const after = await pixels(page);
     expect(Number(early)).toBeLessThan(1.5);

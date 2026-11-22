@@ -5,11 +5,14 @@ import type { ContentRegistry } from "../content/content-registry.js";
 import type { Store } from "../store/store.js";
 import { CONTENT, STORE } from "../tokens.js";
 
-const CatalogQuery = z.object({
-  country: z.string().length(2).optional(),
-  grade: z.coerce.number().int().min(1).max(12).optional(),
-  subject: z.string().optional(),
-});
+/** Strict: an unknown filter is a 400, never silently dropped (findings register CR19). */
+const CatalogQuery = z
+  .object({
+    country: z.string().length(2).optional(),
+    grade: z.coerce.number().int().min(1).max(12).optional(),
+    subject: z.string().optional(),
+  })
+  .strict();
 
 /** Public: lists content packs. A new pack appears here with no code change. */
 @Controller()

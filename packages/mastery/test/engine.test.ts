@@ -41,6 +41,10 @@ const ev = (id: string, skillId: string, at: string, correct = true, kind: Attem
 });
 
 describe("review queue", () => {
+  it("treats a skill id like 'constructor' as an unknown topic, not a built-in (findings register CR29)", () => {
+    const states = computeSkillStates([ev("1", "constructor", "2027-01-11T07:00:00Z")]);
+    expect(buildReviewQueue(states, "2027-01-12", {})).toEqual([{ skillId: "constructor", topic: "_", dueDay: "2027-01-12" }]);
+  });
   it("interleaves topics and puts the most overdue first", () => {
     const events = [
       ev("1", "map.a", "2027-01-01T07:00:00Z"),
@@ -79,6 +83,11 @@ describe("weekly summary", () => {
     expect(byId.B!.needsSupport).toBe(true);
     expect(byId.C!.status).toBe("not-started");
     expect(Object.keys(s)).not.toContain("minutes");
+  });
+  it("counts an event delivered twice only once (findings register CR28)", () => {
+    const wrong = ev("w", "B", "2027-01-12T07:00:00Z", false);
+    const s = weeklySummary([wrong, { ...wrong }, ev("r", "B", "2027-01-13T07:00:00Z")], "2027-01-17", ["B"]);
+    expect(s.lines[0]).toMatchObject({ attemptsThisWeek: 2, correctThisWeek: 1, needsSupport: false });
   });
 });
 

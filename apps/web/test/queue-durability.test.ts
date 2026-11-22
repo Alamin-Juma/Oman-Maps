@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SYNC_MAX_EVENTS, type AttemptEvent } from "@dunialab/mastery";
-import { EventQueue, isStoredEvent, mergeQueues, safeStorage, type KeyValueStorage } from "../src/lib/queue.js";
+import { browserStorage, EventQueue, isStoredEvent, mergeQueues, safeStorage, type KeyValueStorage } from "../src/lib/queue.js";
 import { syncInBatches, type SyncClient } from "../src/lib/sync.js";
 
 const PACK = "p";
@@ -177,5 +177,36 @@ describe("mergeQueues (two tabs, findings register R3)", () => {
 
   it("does not duplicate an event both sides have", () => {
     expect(mergeQueues([entry("a")], [entry("a")], new Set(["a"]))).toHaveLength(1);
+  });
+});
+
+describe("recovery after a failed save (findings register CR20, CR21)", () => {
+  const event = (id: string, profileId: string): AttemptEvent => ({
+    eventId: id, profileId, skillId: "s", taskId: "t", kind: "choice", correct: true, occurredAt: "2027-01-11T06:00:00Z", context: "mission",
+  });
+
+  it("merges with what another tab stored before writing its own unsaved events", () => {
+    const m = new Map<string, string>();
+    let full = true;
+    const storage = {
+      getItem: (k: string) => m.get(k) ?? null,
+      setItem: (k: string, v: string) => { if (full) throw new Error("QuotaExceededError"); m.set(k, v); },
+    };
+    const one = new EventQueue(storage);
+    const two = new EventQueue(storage);
+    one.add("p", [event("a", "x")]);
+    full = false;
+    two.add("p", [event("b", "y")]);
+    one.markSynced([]); // any later write from tab one
+    one.add("p", [event("c", "x")]);
+    const ids = new EventQueue(storage).all("p", "x").map((e) => e.eventId).concat(new EventQueue(storage).all("p", "y").map((e) => e.eventId));
+    expect(ids.sort()).toEqual(["a", "b", "c"]);
+  });
+
+  it("treats the memory stand-in as not saved", () => {
+    const q = new EventQueue(browserStorage(() => { throw new Error("SecurityError"); }));
+    q.add("p", [event("a", "x")]);
+    expect(q.notSaved).toBe(true);
+    expect(q.all("p", "x")).toHaveLength(1);
   });
 });

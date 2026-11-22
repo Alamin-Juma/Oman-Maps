@@ -6,11 +6,11 @@
  * formula) goes through the real generator. If this passes, a Grade 6 East Africa pack gets
  * its 3D terrain, rivers and lakes by running the same command.
  */
-import { mkdtempSync, readFileSync, readdirSync, rmSync, appendFileSync } from "node:fs";
+import { appendFileSync, cpSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect } from "vitest";
+import { afterAll, beforeAll, expect } from "vitest";
 import { Assets3dManifest, DELIVERY_BUDGET, LakesFile, RiversFile, deliveryBudgetViolations, type ContentPack } from "@dunialab/content";
 import { generatePack, syntheticElevation, verifyAssets } from "../../../tools/geo/src/index.js";
 import { feature, scenario } from "../support/gherkin.js";
@@ -49,23 +49,30 @@ const islandPack: ContentPack = {
 // Small images keep the test fast; the real command uses the defaults.
 const SMALL = { heightSize: 65, textureSize: 64, regionalTextureSize: 64, patchHeightSize: 65, patchTextureSize: 128, regionalMetresPerPixel: 600 };
 
-feature("A new region gets 3D terrain, rivers and lakes with no code change", () => {
-  let outDir = "";
-  const cleanup = () => outDir && rmSync(outDir, { recursive: true, force: true });
+// The island is generated once, before any scenario, and removed afterwards even when an assertion
+// fails, so every scenario can also be run on its own (findings register CR56).
+let outDir = "";
+let manifest: Assets3dManifest | undefined;
+beforeAll(async () => {
+  outDir = mkdtempSync(join(tmpdir(), "dunialab-geo-feature-"));
+  manifest = await generatePack({
+    pack: islandPack,
+    outDir,
+    sources: { elevation: syntheticElevation(islandHeight) },
+    params: SMALL,
+  });
+}, 120_000);
+afterAll(() => {
+  if (outDir) rmSync(outDir, { recursive: true, force: true });
+});
 
+feature("A new region gets 3D terrain, rivers and lakes with no code change", () => {
   scenario(
     "a pack for a place the code has never heard of is generated and verified",
     async ({ given, when, then, and }) => {
-      outDir = mkdtempSync(join(tmpdir(), "dunialab-geo-feature-"));
-      let manifest: Assets3dManifest | undefined;
       await given("a content pack for a made-up island with a mountain, a river, a lake and a town", () => {});
-      await when("the generator runs on it", async () => {
-        manifest = await generatePack({
-          pack: islandPack,
-          outDir,
-          sources: { elevation: syntheticElevation(islandHeight) },
-          params: SMALL,
-        });
+      await when("the generator runs on it (before the scenarios)", () => {
+        expect(manifest).toBeDefined();
       });
       await then("it writes a manifest that follows the published format", () => {
         const onDisk = JSON.parse(readFileSync(join(outDir, "manifest.json"), "utf8"));
@@ -114,20 +121,27 @@ feature("A new region gets 3D terrain, rivers and lakes with no code change", ()
 
   scenario("a changed or damaged file is caught", async ({ given, when, then }) => {
     let problems: string[] = [];
-    await given("generated assets where one terrain file was altered after generation", () => {
-      const tileDir = join(outDir, "tiles");
+    // Its own copy, so damaging it cannot affect any other scenario, in any order.
+    const damaged = mkdtempSync(join(tmpdir(), "dunialab-geo-damaged-"));
+    await given("generated assets where one terrain file was altered after generation", async () => {
+      cpSync(outDir, damaged, { recursive: true });
+      expect(await verifyAssets(damaged)).toEqual([]); // positive control: the copy starts valid
+      const tileDir = join(damaged, "tiles");
       const z = readdirSync(tileDir)[0]!;
       const x = readdirSync(join(tileDir, z))[0]!;
       const y = readdirSync(join(tileDir, z, x))[0]!;
       appendFileSync(join(tileDir, z, x, y, "h.webp"), "tampered");
     });
     await when("the assets are verified", async () => {
-      problems = await verifyAssets(outDir);
+      try {
+        problems = await verifyAssets(damaged);
+      } finally {
+        rmSync(damaged, { recursive: true, force: true });
+      }
     });
     await then("the altered file is named", () => {
       expect(problems.length).toBeGreaterThan(0);
       expect(problems.join("\n")).toMatch(/h\.webp/);
-      cleanup();
     });
   });
 

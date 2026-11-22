@@ -30,15 +30,28 @@ export interface RateLimits {
   loginAttemptsPerAddress: { max: number; windowMs: number };
   /** New accounts per network address. */
   registrationsPerAddress: { max: number; windowMs: number };
+  /**
+   * Online (paid) explanation checks per parent account (findings register CR7). Over it, the
+   * child still gets feedback, from the offline rubric checker.
+   */
+  aiChecksPerParent: { max: number; windowMs: number };
+  /** Online checks for the whole deployment: a spending stop. Over it, every check is local. */
+  aiChecksPerDeployment: { max: number; windowMs: number };
+  /** Online checks one parent account may have running at the same moment. */
+  aiConcurrentPerParent: number;
 }
 
 const MINUTE = 60_000;
 
-/** Production limits (findings register S9). */
+/** Production limits (findings register S9, CR7). */
 export const DEFAULT_RATE_LIMITS: RateLimits = {
   loginFailuresPerAccount: { max: 5, windowMs: 15 * MINUTE },
   loginAttemptsPerAddress: { max: 30, windowMs: 15 * MINUTE },
   registrationsPerAddress: { max: 10, windowMs: 60 * MINUTE },
+  // A pilot child explains about three times a mission; 40 an hour covers siblings on one account.
+  aiChecksPerParent: { max: 40, windowMs: 60 * MINUTE },
+  aiChecksPerDeployment: { max: 1_000, windowMs: 60 * MINUTE },
+  aiConcurrentPerParent: 2,
 };
 
 export interface AppConfig {

@@ -122,6 +122,19 @@
       "expected": {
         "A": { "status": "mastered", "attempts": 2, "correctDays": ["2027-01-11", "2027-01-12"], "masteredOn": "2027-01-12", "box": 0, "nextReviewDay": "2027-01-13" }
       }
+    },
+    {
+      "name": "any string is a valid skill id, including names a dictionary may already have (findings register CR29)",
+      "events": [
+        { "eventId": "e1", "profileId": "p", "skillId": "constructor", "taskId": "t1", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:00:00Z", "context": "mission" },
+        { "eventId": "e2", "profileId": "p", "skillId": "toString", "taskId": "t2", "kind": "choice", "correct": false, "occurredAt": "2027-01-11T07:05:00Z", "context": "mission" },
+        { "eventId": "e3", "profileId": "p", "skillId": "__proto__", "taskId": "t3", "kind": "choice", "correct": true, "occurredAt": "2027-01-11T07:10:00Z", "context": "mission" }
+      ],
+      "expected": {
+        "constructor": { "status": "practising", "attempts": 1, "correctDays": ["2027-01-11"], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-12" },
+        "toString": { "status": "practising", "attempts": 1, "correctDays": [], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-12" },
+        "__proto__": { "status": "practising", "attempts": 1, "correctDays": ["2027-01-11"], "masteredOn": null, "box": 0, "nextReviewDay": "2027-01-12" }
+      }
     }
   ]
 }

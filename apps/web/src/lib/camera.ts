@@ -95,3 +95,20 @@ export function shouldRetryWithAnyCamera(error: unknown): boolean {
   const name = typeof error === "object" && error !== null && "name" in error ? String(error.name) : "";
   return name === "OverconstrainedError";
 }
+
+/** The part of a MediaStream this module needs: its tracks can be stopped. */
+export interface StoppableStream {
+  getTracks(): Array<{ stop(): void }>;
+}
+
+/**
+ * Keep a camera stream only if the request that opened it is still wanted (findings register
+ * CR12). Opening the camera can take seconds; if the panel was closed or the camera stopped in the
+ * meantime, the stream that finally arrives belongs to nobody and must be switched off at once,
+ * or the camera stays on with no screen to turn it off.
+ */
+export function keepIfStillWanted<S extends StoppableStream>(stream: S, stillWanted: boolean): S | null {
+  if (stillWanted) return stream;
+  for (const track of stream.getTracks()) track.stop();
+  return null;
+}

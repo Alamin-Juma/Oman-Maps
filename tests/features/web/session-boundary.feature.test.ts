@@ -11,7 +11,7 @@
  */
 import { expect } from "vitest";
 import { ApiError, DuniaApi } from "../../../apps/web/src/lib/api.js";
-import { SessionScope } from "../../../apps/web/src/lib/session.js";
+import { expiryApplies, SessionScope } from "../../../apps/web/src/lib/session.js";
 import { feature, scenario } from "../support/gherkin.js";
 
 /** A server that answers every request with the given status. */
@@ -71,6 +71,58 @@ feature("Signing out, or an expired sign-in, is a clean boundary on a shared pho
     await then("the late answer does not reach the screen", () => {
       lateAnswer("Amani, Baraka");
       expect(shown).toEqual(["Amani"]);
+    });
+  });
+
+  scenario("a 401 that is not JSON still ends the session cleanly (findings register CR11)", async ({ given, when, then, and }) => {
+    let expired = 0;
+    let error: unknown;
+    const plain401 = (async () => new Response("Unauthorized", { status: 401, headers: { "content-type": "text/plain" } })) as typeof fetch;
+    const api = new DuniaApi("http://api.test", () => "a-token", plain401, 6000, () => expired++);
+    await given("a proxy in front of the API answers an expired sign-in with plain text", () => {});
+    await when("the app loads the family's children", async () => {
+      error = await api.profiles().catch((e) => e);
+    });
+    await then("the session-expired handler runs", () => expect(expired).toBe(1));
+    await and("the failure is an ApiError with the real status, not a JSON parse error", () => {
+      expect(error).toBeInstanceOf(ApiError);
+      expect((error as ApiError).status).toBe(401);
+    });
+  });
+
+  scenario("a late 401 for the previous sign-in does not end the new one (findings register CR10)", async ({ given, when, then, and }) => {
+    let token = "token-A";
+    const expiredFor: Array<string | null> = [];
+    let answerA: (r: Response) => void = () => {};
+    const fetchImpl = ((_url: string, init?: RequestInit) => {
+      const auth = new Headers(init?.headers).get("authorization");
+      if (auth === "Bearer token-A") return new Promise<Response>((r) => (answerA = r));
+      return Promise.resolve(new Response("[]", { status: 200 }));
+    }) as typeof fetch;
+    const api = new DuniaApi("http://api.test", () => token, fetchImpl, 6000, (failed) => expiredFor.push(failed));
+    let pendingA: Promise<unknown> = Promise.resolve();
+    await given("a request sent with parent A's sign-in is still waiting", () => {
+      pendingA = api.profiles().catch(() => {});
+    });
+    await when("parent B signs in, and then A's request comes back 401", async () => {
+      token = "token-B";
+      answerA(new Response(JSON.stringify({ message: "expired" }), { status: 401 }));
+      await pendingA;
+    });
+    await then("the handler is told which sign-in failed: A's, not B's", () => expect(expiredFor).toEqual(["token-A"]));
+    await and("a 401 for B's own request names B", async () => {
+      token = "token-B";
+      const failing = new DuniaApi("http://api.test", () => token, (async () => new Response("", { status: 401 })) as typeof fetch, 6000, (failed) => expiredFor.push(failed));
+      await failing.profiles().catch(() => {});
+      expect(expiredFor).toEqual(["token-A", "token-B"]);
+    });
+  });
+
+  scenario("the app ends a session only for the sign-in that actually failed (findings register CR10)", async ({ then }) => {
+    await then("an expiry for an older token is ignored, and one for the current token is honoured", () => {
+      expect(expiryApplies("token-A", "token-B")).toBe(false);
+      expect(expiryApplies("token-B", "token-B")).toBe(true);
+      expect(expiryApplies("token-B", null)).toBe(false); // already signed out
     });
   });
 });

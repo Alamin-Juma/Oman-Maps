@@ -9,7 +9,7 @@
  * (the camera API is unavailable, with no prompt) and a refused permission.
  */
 import { expect } from "vitest";
-import { cameraSupport, cameraFailure } from "../../../apps/web/src/lib/camera.js";
+import { cameraSupport, cameraFailure, keepIfStillWanted } from "../../../apps/web/src/lib/camera.js";
 import { feature, scenario } from "../support/gherkin.js";
 
 feature("Device check: can this phone open its camera?", () => {
@@ -75,4 +75,19 @@ feature("Device check: can this phone open its camera?", () => {
       expect(cameraFailure({ name: "WeirdNewError" }, "en").length).toBeGreaterThan(10);
     });
   });
+
+  scenario("closing the check while the camera is still opening leaves the camera off (findings register CR12)", async ({ given, when, then }) => {
+    const stopped: string[] = [];
+    const lateStream = { getTracks: () => [{ stop: () => stopped.push("video") }] };
+    let kept: unknown = "not yet";
+    await given("the tester pressed Start, then closed the panel before the camera opened", () => {});
+    await when("the camera finally opens", () => {
+      kept = keepIfStillWanted(lateStream, false);
+    });
+    await then("its stream is not kept and its camera track is stopped", () => {
+      expect(kept).toBeNull();
+      expect(stopped).toEqual(["video"]);
+    });
+  });
 });
+

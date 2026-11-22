@@ -1,6 +1,9 @@
-/** Content packs validated by the build: see validatedPacks() in vite.config.ts. */
+/**
+ * The build's pack selection: see validatedPacks() in vite.config.ts. Offered packs in full,
+ * withheld packs by id only (findings register S1, CR2).
+ */
 declare module "virtual:dunialab-packs" {
-  import type { ContentPack } from "@dunialab/content";
-  const packs: ContentPack[];
-  export default packs;
+  import type { PackSelection } from "./lib/pack-selection.js";
+  const selection: PackSelection;
+  export default selection;
 }

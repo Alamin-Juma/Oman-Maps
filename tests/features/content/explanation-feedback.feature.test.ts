@@ -6,11 +6,14 @@
  *   "The only step that needs the network during a mission is the AI check, and it has an offline fallback."
  *   Child safety: "No free conversation."
  */
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect } from "vitest";
 import { checkExplanationLocally, findExplainTask, validatePack, type ExplanationFeedback } from "@dunialab/content";
 import { feature, scenario } from "../support/gherkin.js";
+import { startApi } from "../support/api.js";
 
 const require = createRequire(import.meta.url);
 const pack = validatePack(JSON.parse(readFileSync(require.resolve("@dunialab/content/packs/kenya-explorer.json"), "utf8"))).pack!;
@@ -59,7 +62,26 @@ feature("A child's explanation gets accepted, one hint, or a multiple-choice fol
 });
 
 feature("Content cannot ship to children without teacher approval", () => {
-  scenario("the engineering draft of Kenya Explorer is not approved", async ({ then }) => {
-    await then("its review status is not 'approved'", () => expect(pack.review.status).not.toBe("approved"));
+  // Its own fixtures (findings register CR42): the shipped pack will be approved one day, and that
+  // must change what children get, not break this test.
+  scenario("a production API lists an approved pack and never a draft", async ({ given, when, then }) => {
+    let dir = "";
+    let ids: string[] = [];
+    await given("a packs folder holding one approved and one draft pack", () => {
+      dir = mkdtempSync(join(tmpdir(), "dunialab-approval-"));
+      const base = JSON.parse(readFileSync(require.resolve("@dunialab/content/packs/kenya-explorer.json"), "utf8"));
+      writeFileSync(join(dir, "approved.json"), JSON.stringify({ ...base, id: "zz.approved", review: { ...base.review, status: "approved", reviewedBy: "Teacher" } }));
+      writeFileSync(join(dir, "draft.json"), JSON.stringify({ ...base, id: "zz.draft", review: { ...base.review, status: "draft" } }));
+    });
+    await when("an API that does not allow drafts lists its catalogue", async () => {
+      const api = await startApi({ packsDir: dir, allowDraftContent: false });
+      try {
+        ids = (await api.call<{ id: string }[]>("GET", "/v1/catalog")).body.map((p) => p.id);
+      } finally {
+        await api.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+    await then("only the approved pack is offered", () => expect(ids).toEqual(["zz.approved"]));
   });
 });

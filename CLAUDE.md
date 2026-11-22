@@ -9,12 +9,34 @@ original, kept for reference only; never edit it.
 
 ## Non-negotiable rules
 
-### 1. Test-driven: Feature → Unit → E2E
-Full rule: `docs/engineering/testing-workflow.md`.
-1. Write the **feature test first** in `tests/features/<area>/*.feature.test.ts` (Given/When/Then, public API only). Run it and see it fail.
-2. Write **unit tests** next to the code (`packages/*/test`, `apps/*/test`) and implement until green.
-3. Add/extend an **E2E test** in `tests/e2e/` against the real system (`npm run db:up`, built API or Docker image).
-A feature is not done without all three. Logic implemented in two languages (mastery rules: TS + C#) is specified by shared JSON fixtures; change the fixture first.
+### 1. Test-driven: the test is the specification (Feature → Unit → Code → E2E)
+Full rule: `docs/engineering/testing-workflow.md`. The order is fixed:
+1. **Validate first with a failing test.** Write the **feature test** in `tests/features/<area>/*.feature.test.ts`
+   (Given/When/Then, public API only). Run it and **see it fail for the right reason** before any code exists.
+2. **Then the unit test** for the code you are about to write (`packages/*/test`, `apps/*/test`). See it fail.
+3. **Then the implementation**, the smallest code that makes both pass.
+4. **Then the E2E test** in `tests/e2e/` against the real system (`npm run db:up`, built API or Docker image).
+A feature is not done without all of them. Logic implemented in two languages (mastery rules: TS + C#) is
+specified by shared JSON fixtures; change the fixture first.
+
+**Every test is a file in the repo, never only a check run in an agent's session.** The failing feature
+test, the failing unit test assertions and the final E2E test are all written into their folders
+(`tests/features/`, `packages/*/test` or `apps/*/test`, `tests/e2e/`) and committed with the change, so
+anyone can run them again and CI runs them on every push. A one-off probe (a `curl`, a throwaway script,
+a background command) may help an agent investigate, but it is **never** evidence: if a result matters,
+it becomes a test file first, and the ledger names that file.
+
+**A failing test is fixed in the CODE, never by editing the test to match the code.** When a test fails:
+- Assume the code is wrong. Find where the code fails the requirement and change the code.
+- Change a test **only** when you can show the test itself is wrong: it asserts something the product
+  definition, an ADR or the brief does not require, or it is broken as a test (wrong argument, wrong
+  setup, flaky timing, measuring the wrong build). "The code does X, so the test should expect X" is
+  never a reason.
+- Every such test change is recorded in `docs/engineering/ledger.md` ("Test changes after a failure")
+  with: the test, what failed, the evidence that the test (not the code) was wrong, and what changed.
+  It is reviewed like any other finding. Silence is not allowed.
+- Never weaken a test to make it pass: no loosening a number, deleting an assertion, adding a skip,
+  raising a budget or widening a tolerance without that recorded evidence.
 
 ### 2. Architecture docs are updated with every architectural change
 Any new/removed component, data store, external service, cross-component call, data flow or extension point
@@ -57,6 +79,16 @@ Schema changes always update `docs/architecture/data-model.md`.
   a permission or data bug; check for one before changing code.
 - **Manual guides are written after code review** (`docs/manual-tests/`), from what shipped, not from the brief.
 
+### 6. Every change is recorded, and the docs move with it
+Each piece of work, in the same change, before it is called done:
+1. **Ledger:** add an entry to `docs/engineering/ledger.md`: date, what changed and why, the tests that
+   prove it (feature, unit, E2E), the files touched, findings closed, and any test changed after a failure.
+2. **Docs that describe what changed:** `docs/technical-guide.md` (behaviour), `docs/architecture/`
+   (rule 2), `docs/engineering/findings-register.md` (statuses), `CLAUDE.md` (new rules, commands, repo map).
+3. **Then the plans, if affected:** `docs/product/weekly-delivery-plan.md` (what was delivered in which week,
+   what moved) and `docs/product/product-definition.md` (only when a product decision changed).
+A change without its ledger entry is not done, whatever the tests say.
+
 ## Repo map
 ```
 packages/content   pack schema, validator, offline rubric checker, packs/*.json
@@ -86,7 +118,8 @@ npm test                      # feature + unit tests
 npm run db:up                 # Postgres on :5433 (docker compose)
 npm run test:e2e              # E2E (spawns built API against Postgres); E2E_REQUIRE_DB=1 fails instead of skipping
 npm run typecheck             # all workspaces + the root tests (typecheck:tests)
-npm run validate:content      # validate content packs
+npm run validate:content      # validate content packs (scripts/validate-content.mjs)
+npm run sync:unity-content    # copy APPROVED packs into Unity (--allow-drafts: local development only)
 npm run dev:api               # API on :3000
 npm run dev:web               # web on :5173
 npm run dev:phone             # web over HTTPS on the LAN (real-phone camera testing)
@@ -101,13 +134,18 @@ docker compose --profile app up -d --build   # API image + Postgres; then E2E_AP
 - TypeScript 7, ESM, `strict` + `noUncheckedIndexedAccess`. Relative imports end in `.js`.
 - Nest DI uses explicit `@Inject(TOKEN)`. Validate all input with zod (`common/zod.ts#parse`).
 - Claude API: default model `claude-opus-5-5`, configurable via `AI_MODEL`; structured outputs; never send child identity.
-- Production web builds offer approved packs only; `VITE_ALLOW_DRAFT_CONTENT=true` is for rehearsals and tests.
+- Production web builds offer approved packs only, and draft content is not even bundled; `VITE_ALLOW_DRAFT_CONTENT=true`
+  is for rehearsals and tests. Test-only overrides: `DUNIALAB_PACKS_DIR`, `DUNIALAB_ASSETS_DIR`, `DUNIALAB_UNITY_PACKS_DIR`.
   Browser E2E builds set `NODE_ENV=production` (under Vitest it is `test`, which bundles React's dev mode).
 - The sync batch limit is `SYNC_MAX_EVENTS` (`@dunialab/mastery`); never hard-code 500 anywhere.
+- Paid AI checks are rationed by `DEFAULT_RATE_LIMITS` (`aiChecksPerParent`, `aiConcurrentPerParent`,
+  `aiChecksPerDeployment`); over any limit the child gets the local rubric, never an error.
+- When reading a test run, read the "Test Files" line too: a failing `beforeAll` reports its tests as
+  "skipped" while the file (and the run) fails.
 - Data budgets live in `DELIVERY_BUDGET` (`packages/content/src/delivery-budget.ts`); never hard-code a size limit elsewhere.
 - Tests always start through `scripts/vitest.mjs` (all `npm test*` scripts do). On Windows, a terminal in
   `c:\...` (lower-case drive, VS Code's default) makes a directly started Vitest load itself twice and fail
   with "failed to find the runner"; the launcher starts it through its true-case path. Do not call `npx vitest`.
 - The generator never names a pack, feature or place: behaviour comes from `feature.kind` and data
   (a feature test greps `tools/geo/src` for place names).
-- Commit only when asked. Keep `docs/technical-guide.md` current when behaviour changes.
+- Commit only when asked. Every change gets a ledger entry and its docs in the same change (rule 6).

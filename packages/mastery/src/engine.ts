@@ -97,14 +97,19 @@ export function computeSkillStates(
   rules: MasteryRules = DEFAULT_RULES,
   skillIds: readonly string[] = [],
 ): Record<string, SkillState> {
-  const states: Record<string, SkillState> = {};
-  const scratch: Record<string, Scratch> = {};
-  for (const id of skillIds) states[id] = emptySkillState(id);
+  // Maps, not plain objects: a skill id is any string, including "constructor" or "__proto__",
+  // which a plain object already "has" (findings register CR29).
+  const states = new Map<string, SkillState>();
+  const scratch = new Map<string, Scratch>();
+  for (const id of skillIds) states.set(id, emptySkillState(id));
 
   for (const e of sortEvents(dedupe(events))) {
-    const s = (states[e.skillId] ??= emptySkillState(e.skillId));
-    const sc = (scratch[e.skillId] ??= { lastPromotionDay: null });
+    let s = states.get(e.skillId);
+    if (!s) states.set(e.skillId, (s = emptySkillState(e.skillId)));
+    let sc = scratch.get(e.skillId);
+    if (!sc) scratch.set(e.skillId, (sc = { lastPromotionDay: null }));
     apply(s, sc, e, rules);
   }
-  return states;
+  // Object.fromEntries defines own properties, so "__proto__" is an ordinary key here.
+  return Object.fromEntries(states);
 }

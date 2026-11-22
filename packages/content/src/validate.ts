@@ -70,6 +70,11 @@ export function validatePack(input: unknown): ValidationResult {
       if (t.type === "locate" && !featureIds.has(t.featureId)) err(tp, `unknown feature "${t.featureId}"`);
       if (t.type === "explain") {
         skillsWithExplain.add(t.skillId);
+        // Ids are unique inside one task: the local checker counts criteria by id, and the session
+        // shows the hint it finds by id (findings register CR30, CR31). Across tasks they may repeat.
+        const repeated = (ids: string[]) => ids.filter((id, i) => ids.indexOf(id) !== i);
+        for (const id of new Set(repeated(t.rubric.criteria.map((c) => c.id)))) err(`${tp}.rubric`, `duplicate criterion id "${id}"`);
+        for (const id of new Set(repeated(t.hints.map((h) => h.id)))) err(`${tp}.hints`, `duplicate hint id "${id}"`);
         const criteria = new Set(t.rubric.criteria.map((c) => c.id));
         if (t.rubric.minCriteria > criteria.size) err(tp, "minCriteria exceeds number of criteria");
         for (const h of t.hints) {

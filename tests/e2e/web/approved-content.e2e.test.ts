@@ -9,7 +9,7 @@
  *     the lessons, labelled as draft, with their 3D files. Without this half, "no lessons" would also
  *     pass if the app were simply broken.
  */
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +19,18 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const WEB_ROOT = fileURLToPath(new URL("../../../apps/web", import.meta.url));
 const PACK_ASSETS = join("content-assets", "ke.g5.sst.kenya-explorer");
+/** A sentence that exists only in the draft pack's lessons (a teacher-written explanation). */
+const DRAFT_LESSON_TEXT = JSON.parse(
+  readFileSync(fileURLToPath(new URL("../../../packages/content/packs/kenya-explorer.json", import.meta.url)), "utf8"),
+).missions[0].intro.en as string;
+
+/** All JavaScript the build ships, as one string. */
+function shippedScripts(outDir: string): string {
+  return readdirSync(join(outDir, "assets"))
+    .filter((f) => f.endsWith(".js"))
+    .map((f) => readFileSync(join(outDir, "assets", f), "utf8"))
+    .join(" ");
+}
 
 /** Production build into a fresh folder, with the given extra build environment. */
 async function productionBuild(env: Record<string, string | undefined>): Promise<string> {
@@ -71,6 +83,9 @@ describe("E2E (browser): production builds offer only approved lessons", () => {
     await expect.poll(() => page.getByRole("status").innerText()).toMatch(/waiting for teacher approval/);
     expect(await page.getByRole("button", { name: /The map is broken!/ }).count()).toBe(0);
     expect(existsSync(join(outDir, PACK_ASSETS))).toBe(false);
+    // Findings register CR2: hidden is not enough. The draft lessons must not be in the files at all.
+    expect(DRAFT_LESSON_TEXT.length).toBeGreaterThan(20);
+    expect(shippedScripts(outDir).includes(DRAFT_LESSON_TEXT), "draft lesson text in the shipped scripts").toBe(false);
   }, 180_000);
 
   it("positive control: a rehearsal build that allows drafts offers them, labelled as draft", async () => {
@@ -82,6 +97,7 @@ describe("E2E (browser): production builds offer only approved lessons", () => {
     expect(await page.getByText(/not yet teacher-approved/).isVisible()).toBe(true);
     expect(existsSync(join(outDir, PACK_ASSETS, "3d", "manifest.json"))).toBe(true);
     expect(existsSync(join(outDir, PACK_ASSETS, "3d", "previews"))).toBe(false);
+    expect(shippedScripts(outDir).includes(DRAFT_LESSON_TEXT), "draft lesson text in the shipped scripts").toBe(true);
   }, 180_000);
 });
 
@@ -111,3 +127,29 @@ describe("E2E (build): an invalid content pack fails the build, loudly", () => {
     }
   }, 240_000);
 });
+
+describe("E2E (build): one incomplete pack folder does not break the app (findings register CR40)", () => {
+  it("a pack whose 3D manifest is missing builds without its 3D files; the rest of the app still builds", async () => {
+    const { cpSync, mkdtempSync: tmp } = await import("node:fs");
+    const assets = tmp(join(tmpdir(), "dunialab-assets-"));
+    const outDir = tmp(join(tmpdir(), "dunialab-nomanifest-"));
+    // A copy of the pack's 3D folder with its manifest removed (a partial download or a bad copy).
+    cpSync(join(fileURLToPath(new URL("../../../content-assets/ke.g5.sst.kenya-explorer/3d", import.meta.url)), "lakes.json"), join(assets, "ke.g5.sst.kenya-explorer", "3d", "lakes.json"));
+    const saved = { DUNIALAB_ASSETS_DIR: process.env.DUNIALAB_ASSETS_DIR, VITE_ALLOW_DRAFT_CONTENT: process.env.VITE_ALLOW_DRAFT_CONTENT };
+    process.env.DUNIALAB_ASSETS_DIR = assets;
+    process.env.VITE_ALLOW_DRAFT_CONTENT = "true";
+    try {
+      await build({ root: WEB_ROOT, logLevel: "silent", build: { outDir, emptyOutDir: true } });
+      expect(existsSync(join(outDir, "index.html"))).toBe(true);
+      expect(existsSync(join(outDir, PACK_ASSETS))).toBe(false);
+    } finally {
+      for (const [k, v] of Object.entries(saved)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+      rmSync(assets, { recursive: true, force: true });
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  }, 240_000);
+});
+

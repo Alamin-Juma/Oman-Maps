@@ -29,7 +29,7 @@ flowchart LR
   map[/Printed A2 Kenya Explorer map/]
 
   subgraph phone[Family Android phone]
-    unity[Learner app<br/>Unity: Tier A full AR / Tier B scan-and-pop]
+    unity[Learner app, PLANNED<br/>Unity: Tier A full AR / Tier B scan-and-pop<br/>scaffolding only today: register P4]
   end
   subgraph browser[Any browser]
     web[Web app<br/>Tier C 2D map + parent report]
@@ -58,7 +58,7 @@ flowchart LR
 - **No camera image leaves the phone.** Map recognition runs on the device. The web camera
   device check (Tier B precursor) holds its stream locally and draws to a local canvas; it has no
   API client, and an E2E test asserts no request carries a frame.
-- **Claude never sees who the child is.** It receives the task, rubric, approved hints, exemplar, locale and the answer text, with phone numbers, emails and links **redacted first**, and only for parents who consented to the current policy. Nothing else.
+- **Claude is never sent the child's identity, but the answer text can contain it.** It receives the task, rubric, approved hints, exemplar, locale and the answer text, never a profile id, nickname or grade, and only for parents who consented to the current policy. Phone numbers, emails and links are **redacted first**, but a name or a school typed into the answer is **not** removed: redaction is data minimisation, not a guarantee. Whether external grading may run at all until that is solved is founder decision **D3** (findings register S3, CR5); external AI stays off until then. Online checks are rationed per parent and per deployment, and cancelled when the server stops waiting (CR7).
 - **Open geodata is used at build time only.** The generator (`tools/geo`) downloads elevation and land-cover data on a developer machine; learners' devices only ever fetch our own generated files from our own origin (ADR-0009).
 - **A mission never waits on the network.** The only online step (the AI check) has an offline fallback.
 
@@ -206,6 +206,7 @@ Newest first. One line per change; link the PR/ADR.
 
 | Date | Change | Diagrams updated | Ref |
 |---|---|---|---|
+| 2026-11-22 | First CodeRabbit review round (findings register §8): **AI admission control** in the explanations controller (per-parent allowance and concurrency, deployment cap, cancellation through the `AiGrader` port's `signal`); **build-time pack selection** (`virtual:dunialab-packs` exports the selection, drafts never bundled in production); content-pack field **`countryIsoNumeric`** (P9: no country table in the app); **content validator moved** from `packages/content` to `scripts/validate-content.mjs`; Unity sync copies approved packs only; generator **ocean mask** (sea = connected to the data edge), source-scoped geodata caches, GLO-90 fallback | Context diagram (Unity learner app marked planned) | [findings register](../engineering/findings-register.md) |
 | 2026-11-19 | Review fixes (findings register): **sync contract** `SYNC_MAX_EVENTS` shared by API and clients via `@dunialab/mastery`, with an API body limit sized from it; web **batched sync**; **sign-in/sign-up rate limiter** in the API (`AttemptLimiter`, `TRUST_PROXY`); web **session scope** (sign-out and expired sign-in drop late answers); **content packs validated at build time** (invalid pack fails the build; production offers approved packs only and ships only their 3D files); first load 150.4 -> 121.7 kB | Flows (sync) | [findings register](../engineering/findings-register.md) |
 | 2026-11-17 | 3D Explorer, Phase 2: lazy web viewer, pure scene planner, bounded same-origin loader and Vite manifest allowlist (dev serving / production copy, previews excluded). Terrain rise, orbit, labels, lake surfaces and static rivers; localized facts and source notices; 2D fallback and mission isolation. WebGL E2E and first-open budget enforced | Components, Flow 6 | [ADR-0008](../adr/0008-3d-rendering-stack.md), [ADR-0010](../adr/0010-web-terrain-rendering.md) |
 | 2026-11-16 | 3D Explorer, Phase 0 (decisions and spikes): `tools/geo` workspace with a one-window Copernicus DEM spike; data budgets as code (`DELIVERY_BUDGET` in `@dunialab/content`) with a production-bundle test; E2E WebGL2 harness (SwiftShader, screenshot read-back). Planned, not built: generator, `content-assets/`, 3D viewer. Open geodata is a **build-time** source only; nothing new is contacted at runtime | Components, Extension points | [ADR-0008](../adr/0008-3d-rendering-stack.md), [ADR-0009](../adr/0009-geodata-sources-and-3d-assets.md) (both Proposed) |

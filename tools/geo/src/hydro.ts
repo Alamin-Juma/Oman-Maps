@@ -15,7 +15,7 @@
  * Pure: grids and lines in, a line out. No pack, feature or place is named here.
  */
 import { KM_PER_DEG_LAT, boundsOfPoints, expandBounds, haversineKm, kmPerDegLon, type LonLat } from "./geo-math.js";
-import { cellOf, contains, cropGrid, lonLatOfCell, type GeoGrid } from "./grid.js";
+import { cellOf, contains, cropGrid, lonLatOfCell, oceanMask, type GeoGrid } from "./grid.js";
 import { findFlatRegion, simplifyLine } from "./lakes.js";
 
 export interface TraceOptions {
@@ -96,13 +96,15 @@ export function traceRiver({ dem: fullDem, roughPath, guides, options = {} }: Tr
   // 2. Where does the river end? A lake under the line's end, otherwise the sea.
   const outlet = new Uint8Array(n);
   let endsIn: "sea" | "lake" = "sea";
+  // Sea is water at sea level that reaches the edge of the data. An inland basin below sea level is
+  // walled off by land and is not an outlet; it would end the river inland (findings register CR59).
+  const ocean = oceanMask(dem, seaLevel);
   let seaNearEnd = false;
   forCellsWithin(dem, end, 3, kmX, kmY, (c) => {
-    if (dem.data[c]! <= seaLevel) seaNearEnd = true;
+    if (ocean[c]) seaNearEnd = true;
   });
-  const lake = seaNearEnd ? null : findFlatRegion(dem, end, 3, seaLevel);
-  const lakeAreaKm2 = lake ? lake.cells * kmX * kmY : 0;
-  if (lake && lakeAreaKm2 >= 5 && lake.levelMetres > seaLevel + 2) {
+  const lake = seaNearEnd ? null : findFlatRegion(dem, end, 3, seaLevel, (r) => r.cells * kmX * kmY >= 5 && r.levelMetres > seaLevel + 2);
+  if (lake) {
     endsIn = "lake";
     for (let c = 0; c < n; c++) {
       if (lake.mask[c]) {
@@ -111,7 +113,7 @@ export function traceRiver({ dem: fullDem, roughPath, guides, options = {} }: Tr
       }
     }
   } else {
-    for (let c = 0; c < n; c++) if (inCorridor[c] && dem.data[c]! <= seaLevel) outlet[c] = 1;
+    for (let c = 0; c < n; c++) if (inCorridor[c] && ocean[c]) outlet[c] = 1;
   }
 
   // 3. Flood upward from the outlets, remembering the way down.
@@ -194,20 +196,36 @@ export function traceRiver({ dem: fullDem, roughPath, guides, options = {} }: Tr
   const flat = smooth.map(([lon, lat], idx) => [(lon - dem.west) * (kmX / dem.cell), (dem.north - lat) * (kmY / dem.cell), idx] as const);
   const kept = simplifyLine(flat, simplifyKm).map((p) => p[2]);
 
-  let lowest = Infinity;
-  const elevationAt = cells.map((c) => (lowest = Math.min(lowest, Math.max(0, dem.data[c]!))));
+  // The water surface along the river, filled from the mouth upward: it meets the lake (or the sea)
+  // at its level and never rises downstream; a hollow on the way fills to its sill, as standing
+  // water does. A running minimum from the source instead lowered the mouth to the deepest hollow
+  // (findings register CR61).
+  const mouthLevel = endsIn === "lake" && lake ? lake.levelMetres : seaLevel;
+  const elevationAt = new Array<number>(cells.length);
+  for (let k = cells.length - 1; k >= 0; k--) {
+    const ground = Math.max(0, dem.data[cells[k]!]!);
+    elevationAt[k] = k === cells.length - 1 ? Math.max(0, mouthLevel) : Math.max(ground, elevationAt[k + 1]!);
+  }
   const maxFlow = upstream[cells.at(-1)!]! || 1;
   const points: RiverPoint[] = [];
   let distanceKm = 0;
   let offGuide = 0;
-  for (let k = 0; k < kept.length; k++) {
-    const idx = kept[k]!;
+  // Drop points too close to the last point KEPT (they would not survive rounding to 10 m), but
+  // always keep both ends: without its outlet a short river collapses to one point, which
+  // carveChannel ignores (findings register CR60).
+  const chosen: number[] = [];
+  for (const idx of kept) {
+    if (chosen.length === 0 || haversineKm(smooth[chosen.at(-1)!]!, smooth[idx]!) >= 0.011) chosen.push(idx);
+  }
+  const outletIdx = kept.at(-1)!;
+  if (chosen.at(-1) !== outletIdx) {
+    if (chosen.length > 1) chosen[chosen.length - 1] = outletIdx; // replace the point nearest the mouth
+    else chosen.push(outletIdx);
+  }
+  for (let k = 0; k < chosen.length; k++) {
+    const idx = chosen[k]!;
+    if (k > 0) distanceKm += haversineKm(smooth[chosen[k - 1]!]!, smooth[idx]!);
     const p = smooth[idx]!;
-    if (k > 0) {
-      const step = haversineKm(smooth[kept[k - 1]!]!, p);
-      if (step < 0.011) continue; // would not survive rounding to 10 m
-      distanceKm += step;
-    }
     points.push([round(p[0], 5), round(p[1], 5), round(elevationAt[idx]!, 1), round(distanceKm, 2), round(Math.sqrt(upstream[cells[idx]!]! / maxFlow), 3)]);
   }
   for (const c of cells) offGuide = Math.max(offGuide, dist[c]!);
@@ -412,3 +430,4 @@ export class MinHeap {
 }
 
 const round = (v: number, digits: number) => Math.round(v * 10 ** digits) / 10 ** digits;
+

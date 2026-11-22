@@ -70,7 +70,11 @@ feature("Consent before any child profile exists", () => {
       a = await parentToken(api);
       b = await parentToken(api);
       for (const t of [a, b]) await api.call("POST", "/v1/consents", { policyVersion: "2026-11", accepted: true }, t);
-      await api.call("POST", "/v1/profiles", child, a);
+      // Positive control (findings register CR47): the child exists, and its own parent sees it,
+      // so "none" below cannot pass just because the child was never created.
+      expect((await api.call("POST", "/v1/profiles", child, a)).status).toBe(201);
+      const own = (await api.call<any[]>("GET", "/v1/profiles", undefined, a)).body;
+      expect(own.map((p) => p.nickname)).toEqual([child.nickname]);
     });
     await when("the second parent lists profiles", async () => {
       seen = (await api.call<any[]>("GET", "/v1/profiles", undefined, b)).body;

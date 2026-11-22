@@ -160,7 +160,14 @@ export const ContentPack = z.object({
   id: Id,
   version: z.string().regex(/^\d+\.\d+\.\d+$/),
   title: LocalizedText,
-  country: z.string().length(2),
+  /** ISO 3166-1 alpha-2, upper case: one spelling, so a catalogue filter always matches (findings register CR32). */
+  country: z.string().regex(/^[A-Z]{2}$/, "an upper-case ISO 3166-1 alpha-2 code, such as KE"),
+  /**
+   * The same country's ISO 3166-1 numeric code (Kenya: "404"), which the 2D basemap uses to find the
+   * home boundary. In the pack, so a new country is a content drop (findings register P9, CR36).
+   * Optional: without it the map highlights no home country.
+   */
+  countryIsoNumeric: z.string().regex(/^\d{3}$/, "a three-digit ISO 3166-1 numeric code, such as 404").optional(),
   grade: z.number().int().min(1).max(12),
   subject: z.string(),
   strand: z.object({ code: z.string(), title: LocalizedText }),

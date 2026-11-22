@@ -9,7 +9,7 @@
  */
 import { expect } from "vitest";
 import { SYNC_MAX_EVENTS, type AttemptEvent } from "@dunialab/mastery";
-import { EventQueue, type KeyValueStorage } from "../../../apps/web/src/lib/queue.js";
+import { browserStorage, EventQueue, type KeyValueStorage } from "../../../apps/web/src/lib/queue.js";
 import { syncInBatches, type SyncClient, type SyncOutcome } from "../../../apps/web/src/lib/sync.js";
 import { feature, scenario } from "../support/gherkin.js";
 
@@ -211,5 +211,48 @@ feature("A child's progress is never lost silently, and every waiting event can 
 
   scenario("the client and the server agree on the limit", async ({ then }) => {
     await then("the shared limit is the server's per-request maximum", () => expect(SYNC_MAX_EVENTS).toBe(500));
+  });
+
+  scenario("a tab whose save failed does not overwrite another tab's answers when it can save again (findings register CR20)", async ({ given, when, then }) => {
+    const storage = phoneStorage();
+    const tabOne = new EventQueue(storage);
+    const tabTwo = new EventQueue(storage);
+    const [a, b, c] = [play("amani"), play("baraka"), play("amani")];
+    await given("tab one could not save Amani's answer because the phone was full", () => {
+      storage.fill(true);
+      tabOne.add(PACK, [a]);
+      expect(tabOne.notSaved).toBe(true);
+    });
+    await when("space is freed, tab two saves Baraka's answer, then tab one saves another answer", () => {
+      storage.fill(false);
+      tabTwo.add(PACK, [b]);
+      tabOne.add(PACK, [c]);
+    });
+    await then("all three answers are on the phone", () => {
+      const fresh = new EventQueue(storage);
+      expect(fresh.all(PACK, "amani").map((e) => e.eventId).sort()).toEqual([a.eventId, c.eventId].sort());
+      expect(fresh.all(PACK, "baraka").map((e) => e.eventId)).toEqual([b.eventId]);
+      expect(tabOne.notSaved).toBe(false);
+    });
+  });
+
+  scenario("when the browser gives no storage at all, the app says progress is not saved (findings register CR21)", async ({ given, when, then, and }) => {
+    let q = new EventQueue(browserStorage(() => ({ getItem: () => null, setItem: () => true })));
+    await given("a browser where opening storage itself throws (site data blocked)", () => {
+      q = new EventQueue(browserStorage(() => { throw new DOMException("The operation is insecure.", "SecurityError"); }));
+    });
+    await when("the child answers a question", () => q.add(PACK, [play("amani")]));
+    await then("the answer is kept for this session", () => expect(q.all(PACK, "amani")).toHaveLength(1));
+    await and("the app knows it is not saved on the phone, so the warning shows", () => expect(q.notSaved).toBe(true));
+  });
+
+  scenario("positive control: real storage saves, and no warning shows", async ({ when, then }) => {
+    const m = new Map<string, string>();
+    const q = new EventQueue(browserStorage(() => ({ getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) })));
+    await when("the child answers a question", () => q.add(PACK, [play("amani")]));
+    await then("it is saved and the warning stays hidden", () => {
+      expect(q.notSaved).toBe(false);
+      expect(m.size).toBe(1);
+    });
   });
 });

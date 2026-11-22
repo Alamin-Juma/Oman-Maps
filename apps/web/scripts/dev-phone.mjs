@@ -9,13 +9,14 @@
  */
 import { networkInterfaces } from "node:os";
 import { createServer } from "vite";
+import { listeningPort } from "./listening-port.mjs";
 
 process.env.DUNIALAB_HTTPS = "1";
 
 const server = await createServer({ server: { port: 5173, host: true } });
 await server.listen();
 
-const port = server.config.server.port ?? 5173;
+const port = listeningPort(server);
 const addresses = Object.values(networkInterfaces())
   .flat()
   .filter((n) => n && n.family === "IPv4" && !n.internal)

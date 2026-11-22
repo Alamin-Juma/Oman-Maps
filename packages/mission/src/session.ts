@@ -42,7 +42,15 @@ export interface SessionOptions {
   now?: () => string;
   /** UUID generator. Injected for determinism in tests. */
   newId?: () => string;
+  /**
+   * Longest wait for an online checker before the on-device rubric answers (findings register
+   * CR27). A verdict that arrives later is ignored. Default {@link DEFAULT_CHECKER_TIMEOUT_MS}.
+   */
+  checkerTimeoutMs?: number;
 }
+
+/** A mission never waits on the network for longer than this (product rule 4). */
+export const DEFAULT_CHECKER_TIMEOUT_MS = 6000;
 
 export interface SessionState {
   mission: Mission;
@@ -67,11 +75,16 @@ export class MissionSession {
   private phase: Phase = "task";
   private hint: Hint | null = null;
   private readonly queue: AttemptEvent[] = [];
+  /** The explanation check in progress, if any: one attempt at a time (findings register CR26). */
+  private inFlight: Promise<{ feedback: ExplanationFeedback; hint: Hint | null }> | null = null;
   readonly mission: Mission;
 
   constructor(private readonly opts: Required<Omit<SessionOptions, "context">> & { context: AttemptEvent["context"] }) {
     const mission = opts.pack.missions.find((m) => m.id === opts.missionId);
     if (!mission) throw new Error(`mission "${opts.missionId}" not found in pack "${opts.pack.id}"`);
+    if (!(Number.isFinite(opts.checkerTimeoutMs) && opts.checkerTimeoutMs > 0)) {
+      throw new Error(`checkerTimeoutMs must be a positive number of milliseconds, got ${String(opts.checkerTimeoutMs)}`);
+    }
     this.mission = mission;
   }
 
@@ -118,21 +131,40 @@ export class MissionSession {
    * @param checker optional online checker (e.g. the API). Any error falls back to the
    *                on-device rubric checker, so a mission never waits on the network.
    */
-  async answerExplain(
+  answerExplain(
     answer: string,
     locale: Locale,
     checker?: ExplanationChecker,
   ): Promise<{ feedback: ExplanationFeedback; hint: Hint | null }> {
+    // A second submission while one is being checked gets that same result: it must not record a
+    // second event or advance twice, which would skip the next task (findings register CR26).
+    if (this.inFlight) return this.inFlight;
     const task = this.state().task;
     if (task?.type !== "explain" || (this.phase !== "task" && this.phase !== "hint")) {
-      throw new Error(`answerExplain is not valid now (phase=${this.phase}, task=${task?.type})`);
+      return Promise.reject(new Error(`answerExplain is not valid now (phase=${this.phase}, task=${task?.type})`));
     }
+    const run = this.checkAndApply(task, answer, locale, checker).finally(() => {
+      this.inFlight = null;
+    });
+    this.inFlight = run;
+    return run;
+  }
+
+  private async checkAndApply(
+    task: ExplainTask,
+    answer: string,
+    locale: Locale,
+    checker?: ExplanationChecker,
+  ): Promise<{ feedback: ExplanationFeedback; hint: Hint | null }> {
     const attempt = this.phase === "hint" ? 2 : 1;
 
     let feedback: ExplanationFeedback;
     try {
-      feedback = checker ? await checker(task, answer, locale, attempt) : checkExplanationLocally(task, answer, locale, attempt);
+      feedback = checker
+        ? await withDeadline(Promise.resolve(checker(task, answer, locale, attempt)), this.opts.checkerTimeoutMs)
+        : checkExplanationLocally(task, answer, locale, attempt);
     } catch {
+      // Any failure, including the deadline, is answered by the on-device rubric.
       feedback = checkExplanationLocally(task, answer, locale, attempt);
     }
     // Never more than one hint, whatever a checker says.
@@ -199,5 +231,19 @@ export function createMissionSession(opts: SessionOptions): MissionSession {
     now: () => new Date().toISOString(),
     newId: uuid,
     ...opts,
+    checkerTimeoutMs: opts.checkerTimeoutMs ?? DEFAULT_CHECKER_TIMEOUT_MS,
   });
+}
+
+/**
+ * Settle with `work`, or reject once `ms` have passed. A late result is simply never observed,
+ * so it cannot change an attempt that the local rubric already answered (findings register CR27).
+ * A timer, not I/O: the package stays free of network and framework code.
+ */
+function withDeadline<T>(work: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`checker did not answer within ${ms} ms`)), ms);
+  });
+  return Promise.race([work, deadline]).finally(() => clearTimeout(timer));
 }

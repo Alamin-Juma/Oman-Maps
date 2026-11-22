@@ -6,7 +6,7 @@
  *    mixing topics so the child does not just repeat the last thing studied."
  */
 import { expect } from "vitest";
-import { buildReviewQueue, computeSkillStates, type AttemptEvent } from "@dunialab/mastery";
+import { buildReviewQueue, computeSkillStates, weeklySummary, type AttemptEvent } from "@dunialab/mastery";
 import { feature, scenario } from "../support/gherkin.js";
 
 const at = (day: string, hour = 9) => `${day}T${String(hour - 3).padStart(2, "0")}:00:00Z`; // EAT hour -> UTC
@@ -101,6 +101,40 @@ feature("Spaced review mixes topics", () => {
     await then("no two reviews in a row come from the same sub-strand", () => {
       for (let i = 1; i < queue.length; i++) expect(topics[queue[i] as keyof typeof topics]).not.toBe(topics[queue[i - 1] as keyof typeof topics]);
       expect(queue).toHaveLength(4);
+    });
+  });
+});
+
+feature("The weekly report counts each answer once", () => {
+  scenario("an answer sent twice (a retried sync) is counted once (findings register CR28)", async ({ given, when, then }) => {
+    let events: AttemptEvent[] = [];
+    let line: { attemptsThisWeek: number; correctThisWeek: number; needsSupport: boolean } | undefined;
+    await given("Amani answered one question wrongly and one correctly, and the wrong one reached the server twice", () => {
+      const wrong = attempt("map.scale", "2027-01-11", { correct: false });
+      events = [wrong, { ...wrong }, attempt("map.scale", "2027-01-12")];
+    });
+    await when("the parent opens the weekly report", () => {
+      line = weeklySummary(events, "2027-01-17", ["map.scale"]).lines.find((l) => l.skillId === "map.scale");
+    });
+    await then("it shows two attempts, one correct, and half correct is not 'needs support'", () => {
+      expect(line).toMatchObject({ attemptsThisWeek: 2, correctThisWeek: 1, needsSupport: false });
+    });
+  });
+});
+
+feature("Any skill id works", () => {
+  scenario("a skill called 'constructor' is tracked like any other (findings register CR29)", async ({ given, when, then }) => {
+    let events: AttemptEvent[] = [];
+    let state: ReturnType<typeof computeSkillStates> = {};
+    await given("a content pack whose skill id happens to be a built-in name", () => {
+      events = [attempt("constructor", "2027-01-11"), attempt("__proto__", "2027-01-11")];
+    });
+    await when("we compute the skill states", () => {
+      state = computeSkillStates(events);
+    });
+    await then("each skill has its own state", () => {
+      expect(Object.keys(state).sort()).toEqual(["__proto__", "constructor"]);
+      expect(state["constructor"]!.attempts).toBe(1);
     });
   });
 });

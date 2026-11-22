@@ -72,8 +72,8 @@ npm install
 npm run build                     # all packages + apps
 npm test                          # feature + unit tests
 npm run db:up                     # Postgres 17 on localhost:5433
+npx playwright install chromium   # first time only, before the first E2E run
 npm run test:e2e                  # API + Postgres + Chromium end-to-end
-npx playwright install chromium   # first time only, for the browser E2E
 
 # Run it
 npm run dev:api                   # API on http://localhost:3000 (in-memory store unless DATABASE_URL is set)
@@ -273,6 +273,40 @@ CI: every run verifies sizes, fingerprints and budgets from the Git LFS pointers
   `TRUST_PROXY` (for example `1`) so the limits see each visitor's address, not the proxy's.
 - **An expired sign-in** signs the parent out with a message; a 401 at the sign-in form is just a wrong password.
 
+**Changed by the first CodeRabbit review round (22 Nov 2026; findings register §8)**
+- **Drafts are not even in the files.** The build decides which packs the app offers; a withheld pack ships as
+  its id only (`virtual:dunialab-packs` exports the selection). One pack folder without `3d/manifest.json`
+  ships without 3D, with a warning, instead of failing the build.
+- **Online explanation checks are rationed** (`DEFAULT_RATE_LIMITS`): 40 per parent per hour, 2 at a time
+  per parent, 1,000 per deployment per hour. Over any of them, and whenever the consent lookup fails, the
+  child gets the device rubric's answer: never an error. A check the server stops waiting for is cancelled
+  (`AiGrader.grade(input, { signal })`).
+- **A mission bounds its own wait** (`checkerTimeoutMs`, default 6 s, in `@dunialab/mission`), and a second
+  press of "Check my answer" gets the first press's result.
+- **Sessions:** a late 401 for an older sign-in no longer signs out the newer one; a plain-text 401 still
+  ends the session; Sign in and Create account send one request at a time.
+- **Screens:** the parent area shows "Loading children...", a failure with Try again, or the children; only a
+  successful empty list offers Add child. A weekly report shows only for the child and pack it was asked for.
+- **Storage:** when the browser gives no storage at all, the app says progress is not saved; a tab whose save
+  failed merges with other tabs' saves when it can save again.
+- **Content packs** may carry `countryIsoNumeric` (ISO 3166-1 numeric, Kenya "404"); the 2D map highlights
+  the home country from it. `country` must be upper case. Repeated criterion or hint ids in one task are refused.
+- **Tools:** `npm run validate:content` now runs `scripts/validate-content.mjs` (packages stay pure).
+  `npm run sync:unity-content` copies approved packs only (`--allow-drafts` for local development) and removes
+  packs no longer in the source. `npm run dev:phone` prints the port Vite really chose.
+- **Geodata generator:** the sea is water connected to the edge of the data, so land below sea level keeps its
+  tiles and an inland basin is never a river's mouth; rivers keep their outlet and meet lakes at the surface;
+  lake search ranks by km and looks past puddles. A 403 from a data mirror is not cached; each mirror has its own
+  cache; a missing GLO-30 land tile falls back to GLO-90; downloaded river lines are checked before caching.
+  `--params` is checked before any old asset is deleted. `geo:verify` also checks every named tile and every
+  recorded size. The Kenya assets were regenerated: the Tana now traces 758.9 km (was 751).
+
+**Running the E2E suite against the Docker image**
+`docker compose --profile app up -d --build`, then `E2E_API_URL=http://localhost:3000 E2E_REQUIRE_DB=1 npm run test:e2e`.
+The image runs in production mode with the real rate limits, so a second run within an hour fails sign-ups
+with 429 (10 sign-ups per address per hour). That is the limit working. Restart the API container between
+repeated runs: `docker compose --profile app restart api`. CI uses a fresh container each run.
+
 **Windows: "Vitest failed to find the runner"**
 Fixed at the root: every test script starts Vitest through `scripts/vitest.mjs`. The cause was not the folder but the path
 Node used to start Vitest: from a terminal in `c:\dev\...` (lower-case drive letter, VS Code's default) npm starts it as
@@ -283,6 +317,11 @@ true-case path. To run Vitest by hand use `npm run vitest -- run --project featu
 **Use the real AI locally:** put `ANTHROPIC_API_KEY` in `apps/api/.env`, restart `npm run dev:api`, sign in on the web app, and the explanation check goes through Claude.
 
 ## 8. Status and roadmap
+
+For the 19 November baseline, remaining features, decision dependencies and dated delivery
+forecast, see the [weekly feature delivery plan](product/weekly-delivery-plan.md).
+It distinguishes current implementation from completed release evidence; the historical
+foundation table and original 11-week sequence below are not a current completion forecast.
 
 Done on 2026-11-07 (foundation):
 

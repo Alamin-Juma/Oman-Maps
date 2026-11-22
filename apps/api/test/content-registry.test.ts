@@ -15,11 +15,18 @@ describe("ContentRegistry", () => {
     expect(k.tasks.get("m4-t4-followup")?.task.type).toBe("choice");
   });
 
-  it("skips draft packs when drafts are not allowed (production) and warns", () => {
+  it("skips draft packs when drafts are not allowed (production) and warns, but keeps approved ones (findings register CR43)", () => {
+    // Its own fixtures: approving the shipped pack must not break this test.
+    const dir = tmp();
+    const base = JSON.parse(readFileSync(join(defaultDir, "kenya-explorer.json"), "utf8"));
+    writeFileSync(join(dir, "approved.json"), JSON.stringify({ ...base, id: "zz.approved", review: { ...base.review, status: "approved", reviewedBy: "Teacher" } }));
+    writeFileSync(join(dir, "draft.json"), JSON.stringify({ ...base, id: "zz.draft", review: { ...base.review, status: "draft" } }));
     const warnings: string[] = [];
-    const r = ContentRegistry.fromDirectory(defaultDir, { allowDraft: false, warn: (m) => warnings.push(m) });
-    expect(r.size).toBe(0);
-    expect(warnings[0]).toMatch(/skipping ke\.g5\.sst\.kenya-explorer/);
+    const r = ContentRegistry.fromDirectory(dir, { allowDraft: false, warn: (m) => warnings.push(m) });
+    expect(r.get("zz.approved")).toBeDefined();
+    expect(r.get("zz.draft")).toBeUndefined();
+    expect(r.size).toBe(1);
+    expect(warnings.join("\n")).toMatch(/skipping zz\.draft/);
   });
 
   it("refuses to start with an invalid pack", () => {

@@ -69,3 +69,31 @@ describe("DuniaApi", () => {
     await expect(api.addProfile("A", 5, ["lion", "sun", "drum"])).rejects.toBeInstanceOf(ApiError);
   });
 });
+
+describe("DuniaApi error decoding and expiry (findings register CR10, CR11)", () => {
+  const reply = (body: string, status: number) => (async () => new Response(body, { status })) as typeof fetch;
+
+  it("turns a non-JSON error body into an ApiError with the status", async () => {
+    const api = new DuniaApi("http://x", () => "t", reply("<html>Bad gateway</html>", 502));
+    const err = await api.profiles().catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(502);
+  });
+
+  it("keeps the server's message from a JSON error body", async () => {
+    const api = new DuniaApi("http://x", () => "t", reply(JSON.stringify({ message: "pack not found" }), 404));
+    expect((await api.profiles().catch((e) => e)).message).toBe("pack not found");
+  });
+
+  it("refuses a successful answer that is not JSON instead of throwing a SyntaxError", async () => {
+    const api = new DuniaApi("http://x", () => "t", reply("not json", 200));
+    expect(await api.profiles().catch((e) => e)).toBeInstanceOf(ApiError);
+  });
+
+  it("reports the token the failed request was sent with", async () => {
+    const seen: Array<string | null> = [];
+    const api = new DuniaApi("http://x", () => "token-1", reply("", 401), 6000, (t) => seen.push(t));
+    await api.profiles().catch(() => {});
+    expect(seen).toEqual(["token-1"]);
+  });
+});

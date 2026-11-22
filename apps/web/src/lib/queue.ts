@@ -58,6 +58,8 @@ export class EventQueue {
    * R1). While set, it is the truth for this session; every later write tries storage again.
    */
   private unsaved: Stored[] | null = null;
+  /** Ids changed while saving was failing: the recovery write merges them in (findings register CR20). */
+  private pendingTouched = new Set<string>();
   private damaged = 0;
 
   constructor(private readonly storage: KeyValueStorage) {}
@@ -123,7 +125,10 @@ export class EventQueue {
    * full fix is IndexedDB transactions (deferred in the register).
    */
   private write(items: Stored[], touched?: ReadonlySet<string>) {
-    const toSave = touched && !this.unsaved ? mergeQueues(this.peekStored(), items, touched) : items;
+    // Every write that changes events merges with what is stored, including the first write after
+    // saving failed: another tab may have saved since, and those events must survive (CR20).
+    const changed = new Set([...this.pendingTouched, ...(touched ?? [])]);
+    const toSave = touched ? mergeQueues(this.peekStored(), items, changed) : items;
     let saved: boolean;
     try {
       saved = this.storage.setItem(KEY, JSON.stringify(toSave)) !== false;
@@ -133,6 +138,7 @@ export class EventQueue {
     // Storage full or blocked: keep everything in memory for this session and say so, rather
     // than letting the child's progress disappear (findings register R1).
     this.unsaved = saved ? null : toSave;
+    this.pendingTouched = saved ? new Set() : changed;
   }
 
   /** What is in storage right now, valid entries only, without side effects. */
@@ -246,16 +252,21 @@ export function safeStorage(inner: KeyValueStorage): Required<KeyValueStorage> {
   };
 }
 
-export function browserStorage(): Required<KeyValueStorage> {
+/**
+ * The phone's storage, or a memory stand-in when the browser gives none (site data blocked).
+ * The stand-in keeps data for this page only, so its writes report `false`: the queue then knows
+ * progress is NOT saved on the phone and the app says so (findings register CR21).
+ */
+export function browserStorage(open: () => KeyValueStorage = () => window.localStorage): Required<KeyValueStorage> {
   try {
-    return safeStorage(window.localStorage);
+    return safeStorage(open());
   } catch {
     const mem = new Map<string, string>();
     return {
       getItem: (k) => mem.get(k) ?? null,
       setItem: (k, v) => {
         mem.set(k, v);
-        return true;
+        return false; // kept in memory only: not durable
       },
       removeItem: (k) => void mem.delete(k),
     };

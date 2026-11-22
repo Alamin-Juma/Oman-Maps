@@ -115,4 +115,58 @@ feature("A child plays a mission the same way on every tier, fully offline", () 
       expect(s.events().at(-1)).toMatchObject({ kind: "explain", correct: true, checkedBy: "ai" });
     });
   });
+
+  scenario("a checker that never answers cannot hold the child up (findings register CR27)", async ({ given, when, then, and }) => {
+    const s = createMissionSession({ pack, missionId: "m4-mountain-expedition", profileId: "p1", checkerTimeoutMs: 50, ...deps("2027-01-11") });
+    let lateAnswer: (f: unknown) => void = () => {};
+    let outcome = "";
+    let tookMs = 0;
+    await given("the online checker is stalled (connected, but no answer comes back)", () => {
+      s.answerLocate("mount-kenya");
+      s.answerChoice(["mt-kenya"]);
+      s.answerLocate("mount-elgon");
+    });
+    await when("the child explains", async () => {
+      const started = Date.now();
+      const r = await s.answerExplain("Mount Kenya is very high so it is much colder than the coast", "en", () => new Promise((res) => (lateAnswer = res as (f: unknown) => void)));
+      tookMs = Date.now() - started;
+      outcome = r.feedback.outcome;
+    });
+    await then("the on-device rubric answers within the time limit", () => {
+      expect(tookMs).toBeLessThan(1000);
+      expect(outcome).toBe("accepted");
+      expect(s.events().at(-1)).toMatchObject({ kind: "explain", correct: true, checkedBy: "local" });
+    });
+    await and("a verdict that arrives afterwards changes nothing", async () => {
+      lateAnswer({ outcome: "choice-follow-up", hintId: null, criteriaMet: [], confidence: 0.9, checkedBy: "ai", flagForTeacher: false });
+      await new Promise((r) => setTimeout(r, 20));
+      expect(s.events()).toHaveLength(4);
+      expect(s.state().phase).toBe("done");
+    });
+  });
+
+  scenario("pressing Check twice records one answer and never skips a task (findings register CR26)", async ({ given, when, then }) => {
+    const s = createMissionSession({ pack, missionId: "m4-mountain-expedition", profileId: "p1", ...deps("2027-01-11") });
+    let results: Array<{ feedback: { outcome: string } }> = [];
+    let checks = 0;
+    await given("the child is on the explanation task", () => {
+      s.answerLocate("mount-kenya");
+      s.answerChoice(["mt-kenya"]);
+      s.answerLocate("mount-elgon");
+    });
+    await when("the explanation is submitted twice before the first check returns", async () => {
+      const slow = async () => {
+        checks++;
+        await new Promise((r) => setTimeout(r, 30));
+        return { outcome: "accepted" as const, hintId: null, criteriaMet: ["height", "cooler"], confidence: 0.9, checkedBy: "ai" as const, flagForTeacher: false };
+      };
+      results = await Promise.all([s.answerExplain("cold because high", "en", slow), s.answerExplain("cold because high", "en", slow)]);
+    });
+    await then("one check ran, one event was recorded, and both submissions get the same result", () => {
+      expect(checks).toBe(1);
+      expect(s.events().filter((e) => e.kind === "explain")).toHaveLength(1);
+      expect(s.state().phase).toBe("done");
+      expect(results.map((r) => r.feedback.outcome)).toEqual(["accepted", "accepted"]);
+    });
+  });
 });

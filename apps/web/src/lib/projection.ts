@@ -14,14 +14,14 @@ export function createMapProjection(bounds: [LonLat, LonLat], extent: [[number, 
   const projection = geoMercator().fitExtent(extent, { type: "MultiPoint", coordinates: [[w, s], [e, n]] });
 
   const lat = (s + n) / 2;
-  const lon = (w + e) / 2;
   const dLon = scaleKm / (111.32 * Math.cos((lat * Math.PI) / 180));
-  const a = projection([lon, lat])!;
-  const b = projection([lon + dLon, lat])!;
+  // Mercator x is scale x longitude (radians), so the width needs no second projected point. Projecting
+  // a point past 180 degrees wrapped it to -180 and gave a negative width (findings register CR38).
+  const scaleBarPx = projection.scale() * ((dLon * Math.PI) / 180);
 
   return {
     path: geoPath(projection),
     project: (p: LonLat): [number, number] => projection(p) as [number, number],
-    scaleBar: { km: scaleKm, px: b[0] - a[0] },
+    scaleBar: { km: scaleKm, px: scaleBarPx },
   };
 }
