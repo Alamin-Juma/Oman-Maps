@@ -66,6 +66,14 @@ describe("E2E (build): first page load stays inside the data budget", () => {
     );
 
     expect(deliveryBudgetViolations({ initialJsGzipBytes: total })).toEqual([]);
+
+    // Ledger TC3, re-audited: this test once measured React's development build (205.6 kB) without
+    // noticing. A production build has React's developer warnings stripped; prove that is what was
+    // measured, so a wrong build can never pass or fail this budget silently again.
+    for (const url of scripts) {
+      const code = readFileSync(join(outDir, url.replace(/^\//, "")), "utf8");
+      expect(code, `${url} is a development build`).not.toContain('unique "key" prop');
+    }
   });
 
   it("keeps lazy JavaScript plus the overview assets within the first 3D open budget", () => {

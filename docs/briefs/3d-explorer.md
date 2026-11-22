@@ -196,8 +196,8 @@ Feature tests (examples; write them in our Given/When/Then style):
 - **Mountains are real.** In the committed L2 patch around the `mount-kenya` anchor, the highest point within 15 km is between 4,900 and 5,300 m. Around `kilimanjaro` it is between 5,600 and 5,950 m.
 - **The Tana reaches the sea.**
   - The traced river starts within 10 km of the first point of the pack's `path` and ends at the ocean (elevation ≤ 5 m, next to sea pixels).
-  - Its length is believable. *(Phase 1 measured this from the pack's starting point; see
-    ADR-0009 "What Phase 1 built". The original 850 to 1,150 km band assumed the river's farthest source.)*
+  - Its length agrees, within 15%, with the surveyed Natural Earth line over the same stretch (ADR-0009,
+    "What Phase 1 built"). The original 850-1,150 km band assumed the river's farthest source in full detail.
   - Its elevation never increases from source to mouth.
 - **Lakes are flat.** The Lake Victoria surface sits at 1,134 m ± 15 m and is uniform.
 - **New region, no code.** Running the generator over a fixture pack for another region produces a valid manifest with no code change. Reuse `tests/features/api/fixtures/packs/ke-g6-east-africa.json` or a tiny synthetic one.

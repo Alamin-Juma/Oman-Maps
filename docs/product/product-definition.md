@@ -321,6 +321,15 @@ DuniaLab collects as little as possible: a parent account, a nickname and grade 
 
 The MVP takes about 11 weeks to build, from mid-November 2026 to the end of January 2027, and is then piloted in Term 1 of 2027. The proposal's 6-week plan for a full build and pilot is not realistic for one engineer. The school calendar matters too: schools close from November to early January, so the pilot has to land in Term 1.
 
+**Current delivery forecast (19 November 2026, proposed):** the
+[weekly feature delivery plan](weekly-delivery-plan.md) separates existing work from remaining
+features, using the founder's stated 30-40 engineering hours per week. It challenges the original
+end-of-January assumption: a web candidate is forecast for late January/early February, conditional
+on an explicit pilot-scope decision; the full A/B/C candidate is forecast for early March, with
+contingency through late March. These estimates do not change the fixed MVP or approve decisions
+D1-D7. The plan also shows why the sequential pilots and delayed test extend beyond Term 1.
+Confirm school dates and reforecast after the device spike before committing to a pilot start.
+
 ![MVP build and pilot plan · dates are planning assumptions](images/product-definition-4.png)
 
 *MVP build and pilot plan · dates are planning assumptions*

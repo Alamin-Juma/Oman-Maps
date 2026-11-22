@@ -27,6 +27,28 @@ import {
 import { createAssetReader, haversineKm, isLfsPointer, verifyAssets, type LonLat } from "../../../tools/geo/src/index.js";
 import { feature, scenario } from "../support/gherkin.js";
 
+/**
+ * Length (km) of the surveyed Natural Earth Tana from the vertex nearest `start` to the mouth.
+ * The fixture's pieces (river, reservoir centre lines, a connector) are joined west to east,
+ * which is the direction the Tana flows.
+ */
+function surveyedTanaFrom(start: LonLat): number {
+  const geo = JSON.parse(readFileSync(join(ROOT, "tests/features/fixtures/natural-earth-tana.geojson"), "utf8")) as {
+    features: { geometry: { type: string; coordinates: unknown } }[];
+  };
+  const pieces = geo.features.flatMap((f) =>
+    f.geometry.type === "LineString" ? [f.geometry.coordinates as LonLat[]] : (f.geometry.coordinates as LonLat[][]),
+  );
+  const line = pieces.sort((a, b) => a[0]![0] - b[0]![0]).flat();
+  let nearest = 0;
+  line.forEach((p, i) => {
+    if (haversineKm(p, start) < haversineKm(line[nearest]!, start)) nearest = i;
+  });
+  let km = 0;
+  for (let i = nearest + 1; i < line.length; i++) km += haversineKm(line[i - 1]!, line[i]!);
+  return km;
+}
+
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const pack = validatePack(JSON.parse(readFileSync(join(ROOT, "packages/content/packs/kenya-explorer.json"), "utf8"))).pack!;
 const DIR = join(ROOT, "content-assets", pack.id, "3d");
@@ -77,6 +99,13 @@ feature("Kenya Explorer's 3D assets match the real Kenya", () => {
     const patchIds = () => manifest!.patches.map((p) => p.featureId).sort();
     await then("the three mountains and the valley each have a patch", () => {
       expect(patchIds()).toEqual(["great-rift-valley", "kilimanjaro", "mount-elgon", "mount-kenya"]);
+    });
+    await and("each close-up is made from the 30 m elevation data, not the coarser 90 m", () => {
+      // Ledger TC2, re-audited: the brief asks for HD patches at about 30-40 m per pixel.
+      expect(manifest!.sources.map((s) => s.id)).toContain("copernicus-dem-glo-30");
+      for (const f of manifest!.files.filter((x) => x.path.startsWith("patches/") && x.path.endsWith("/h.webp"))) {
+        expect(f.sources, f.path).toContain("copernicus-dem-glo-30");
+      }
     });
     await and("each patch fits its own budget", () => {
       for (const bytes of Object.values(manifest!.delivery.hdFeaturePatchBytes)) {
@@ -147,12 +176,16 @@ feature("Kenya Explorer's 3D assets match the real Kenya", () => {
       expect(summary().guided).toBe(true);
       expect(summary().maxOffGuideKm!).toBeLessThan(20);
     });
-    await and("its length from this starting point is believable", () => {
-      // The whole Tana is about 1,000 km from its farthest source. The pack's line starts
-      // further downstream, and a ~185 m grid cannot follow small meanders, so the traced
-      // length is shorter. Recorded here so a big change is noticed.
-      expect(summary().lengthKm).toBeGreaterThan(550);
-      expect(summary().lengthKm).toBeLessThan(1150);
+    await and("its length agrees with the surveyed river over the same stretch", () => {
+      // Ledger TC9, re-audited. The brief's 850-1,150 km came from the quoted ~1,000 km for the
+      // whole river measured in full detail from its farthest source, which is not what this data
+      // measures; the guessed 550-1,150 km band that replaced it had no evidence either. The
+      // independent reference is the surveyed Natural Earth line (public domain, committed as a
+      // fixture): measured from the point nearest our trace's start to the mouth, our trace must
+      // agree with it within 15%. A straight-line "river" (about 430 km) would fail by a third.
+      const surveyed = surveyedTanaFrom([points[0]![0], points[0]![1]]);
+      expect(surveyed).toBeGreaterThan(500); // positive control: the fixture really is the Tana
+      expect(Math.abs(summary().lengthKm - surveyed) / surveyed).toBeLessThan(0.15);
     });
   });
 

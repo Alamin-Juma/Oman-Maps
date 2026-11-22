@@ -77,11 +77,40 @@ jobs:
       - run: npm run test:e2e
 
   docker:
-    name: API Docker image builds
+    # Builds the API image AND runs it: the API end-to-end tests run against the container in
+    # production mode (findings register T5). Building alone proved nothing about startup,
+    # migrations or configuration.
+    name: API Docker image builds and passes the API E2E tests
     runs-on: ubuntu-latest
     needs: test
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - run: docker build -f docker/api.Dockerfile -t dunialab-api:ci .
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Build and start the image with Postgres
+        run: docker compose --profile app up -d --build
+      - name: Wait until the API is healthy
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3000/health && exit 0
+            sleep 2
+          done
+          docker compose --profile app logs api
+          exit 1
+      - run: npm ci
+      - run: npm run build
+      - name: API E2E against the running image
+        env:
+          E2E_API_URL: http://localhost:3000
+          E2E_REQUIRE_DB: "1"
+        run: node scripts/vitest.mjs run --project e2e tests/e2e/api
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose --profile app logs api
+      - name: Stop the containers
+        if: always()
+        run: docker compose --profile app down -v
