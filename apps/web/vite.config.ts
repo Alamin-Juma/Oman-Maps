@@ -91,18 +91,15 @@ function contentAssets(): Plugin {
     for (const dir of await readdir(root, { withFileTypes: true })) {
       if (!dir.isDirectory() || !offered.has(dir.name)) continue;
       const source = join(root, dir.name, "3d");
-      let raw: string;
       try {
-        raw = await readFile(join(source, "manifest.json"), "utf8");
+        const manifest = Assets3dManifest.parse(JSON.parse(await readFile(join(source, "manifest.json"), "utf8")));
+        for (const path of ["manifest.json", ...manifest.files.filter((f) => f.role !== "preview").map((f) => f.path)]) {
+          allowed.set(`${dir.name}/3d/${path}`, join(source, path));
+        }
       } catch {
-        // One incomplete pack folder must not stop the app or the other packs. The viewer already
-        // treats a missing manifest as "3D unavailable" and keeps the 2D map (findings register CR40).
-        console.warn(`[dunialab] ${dir.name}: no 3d/manifest.json, so this pack ships without 3D. Run "npm run geo:build -- --pack ${dir.name}".`);
-        continue;
-      }
-      const manifest = Assets3dManifest.parse(JSON.parse(raw));
-      for (const path of ["manifest.json", ...manifest.files.filter((f) => f.role !== "preview").map((f) => f.path)]) {
-        allowed.set(`${dir.name}/3d/${path}`, join(source, path));
+        // One incomplete or damaged pack folder must not stop the app or the other packs. The viewer
+        // already treats a missing manifest as "3D unavailable" and keeps the 2D map (CR40, CR95).
+        console.warn(`[dunialab] ${dir.name}: 3d/manifest.json is missing or invalid, so this pack ships without 3D. Run "npm run geo:build -- --pack ${dir.name}".`);
       }
     }
     return allowed;

@@ -41,6 +41,10 @@ export async function syncInBatches(
     const batch = pending.slice(i, i + batchSize);
     try {
       const r = await client.sync(profileId, packId, batch);
+      // Only a real acknowledgement marks events as sent (findings register CR92).
+      if (!r || typeof r.accepted !== "number" || typeof r.duplicates !== "number") {
+        throw new Error("The server's answer to the sync was not an acknowledgement; nothing was marked as sent");
+      }
       queue.markSynced(batch.map((e) => e.eventId));
       outcome.sent += batch.length;
       outcome.accepted += r.accepted;

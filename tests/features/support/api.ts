@@ -26,7 +26,7 @@ export interface TestApi {
 }
 
 export async function startApi(
-  opts: { aiGrader?: AiGrader; packsDir?: string; rateLimits?: RateLimits; now?: () => number; store?: Store; aiTimeoutMs?: number; allowDraftContent?: boolean } = {},
+  opts: { aiGrader?: AiGrader; packsDir?: string; rateLimits?: RateLimits; now?: () => number; store?: Store; aiTimeoutMs?: number; allowDraftContent?: boolean; externalAiApproved?: boolean } = {},
 ): Promise<TestApi> {
   const app = await createApp({
     config: {
@@ -36,6 +36,9 @@ export async function startApi(
       rateLimits: opts.rateLimits ?? TEST_RATE_LIMITS,
       ...(opts.aiTimeoutMs ? { aiTimeoutMs: opts.aiTimeoutMs } : {}),
       ...(opts.allowDraftContent === undefined ? {} : { allowDraftContent: opts.allowDraftContent }),
+      // The AI feature scenarios use a scripted grader and made-up answers, so they run with external AI
+      // approved unless a scenario says otherwise (findings register CR96).
+      externalAiApproved: opts.externalAiApproved ?? true,
     },
     ...(opts.now ? { now: opts.now } : {}),
     store: opts.store ?? new InMemoryStore(),

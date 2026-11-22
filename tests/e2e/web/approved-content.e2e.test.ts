@@ -151,5 +151,28 @@ describe("E2E (build): one incomplete pack folder does not break the app (findin
       rmSync(outDir, { recursive: true, force: true });
     }
   }, 240_000);
+
+  it("a pack whose 3D manifest is damaged is skipped the same way (findings register CR95)", async () => {
+    const { mkdirSync, mkdtempSync: tmp, writeFileSync } = await import("node:fs");
+    const assets = tmp(join(tmpdir(), "dunialab-assets-"));
+    const outDir = tmp(join(tmpdir(), "dunialab-badmanifest-"));
+    mkdirSync(join(assets, "ke.g5.sst.kenya-explorer", "3d"), { recursive: true });
+    writeFileSync(join(assets, "ke.g5.sst.kenya-explorer", "3d", "manifest.json"), "{ truncated");
+    const saved = { DUNIALAB_ASSETS_DIR: process.env.DUNIALAB_ASSETS_DIR, VITE_ALLOW_DRAFT_CONTENT: process.env.VITE_ALLOW_DRAFT_CONTENT };
+    process.env.DUNIALAB_ASSETS_DIR = assets;
+    process.env.VITE_ALLOW_DRAFT_CONTENT = "true";
+    try {
+      await build({ root: WEB_ROOT, logLevel: "silent", build: { outDir, emptyOutDir: true } });
+      expect(existsSync(join(outDir, "index.html"))).toBe(true);
+      expect(existsSync(join(outDir, PACK_ASSETS))).toBe(false);
+    } finally {
+      for (const [k, v] of Object.entries(saved)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+      rmSync(assets, { recursive: true, force: true });
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  }, 240_000);
 });
 

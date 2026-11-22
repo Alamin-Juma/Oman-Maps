@@ -86,6 +86,7 @@ API environment (`apps/api/.env`, never committed):
 DATABASE_URL=postgres://dunialab:dunialab@localhost:5433/dunialab
 JWT_SECRET=<32+ random chars>
 ANTHROPIC_API_KEY=            # optional; without it the offline rubric checker answers
+EXTERNAL_AI_APPROVED=         # "true" only after founder decision D3; until then the key is never used
 AI_MODEL=claude-opus-5-5      # default
 AI_CONFIDENCE_THRESHOLD=0.75
 ```
@@ -277,6 +278,9 @@ CI: every run verifies sizes, fingerprints and budgets from the Git LFS pointers
 - **Drafts are not even in the files.** The build decides which packs the app offers; a withheld pack ships as
   its id only (`virtual:dunialab-packs` exports the selection). One pack folder without `3d/manifest.json`
   ships without 3D, with a warning, instead of failing the build.
+- **External AI is off until approved in code:** without `EXTERNAL_AI_APPROVED=true` the API never calls the
+  provider, even with `ANTHROPIC_API_KEY` set (decision D3; CR96). The consent lookup has a time limit too (CR91).
+- **An empty answer from the server is an error**, never a sync acknowledgement (CR92).
 - **Online explanation checks are rationed** (`DEFAULT_RATE_LIMITS`): 40 per parent per hour, 2 at a time
   per parent, 1,000 per deployment per hour. Over any of them, and whenever the consent lookup fails, the
   child gets the device rubric's answer: never an error. A check the server stops waiting for is cancelled
@@ -314,7 +318,7 @@ Node used to start Vitest: from a terminal in `c:\dev\...` (lower-case drive let
 true-case path. To run Vitest by hand use `npm run vitest -- run --project features <file>`, not `npx vitest`.
 `tests/e2e/tooling/vitest-launcher.e2e.test.ts` proves the fix on Windows and reports if it is ever no longer needed.
 
-**Use the real AI locally:** put `ANTHROPIC_API_KEY` in `apps/api/.env`, restart `npm run dev:api`, sign in on the web app, and the explanation check goes through Claude.
+**Use the real AI locally (synthetic answers only):** put `ANTHROPIC_API_KEY` and `EXTERNAL_AI_APPROVED=true` in `apps/api/.env`, restart `npm run dev:api`, sign in on the web app, and the explanation check goes through Claude. Without `EXTERNAL_AI_APPROVED=true` the key is ignored: until founder decision D3, no child's answer may reach the provider (findings register CR96). Never set it on a deployment with real children before D3.
 
 ## 8. Status and roadmap
 

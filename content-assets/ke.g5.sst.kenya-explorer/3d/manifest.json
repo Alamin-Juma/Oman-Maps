@@ -596,8 +596,8 @@
   },
   {
    "path": "previews/overview.jpg",
-   "bytes": 492401,
-   "sha256": "766943ff6e6d5853a28a895bf172cbd1938678244b4b398e898698dc2eb92fec",
+   "bytes": 492423,
+   "sha256": "fbf45cfb48053fef9e872527de7b0365fc53ab9e1e6509b4ef66b041d88d1521",
    "role": "preview",
    "sources": []
   },
@@ -631,8 +631,8 @@
   },
   {
    "path": "previews/river-tana-river.jpg",
-   "bytes": 279300,
-   "sha256": "73345e9b3cf9c009a3530b6d14f62dd7f1151c399d736329442c2d9fe5ec2d4f",
+   "bytes": 279279,
+   "sha256": "ecbd49be7aa89063a9f873794fb93ca45c44dcd8ab73f20117fbb362aad64af2",
    "role": "preview",
    "sources": []
   },
@@ -733,8 +733,8 @@
   },
   {
    "path": "tiles/6/38/32/albedo.webp",
-   "bytes": 31364,
-   "sha256": "56bcc23077cc3c94d5d6e8f9402b76755eb0ec2f5021218201a2f3bfe75fd3ff",
+   "bytes": 31360,
+   "sha256": "c2b104293f443ce0d579ae1272c6feb7166550a4f7e914ee052ac297557bdfe6",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -789,8 +789,8 @@
   },
   {
    "path": "tiles/6/39/32/albedo.webp",
-   "bytes": 7004,
-   "sha256": "730b40511e7b7179e7e687e2563defb0e0453201f59a1584baee15c5d356dce1",
+   "bytes": 7002,
+   "sha256": "966f6c0095f3e02bce332a55d2338888158bfefacc5a68017bb16447e1d14a66",
    "role": "overview-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -1909,8 +1909,8 @@
   },
   {
    "path": "tiles/8/155/131/albedo.webp",
-   "bytes": 225942,
-   "sha256": "7aa2162c80f0d6807bf8b1a6fa234c8e29d26970fc1146221898d7161343a925",
+   "bytes": 226422,
+   "sha256": "0a63b03bd74cc001f49b94d15c1702260ad2c92628e6d52dee20d5e32969c3e1",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2077,8 +2077,8 @@
   },
   {
    "path": "tiles/8/156/129/albedo.webp",
-   "bytes": 129748,
-   "sha256": "b82535528bf327ffedd5535896b26897ebc3aea82778d366dddfb875ba039ade",
+   "bytes": 129656,
+   "sha256": "809503b86ed9efed4ba7bda3934e8a17490c8d8fc34faed2a9b26c4013f98368",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2105,8 +2105,8 @@
   },
   {
    "path": "tiles/8/156/130/albedo.webp",
-   "bytes": 98984,
-   "sha256": "b6b70fe8e0a236856c9a15c2a41a29c06359d2d0f8727d2f69bf957e5748d680",
+   "bytes": 98882,
+   "sha256": "cfe9eaf026105b9f9b61e793045fd1ecc730257c3a411a8d2d1070cc335b907e",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2133,8 +2133,8 @@
   },
   {
    "path": "tiles/8/156/131/albedo.webp",
-   "bytes": 26672,
-   "sha256": "00efe7f9a0e50e6237d9143511d26486412c535ecbfa8deddd165825792bab46",
+   "bytes": 26720,
+   "sha256": "30ea31253117b4af695da9360277a97e7d3f703dea212b8b55d15fddbc2b2d50",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2273,8 +2273,8 @@
   },
   {
    "path": "tiles/8/157/128/albedo.webp",
-   "bytes": 53400,
-   "sha256": "6f14c6a90442d08af928c9eb967bcf3d7028eafea5a6084ce047727713a30491",
+   "bytes": 53326,
+   "sha256": "6283f29c6340587a86af4b766598a7b04fb306433bd578a17699215ae1dd0c0b",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2301,8 +2301,8 @@
   },
   {
    "path": "tiles/8/157/129/albedo.webp",
-   "bytes": 60526,
-   "sha256": "dba9df4cdab74e064742dc4c94ff68f08998a498e022ed2c0b3bbbc7ddb4f069",
+   "bytes": 60726,
+   "sha256": "ab2cd4d9a00cacd95243d87465df9cc74196dde6e817f97574b93ef4fff7be9b",
    "role": "regional-tile",
    "sources": [
     "copernicus-dem-glo-90",
@@ -2329,8 +2329,8 @@
   }
  ],
  "delivery": {
-  "first3dOpenBytes": 497537,
-  "pack3dTotalBytes": 17357915,
+  "first3dOpenBytes": 497531,
+  "pack3dTotalBytes": 17358369,
   "hdFeaturePatchBytes": {
    "great-rift-valley": 583780,
    "kilimanjaro": 505336,

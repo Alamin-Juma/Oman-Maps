@@ -190,12 +190,12 @@ export function plannedFiles(plan: ScenePlan, manifest: Assets3dManifest): strin
 /**
  * The lake and river outline files to fetch BEFORE the final plan (findings register CR39).
  *
- * A regional view finds nearby water from the outlines themselves, so a first plan made without
- * them always finds none. In that mode every pack outline file is a candidate; the final plan then
- * keeps only what is in view. Other modes already know their water ids.
+ * Region and patch views find nearby water from the outlines themselves, so a first plan made
+ * without them finds none. In those modes every pack outline file is a candidate; the final plan
+ * then keeps only what is in view (findings register CR94). The overview knows its water ids.
  */
 export function waterFilesToLoad(initial: ScenePlan, manifest: Assets3dManifest): string[] {
-  const nearby = initial.mode === "region";
+  const nearby = initial.mode === "region" || initial.mode === "patch";
   const files: string[] = [];
   if (initial.lakeIds.length || (nearby && manifest.lakes.items.length)) files.push(manifest.lakes.file);
   if (initial.riverIds.length || (nearby && manifest.rivers.items.length)) files.push(manifest.rivers.file);

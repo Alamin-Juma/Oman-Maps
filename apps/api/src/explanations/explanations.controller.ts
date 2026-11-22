@@ -81,14 +81,19 @@ export class ExplanationsController {
 
     const local = () => checkExplanationLocally(task, input.answer, input.locale, input.attempt);
     const grader = this.grader;
-    if (!grader || input.answer.trim().length === 0) return local();
+    // The D3 hold, in code: until the founder approves external AI, a child's answer never goes to
+    // the provider, whatever the key or the parent's consent (findings register CR96).
+    if (!grader || !this.config.externalAiApproved || input.answer.trim().length === 0) return local();
 
     let admitted = false;
     try {
       // Egress gate: a child's words only go to an external provider after the parent has
       // consented to the current policy. A failing lookup is answered locally too (findings
       // register CR17): the offline checker needs neither the database nor the AI.
-      if (!(await this.store.hasConsent(parent.parentId, this.config.consentPolicyVersion))) return local();
+      // Bounded too: a lookup that never answers (a stalled database) must not hold the child
+      // either (CR91). The same time limit as the AI check; a timeout lands in the catch below.
+      const consented = await withTimeout(() => this.store.hasConsent(parent.parentId, this.config.consentPolicyVersion), this.config.aiTimeoutMs);
+      if (!consented) return local();
       if (!this.admit(parent.parentId)) {
         this.log.warn("online check allowance reached; using the local rubric");
         return local();

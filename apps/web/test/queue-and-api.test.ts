@@ -97,3 +97,12 @@ describe("DuniaApi error decoding and expiry (findings register CR10, CR11)", ()
     expect(seen).toEqual(["token-1"]);
   });
 });
+
+describe("empty answers (findings register CR92)", () => {
+  it("refuses an empty successful answer: every endpoint returns a body", async () => {
+    const api = new DuniaApi("http://x", () => "t", (async () => new Response("", { status: 200 })) as typeof fetch);
+    expect(await api.profiles().catch((e) => e)).toBeInstanceOf(ApiError);
+    expect(await api.sync("p", "k", []).catch((e) => e)).toBeInstanceOf(ApiError);
+  });
+});
+

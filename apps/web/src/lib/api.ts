@@ -77,6 +77,9 @@ export class DuniaApi {
       throw new ApiError(res.status, message || res.statusText || `HTTP ${res.status}`);
     }
     if (!readable) throw new ApiError(res.status, "The server sent an answer the app cannot read");
+    // Every DuniaLab endpoint answers with a body. An empty "OK" (for example from a proxy) is not an
+    // answer: treating it as one let a sync mark events as sent with no acknowledgement (CR92).
+    if (data === undefined) throw new ApiError(res.status, "The server sent an empty answer");
     return data as T;
   }
 

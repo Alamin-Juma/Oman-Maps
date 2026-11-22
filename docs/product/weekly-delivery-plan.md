@@ -157,6 +157,9 @@ the way: **P9** (country code in the pack) and **E5** (the whole-product walkthr
 **T2** (missions played with the network cut). The Tier B spike brief must list the deferred Unity fixes
 CR82-CR84 for when the project is first opened.
 
+**Second review round, 22 November:** CodeRabbit's re-review raised 15 more findings (CR90-CR104); all fixed.
+The hold on external AI until D3 is now enforced in code (`EXTERNAL_AI_APPROVED`, off by default).
+
 **Next build queue, after the review round** (each item starts with a reviewed brief, rule 5):
 
 | Order | Item | Needs a founder decision? | Plan week it pulls forward or serves |

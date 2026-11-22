@@ -4,7 +4,7 @@
  * Pure: grids in, numbers and outlines out.
  */
 import { KM_PER_DEG_LAT, kmPerDegLon, type LonLat } from "./geo-math.js";
-import { cellOf, type GeoGrid } from "./grid.js";
+import { cellOf, lonLatOfCell, type GeoGrid } from "./grid.js";
 
 /** Two neighbouring water samples differ by less than this (metres). */
 const FLAT_EPS = 0.02;
@@ -47,13 +47,15 @@ export function findFlatRegion(dem: GeoGrid, point: LonLat, searchKm: number, se
   const reachY = Math.max(0, Math.ceil(searchKm / kmY));
 
   const candidates: { c: number; km: number }[] = [];
-  for (let dj = -reachY; dj <= reachY; dj++) {
-    for (let di = -reachX; di <= reachX; di++) {
-      const km = Math.hypot(di * kmX, dj * kmY);
-      if (km > searchKm + 1e-9 && !(di === 0 && dj === 0)) continue;
+  for (let dj = -reachY - 1; dj <= reachY + 1; dj++) {
+    for (let di = -reachX - 1; di <= reachX + 1; di++) {
       const i = ci + di;
       const j = cj + dj;
       if (i < 0 || j < 0 || i >= dem.width || j >= dem.height) continue;
+      // From the point itself to the candidate cell's centre, not from the point's own cell (CR102).
+      const [lon, lat] = lonLatOfCell(dem, i, j);
+      const km = Math.hypot((lon - point[0]) * (kmX / dem.cell), (lat - point[1]) * (kmY / dem.cell));
+      if (km > searchKm + 1e-9 && !(di === 0 && dj === 0)) continue;
       candidates.push({ c: j * dem.width + i, km });
     }
   }
@@ -67,7 +69,9 @@ export function findFlatRegion(dem: GeoGrid, point: LonLat, searchKm: number, se
     if (dem.data[c]! <= seaLevel || !isFlat(dem, i, j)) continue;
     const region = growRegion(dem, c, seaLevel);
     if (accept(region)) return region;
-    for (let k = 0; k < region.mask.length; k++) if (region.mask[k]) tried[k] = 1;
+    // A region grows from its seed's level, so only seeds at that same level would grow the same
+    // refused region; seeds at other levels may grow a different, larger one (CR103).
+    for (let k = 0; k < region.mask.length; k++) if (region.mask[k] && Math.abs(dem.data[k]! - region.levelMetres) <= FLAT_EPS) tried[k] = 1;
   }
   return null;
 }

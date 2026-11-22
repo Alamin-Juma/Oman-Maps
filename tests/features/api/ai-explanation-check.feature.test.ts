@@ -221,28 +221,59 @@ feature("Online checking is a shared, paid service: one account cannot use it up
   });
 
   scenario("one parent cannot run many checks at the same moment", async ({ given, when, then }) => {
-    let inFlight = 0;
-    let peak = 0;
-    const slow: AiGrader = {
+    // The first check is held open by the test, not by a timer, so the overlap is certain
+    // (findings register CR100).
+    let started: () => void = () => {};
+    const firstStarted = new Promise<void>((r) => (started = r));
+    let release: () => void = () => {};
+    const held = new Promise<void>((r) => (release = r));
+    let calls = 0;
+    const holding: AiGrader = {
       grade: async () => {
-        peak = Math.max(peak, ++inFlight);
-        await new Promise((r) => setTimeout(r, 100));
-        inFlight--;
+        calls++;
+        started();
+        await held;
         return meets;
       },
     };
-    let results: any[] = [];
+    let first: Promise<any> = Promise.resolve();
+    let others: any[] = [];
     await given("one parent may have one online check running at a time", async () => {
-      api = await startApi({ aiGrader: slow, rateLimits: { ...TEST_RATE_LIMITS, aiConcurrentPerParent: 1 } });
+      api = await startApi({ aiGrader: holding, rateLimits: { ...TEST_RATE_LIMITS, aiConcurrentPerParent: 1 } });
     });
-    await when("their device sends four checks at once", async () => {
+    await when("their device sends three more checks while the first is still with the AI", async () => {
       const token = await consentedParentToken(api!);
-      results = await Promise.all([0, 1, 2, 3].map(() => check(token, good)));
+      first = check(token, good);
+      await firstStarted;
+      others = await Promise.all([0, 1, 2].map(() => check(token, good)));
     });
-    await then("only one reaches the AI at a time; the others are answered locally, without error", () => {
-      expect(peak).toBe(1);
-      expect(results.every((r) => r.status === 200)).toBe(true);
-      expect(results.filter((r) => r.body.checkedBy === "local").length).toBeGreaterThan(0);
+    await then("the three are answered locally at once, and the first still gets the AI's answer", async () => {
+      expect(others.map((r) => [r.status, r.body.checkedBy])).toEqual([[200, "local"], [200, "local"], [200, "local"]]);
+      release();
+      expect((await first).body.checkedBy).toBe("ai");
+      expect(calls).toBe(1);
+    });
+  });
+
+  scenario("a consent lookup that never answers still gives the child feedback in time (findings register CR91)", async ({ given, when, then }) => {
+    const { grader, calls } = scripted(meets);
+    let res: any;
+    let tookMs = 0;
+    await given("the database stalls on the consent lookup, and the server waits at most 300 ms", async () => {
+      const store = new InMemoryStore();
+      store.hasConsent = () => new Promise<boolean>(() => {});
+      api = await startApi({ aiGrader: grader, store, aiTimeoutMs: 300 });
+    });
+    await when("the child's explanation is checked", async () => {
+      const token = await parentToken(api!);
+      const t0 = Date.now();
+      res = await check(token, good);
+      tookMs = Date.now() - t0;
+    });
+    await then("the device rubric answers within the limit, and nothing goes to the AI", () => {
+      expect(res.body).toMatchObject({ outcome: "accepted", checkedBy: "local" });
+      expect(tookMs).toBeLessThan(3000);
+      expect(calls).toHaveLength(0);
     });
   });
 
@@ -267,5 +298,39 @@ feature("Online checking is a shared, paid service: one account cannot use it up
       expect(signal!.aborted).toBe(true);
     });
   });
+
 });
 
+feature("External AI stays off until the founder approves it (decision D3; findings register CR96)", () => {
+  const good = "Mount Kenya is very high so it is colder than the coast";
+
+  scenario("a configured grader is never called while external AI is not approved", async ({ given, when, then }) => {
+    const { grader, calls } = scripted({ verdict: "meets", criteriaMet: ["height", "cooler"], hintId: null, confidence: 0.99, unsafe: false });
+    let res: any;
+    await given("an API with an AI grader configured and a consenting parent, but external AI not approved", async () => {
+      api = await startApi({ aiGrader: grader, externalAiApproved: false });
+    });
+    await when("a child's explanation is checked", async () => {
+      res = await check(await consentedParentToken(api!), good);
+    });
+    await then("the device rubric answers and nothing leaves for the provider", () => {
+      expect(res.body).toMatchObject({ outcome: "accepted", checkedBy: "local" });
+      expect(calls).toHaveLength(0);
+    });
+  });
+
+  scenario("positive control: once approved, the same setup uses the grader", async ({ given, when, then }) => {
+    const { grader, calls } = scripted({ verdict: "meets", criteriaMet: ["height", "cooler"], hintId: null, confidence: 0.99, unsafe: false });
+    let res: any;
+    await given("the same API with external AI approved", async () => {
+      api = await startApi({ aiGrader: grader, externalAiApproved: true });
+    });
+    await when("a child's explanation is checked", async () => {
+      res = await check(await consentedParentToken(api!), good);
+    });
+    await then("the grader is used", () => {
+      expect(res.body.checkedBy).toBe("ai");
+      expect(calls).toHaveLength(1);
+    });
+  });
+});

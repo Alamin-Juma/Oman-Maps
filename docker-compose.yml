@@ -37,6 +37,8 @@ services:
       ALLOW_DRAFT_CONTENT: "true"
       # ANTHROPIC_API_KEY: set in your shell to exercise the real AI grader
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Unused unless this is "true" (founder decision D3; findings register CR96)
+      EXTERNAL_AI_APPROVED: ${EXTERNAL_AI_APPROVED:-false}
     ports:
       - "127.0.0.1:3000:3000"  # loopback only
 

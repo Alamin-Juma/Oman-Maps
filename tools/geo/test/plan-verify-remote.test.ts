@@ -3,7 +3,7 @@ import sharp from "sharp";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Assets3dManifest, type ContentPack } from "@dunialab/content";
+import { Assets3dManifest, tilePath, type ContentPack } from "@dunialab/content";
 import {
   buildPlan,
   createAssetReader,
@@ -20,6 +20,7 @@ import {
   verifyAssets,
 } from "../src/index.js";
 import type { Bounds } from "../src/geo-math.js";
+import { SEA_COLOUR } from "../src/bake.js";
 import { chooseDem, copernicusTileName, linesNearPath, linesOf, worldCoverTileName } from "../src/remote.js";
 
 const kenya = JSON.parse(readFileSync(new URL("../../../packages/content/packs/kenya-explorer.json", import.meta.url), "utf8")) as ContentPack;
@@ -51,6 +52,7 @@ describe("buildPlan", () => {
       [{ patchHeightSize: 2 }, /patchHeightSize/],
       [{ maxOverviewTiles: 0 }, /maxOverviewTiles/],
       [{ regionalZoomOffset: 20 }, /regional tiles/],
+      [{ regionalZoomOffset: 1024 }, /regional/], // NaN tile counts must not slip past (CR104)
     ];
     for (const [params, message] of bad) expect(() => buildPlan(pack, { ...DEFAULT_PARAMS, ...params }), JSON.stringify(params)).toThrow(message);
   });
@@ -357,6 +359,13 @@ describe("open sea is decided by the sea, not by height (findings register CR67)
       expect(inside.length).toBeGreaterThan(0);
       const stored = new Set(m.regional.tiles.map((t) => `${t.x}/${t.y}`));
       expect(inside.filter((t) => !stored.has(`${t.x}/${t.y}`))).toEqual([]);
+      // ...and painted as land, not as open sea (findings register CR101).
+      const t = inside[0]!;
+      const { data } = await sharp(readFileSync(join(out, tilePath(plan.regionalZoom, t.x, t.y, "albedo")))).raw().toBuffer({ resolveWithObject: true });
+      const [r, g, b] = SEA_COLOUR;
+      let seaPixels = 0;
+      for (let k = 0; k < data.length; k += 3) if (Math.abs(data[k]! - r) <= 3 && Math.abs(data[k + 1]! - g) <= 3 && Math.abs(data[k + 2]! - b) <= 3) seaPixels++;
+      expect(seaPixels).toBe(0);
       expect(m.regional.tiles.length).toBeLessThan(buildPlan({ ...pack, features: [] }, { ...DEFAULT_PARAMS, ...small }).regionalTiles.length); // open sea still left out
     } finally {
       rmSync(out, { recursive: true, force: true });

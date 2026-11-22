@@ -347,3 +347,24 @@ describe("first CodeRabbit review: rivers and lakes (findings register CR59-CR63
   });
 });
 
+describe("second CodeRabbit review: lake search (findings register CR102, CR103)", () => {
+  it("measures distance from the point itself, not from the cell it falls in (CR102)", () => {
+    // 0.01 degree cells. The point sits near the east edge of its cell; the lake starts two cells east.
+    const dem = gridFromFunction([[0, 0], [0.2, 0.1]], 0.01, (lon, lat) => (lon > 0.06 ? 300 : 400 + lon * 100 + lat * 70));
+    const point: LonLat = [0.0499, 0.035];
+    // About 1.68 km from the point to the first lake cell's centre; 2.2 km from the point's cell centre.
+    expect(findFlatRegion(dem, point, 2)).not.toBeNull();
+    expect(findFlatRegion(dem, point, 1.5)).toBeNull(); // positive control: the radius still counts
+  });
+
+  it("does not let a rejected region rule out seeds at another level (CR103)", () => {
+    // 6 x 5 cells in three two-column bands at 100, 101 and 102 m. From a 100 m seed the region is
+    // 20 cells (100 and 101 m bands); from a 101 m seed it is all 30.
+    const cell = 1 / 120;
+    const dem = gridFromFunction([[0, 0], [6 * cell, 5 * cell]], cell, (lon) => 100 + Math.min(2, Math.floor(lon / (2 * cell))));
+    const region = findFlatRegion(dem, [0.5 * cell, 2.5 * cell], 10, 0.01, (r) => r.cells >= 25);
+    expect(region).not.toBeNull();
+    expect(region!.cells).toBe(30);
+  });
+});
+

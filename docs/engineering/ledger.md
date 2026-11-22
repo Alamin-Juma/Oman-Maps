@@ -37,6 +37,7 @@ shown to be wrong, and every such change is listed here with its evidence, so it
 | TC7 | 2026-11-19 | `tests/features/api/sign-in-is-rate-limited.feature.test.ts` (school network) | Timed out at Vitest's 5 s default | The scenario performs about 50 real password hashes (scrypt), which take about 8 s. The behaviour was correct; the harness time limit was too short | Scenario timeout 60 s |
 | TC8 | 2026-11-19 | `tests/features/web/progress-is-kept-and-synced.feature.test.ts` | Type error found by `typecheck:tests` | The test declared its own partial type for the sync result instead of the real `SyncOutcome` | Uses `SyncOutcome` |
 | TC9 | 2026-11-17 | `tests/features/geo/kenya-3d-assets.feature.test.ts` (Tana length) | Not a failure: the brief's 850-1,150 km band was lowered to 550-1,150 km **before the first run**, with no evidence | Found in the re-audit. The brief's band came from the quoted ~1,000 km for the whole river in full detail; the surveyed Natural Earth line, our actual reference, is about 760 km for the whole river. Both bands were guesses | Replaced by a comparison with the surveyed line over the same stretch (within 15%), from a committed public-domain fixture |
+| TC10 | 2026-11-22 | `apps/web/test/three.test.ts` ("fetches nothing extra for a mountain patch") | Not a run failure: a review finding (CR94) | The test was written in the first review round (CR39) and asserted that a patch view needs no water outlines. `planScene` does use outlines in patch mode (it keeps water whose outline is in view), so the test encoded the bug. Evidence: `apps/web/src/three/plan.ts`, the lake and river filters apply to every non-overview mode | Replaced by the correct requirement: a patch view fetches both outline files; the code was fixed to match |
 
 ### Re-audit of TC1-TC9 (19-21 November 2026)
 
@@ -61,6 +62,27 @@ positive controls added to existing scenarios.
 ---
 
 ## 2. Entries
+
+### 2026-11-22 · Second CodeRabbit review (re-review of the fixes): 15 new findings, all fixed
+- **What and why:** CodeRabbit re-reviewed the first round's fixes on the mirror (PR #2, `16a86f7`). It marked
+  11 first-round comments addressed; the 4 still open are founder decisions (D3, D8, D9). It raised 15 new
+  findings (CR90-CR104, findings register §9), all fixed. The most important: the "external AI stays off until
+  D3" hold is now enforced in code (`EXTERNAL_AI_APPROVED`, default off), not only by leaving the key unset.
+  Others: a hanging consent lookup falls back in time; an empty 200 is never taken as a sync acknowledgement;
+  a damaged 3D manifest skips only its pack; colours use the same ocean test as tile storage; lake search
+  measures from the point and does not over-reuse refusals; NaN tile counts are refused; two E2E tests and
+  one feature test now wait for conditions, not time. Kenya assets regenerated again (8 coastal colour tiles).
+- **Proven by:** feature `tests/features/api/ai-explanation-check.feature.test.ts`,
+  `tests/features/web/progress-is-kept-and-synced.feature.test.ts`; unit `apps/api/test/password-and-config.test.ts`,
+  `apps/web/test/{queue-and-api,map-home,three}.test.ts`, `tools/geo/test/{hydro-and-lakes,plan-verify-remote}.test.ts`;
+  E2E `tests/e2e/web/{session-boundary,approved-content}.e2e.test.ts` (both session tests sabotaged and caught).
+- **Files:** `apps/api/src/{config.ts,explanations/explanations.controller.ts}`, `apps/web/src/lib/{api,sync,map-home}.ts`,
+  `apps/web/src/three/plan.ts`, `apps/web/vite.config.ts`, `tools/geo/src/{generate,lakes,plan}.ts`,
+  `.github/workflows/ci.yml`, `docker-compose.yml`, the tests above, `content-assets` (regenerated).
+- **Findings closed:** CR90-CR104. **Tests changed after a failure:** TC10 (a test from the first round encoded
+  the CR94 bug).
+- **Docs updated:** findings register §9 (and P9, E5, §7), technical guide (`EXTERNAL_AI_APPROVED`), ledger,
+  weekly plan. **Commit:** uncommitted until asked.
 
 ### 2026-11-22 · First CodeRabbit review round: all 89 findings given a status
 - **What and why:** The first full-code review (CodeRabbit on the review mirror, revision `63c681a`, saved

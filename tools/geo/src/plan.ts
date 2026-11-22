@@ -108,7 +108,9 @@ export function buildPlan(pack: ContentPack, params: GeoParams = DEFAULT_PARAMS)
   const regionalZoom = overviewZoom + params.regionalZoomOffset;
   // Count before building the list: a mistyped offset would otherwise allocate millions (CR64).
   const regionalCount = tileCountForBounds(bounds, regionalZoom);
-  if (regionalCount > params.maxRegionalTiles) {
+  // A huge offset overflows the tile maths (Infinity, then NaN), and NaN passes every comparison;
+  // refuse anything that is not a finite count within the limit (findings register CR104).
+  if (!Number.isFinite(regionalCount) || regionalCount > params.maxRegionalTiles) {
     throw new Error(`${regionalCount} regional tiles at zoom ${regionalZoom} is more than maxRegionalTiles (${params.maxRegionalTiles}); lower regionalZoomOffset`);
   }
   const byId = [...pack.features].sort((a, b) => a.id.localeCompare(b.id, "en"));

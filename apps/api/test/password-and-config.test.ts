@@ -20,6 +20,13 @@ describe("password hashing", () => {
 });
 
 describe("loadConfig", () => {
+  it("keeps external AI off until it is explicitly approved, even with a key (findings register CR96, D3)", () => {
+    const prod = { NODE_ENV: "production", JWT_SECRET: "s".repeat(40), DATABASE_URL: "postgres://u:p@h:5432/d" } as const;
+    expect(loadConfig({ ...prod, ANTHROPIC_API_KEY: "sk-test" }).externalAiApproved).toBe(false);
+    expect(loadConfig({ ...prod, ANTHROPIC_API_KEY: "sk-test", EXTERNAL_AI_APPROVED: "true" }).externalAiApproved).toBe(true);
+    expect(loadConfig({ NODE_ENV: "development" }).externalAiApproved).toBe(false);
+  });
+
   it("defaults to the offline checker and draft content outside production", () => {
     const c = loadConfig({});
     expect(c.aiEnabled).toBe(false);

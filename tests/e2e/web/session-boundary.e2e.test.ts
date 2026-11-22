@@ -70,6 +70,8 @@ describe.skipIf(!reachable)("E2E (browser): sign-out and expired sign-ins on a s
   }
 
   const childOption = (page: Page) => page.getByRole("option", { name: /Amani/ });
+  /** Let the page finish what an answer started: two animation frames after the last task. */
+  const settled = (page: Page) => page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r()))));
 
   it("positive control: a valid sign-in loads the family's child, with no notice", async () => {
     let childListRequests = 0;
@@ -182,12 +184,16 @@ describe.skipIf(!reachable)("E2E (browser): sign-out and expired sign-ins on a s
 
   it("a report belongs to one child: switching child hides it, and a late answer for the first child is dropped (findings register CR34)", async () => {
     let holdNext = false;
+    let holding = false;
     let release: () => void = () => {};
     const { page, close } = await openSignedIn(token, async (p) => {
       await p.route("**/v1/profiles/*/report**", async (route) => {
         if (holdNext) {
           holdNext = false;
-          await new Promise<void>((r) => (release = r));
+          await new Promise<void>((r) => {
+            release = r;
+            holding = true;
+          });
         }
         return route.continue();
       });
@@ -208,12 +214,18 @@ describe.skipIf(!reachable)("E2E (browser): sign-out and expired sign-ins on a s
     await child.selectOption(baraka);
     await expect.poll(() => page.locator(".report").count()).toBe(0);
 
-    // A late answer for Amani, arriving after the switch to Baraka, is not shown.
+    // A late answer for Amani, arriving after the switch to Baraka, is not shown. Each step waits for
+    // its condition, not a time (findings register CR98).
     await child.selectOption(amani);
     holdNext = true;
     await page.getByRole("button", { name: "Weekly report" }).click();
+    await expect.poll(() => holding).toBe(true); // Amani's report request is being held
     await child.selectOption(baraka);
+    const amaniAnswer = page.waitForResponse((r) => r.url().includes(`/profiles/${amani}/report`));
     release();
+    await amaniAnswer; // the late answer has really arrived
+    await settled(page);
+    expect(await page.locator(".report").count()).toBe(0); // and it is not on screen
     await page.getByRole("button", { name: "Weekly report" }).click();
     await expect.poll(() => page.locator(".report h4").textContent()).toMatch(/^Baraka:/);
     expect(await page.locator(".report h4").textContent()).not.toMatch(/^Amani:/);
@@ -273,8 +285,10 @@ describe.skipIf(!reachable)("E2E (browser): sign-out and expired sign-ins on a s
     await expect.poll(() => checks).toBe(1);
 
     await child.selectOption(baraka); // the mission now belongs to another child
+    const lateAnswer = page.waitForResponse((r) => r.url().endsWith("/v1/explanations/check") && r.request().method() === "POST");
     release(); // Amani's explanation result arrives late
-    await page.waitForTimeout(1500);
+    await lateAnswer; // wait for the reply itself, not a fixed time (findings register CR99)
+    await settled(page); // and for the app to have handled it
 
     const explainFor = await page.evaluate((id) => {
       const saved = JSON.parse(localStorage.getItem("dunialab.events.v1") ?? "[]") as Array<{ event: { profileId: string; kind: string } }>;

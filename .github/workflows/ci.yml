@@ -96,7 +96,7 @@ jobs:
       - name: Wait until the API is healthy
         run: |
           for i in $(seq 1 60); do
-            curl -sf http://127.0.0.1:3000/health && exit 0
+            curl -sf --max-time 2 http://127.0.0.1:3000/health && exit 0
             sleep 2
           done
           docker compose --profile app logs api

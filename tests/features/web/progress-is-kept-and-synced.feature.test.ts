@@ -11,6 +11,7 @@ import { expect } from "vitest";
 import { SYNC_MAX_EVENTS, type AttemptEvent } from "@dunialab/mastery";
 import { browserStorage, EventQueue, type KeyValueStorage } from "../../../apps/web/src/lib/queue.js";
 import { syncInBatches, type SyncClient, type SyncOutcome } from "../../../apps/web/src/lib/sync.js";
+import { DuniaApi } from "../../../apps/web/src/lib/api.js";
 import { feature, scenario } from "../support/gherkin.js";
 
 const PACK = "ke.g5.sst.kenya-explorer";
@@ -255,4 +256,33 @@ feature("A child's progress is never lost silently, and every waiting event can 
       expect(m.size).toBe(1);
     });
   });
+
+  scenario("an empty 'OK' from a proxy is not a sync: the answers stay waiting (findings register CR92)", async ({ given, when, then, and }) => {
+    const q = new EventQueue(phoneStorage());
+    let outcome: SyncOutcome | undefined;
+    await given("two answers waiting, and a proxy that answers the sync with an empty 200", () => {
+      q.add(PACK, [play("amani"), play("amani")]);
+    });
+    await when("the parent presses Sync now", async () => {
+      const emptyOk = (async () => new Response("", { status: 200 })) as typeof fetch;
+      outcome = await syncInBatches(q, new DuniaApi("http://api.test", () => "token", emptyOk), PACK, "amani");
+    });
+    await then("nothing is marked as synced", () => expect(q.unsynced(PACK, "amani")).toHaveLength(2));
+    await and("the parent is told it failed", () => {
+      expect(outcome!.error).toBeDefined();
+      expect(outcome!.sent).toBe(0);
+    });
+  });
+
+  scenario("an acknowledgement of the wrong shape is not a sync either", async ({ then }) => {
+    await then("the answers stay waiting", async () => {
+      const q = new EventQueue(phoneStorage());
+      q.add(PACK, [play("amani")]);
+      const odd: SyncClient = { sync: async () => ({ ok: true }) as unknown as { accepted: number; duplicates: number } };
+      const outcome = await syncInBatches(q, odd, PACK, "amani");
+      expect(q.unsynced(PACK, "amani")).toHaveLength(1);
+      expect(outcome.error).toBeDefined();
+    });
+  });
 });
+

@@ -186,8 +186,9 @@ describe("waterFilesToLoad (findings register CR39)", () => {
     expect(waterFilesToLoad(initial, manifest).sort()).toEqual([manifest.lakes.file, manifest.rivers.file].sort());
   });
 
-  it("fetches nothing extra for a mountain patch, which shows no nearby water", () => {
+  it("fetches the outline files for a patch view too, which also finds nearby water from them (CR94)", () => {
     const initial = planScene({ ...base, featureId: "mount-kenya" });
-    expect(waterFilesToLoad(initial, manifest)).toEqual([]);
+    expect(initial.mode).toBe("patch");
+    expect(waterFilesToLoad(initial, manifest).sort()).toEqual([manifest.lakes.file, manifest.rivers.file].sort());
   });
 });

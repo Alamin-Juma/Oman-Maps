@@ -17,4 +17,10 @@ describe("isHomeBoundary (findings register P9, CR36)", () => {
   it("highlights nothing when the pack names no boundary", () => {
     expect(isHomeBoundary("404", pack())).toBe(false);
   });
+  it("matches a number that lost its leading zero (findings register CR93)", () => {
+    expect(isHomeBoundary(40, pack("040"))).toBe(true); // Austria in the atlas is 040
+    expect(isHomeBoundary("040", pack("040"))).toBe(true);
+    expect(isHomeBoundary(4, pack("004"))).toBe(true);
+    expect(isHomeBoundary(40, pack("400"))).toBe(false);
+  });
 });

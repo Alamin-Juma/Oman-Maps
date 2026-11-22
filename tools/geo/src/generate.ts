@@ -121,8 +121,6 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
   }
 
   // ---- 4. surface colour for the whole map, then coarser copies for clean shrinking ----
-  const colour = colourGrids(dem, cover);
-  const demLevels = mipChain(dem);
   // Open sea is water connected to the edge of the data, not "anything at or below 0 m": land below
   // sea level keeps its tiles (findings register CR67).
   const ocean = oceanMask(dem, SEA_LEVEL);
@@ -130,6 +128,8 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
     const [i, j] = cellOf(dem, [lon, lat]);
     return ocean[j * dem.width + i] === 1;
   };
+  const colour = colourGrids(dem, cover, isSea);
+  const demLevels = mipChain(dem);
   const colourLevels = colour.map((c) => mipChain(c));
   const elevationSources = () => sources.elevation.used();
   const coverSources = () => sources.landCover?.used() ?? [];
@@ -165,7 +165,7 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
     const tileDem = await sources.elevation.read(readBounds, metresPerPixel);
     for (const r of rivers) carveChannel(tileDem, r.traced.points, 1);
     const tileCover = sources.landCover ? await sources.landCover.read(readBounds, metresPerPixel) : null;
-    const tex = bakeTextures(ts, (px, py) => [tileXToLon(x + px / ts, z), tileYToLat(y + py / ts, z)], tileDem, tileCover, metresPerPixel, params.shadeZFactor.regional);
+    const tex = bakeTextures(ts, (px, py) => [tileXToLon(x + px / ts, z), tileYToLat(y + py / ts, z)], tileDem, tileCover, metresPerPixel, params.shadeZFactor.regional, isSea);
     regionalTiles.push({ x, y });
     write(tilePath(z, x, y, "h"), await heightWebp(heights, params.heightSize, params.heightSize, params.heightStepMetres), "regional-tile", elevationSources());
     write(tilePath(z, x, y, "albedo"), await rgbWebp(tex.albedo, ts, ts, params.albedoQuality), "regional-tile", [...elevationSources(), ...coverSources()]);
@@ -185,7 +185,7 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
     const patchDem = await sources.elevation.read(readBounds, metresPerPixel);
     for (const r of rivers) carveChannel(patchDem, r.traced.points, 1);
     const patchCover = sources.landCover ? await sources.landCover.read(readBounds, metresPerPixel) : null;
-    const rendered = renderPatch(p, params, patchDem, patchCover, metresPerPixel);
+    const rendered = renderPatch(p, params, patchDem, patchCover, metresPerPixel, isSea);
     const dir = `patches/${p.featureId}`;
     const from = [...elevationSources(), ...coverSources()];
     write(`${dir}/h.webp`, await heightWebp(rendered.heights, params.patchHeightSize, params.patchHeightSize, params.heightStepMetres), "patch", elevationSources());
@@ -314,7 +314,7 @@ export async function generatePack(o: GenerateOptions): Promise<Assets3dManifest
 type Levels<T extends Float32Array | Uint8Array> = GeoGrid<T>[];
 
 /** Surface colour of every cell of the regional data, as three byte grids (R, G, B). */
-function colourGrids(dem: GeoGrid, cover: GeoGrid<Uint8Array> | null): [GeoGrid<Uint8Array>, GeoGrid<Uint8Array>, GeoGrid<Uint8Array>] {
+function colourGrids(dem: GeoGrid, cover: GeoGrid<Uint8Array> | null, openSea: (lon: number, lat: number) => boolean): [GeoGrid<Uint8Array>, GeoGrid<Uint8Array>, GeoGrid<Uint8Array>] {
   const n = dem.width * dem.height;
   const make = (): GeoGrid<Uint8Array> => ({ width: dem.width, height: dem.height, west: dem.west, north: dem.north, cell: dem.cell, data: new Uint8Array(n) });
   const [r, g, b] = [make(), make(), make()];
@@ -323,8 +323,9 @@ function colourGrids(dem: GeoGrid, cover: GeoGrid<Uint8Array> | null): [GeoGrid<
     for (let i = 0; i < dem.width; i++) {
       const c = j * dem.width + i;
       const h = dem.data[c]!;
-      const cls = cover ? coverAt(cover, dem.west + (i + 0.5) * dem.cell, lat) : LAND_COVER.noData;
-      const rgb = surfaceColour(h, cls, isSea(h, cls));
+      const lon = dem.west + (i + 0.5) * dem.cell;
+      const cls = cover ? coverAt(cover, lon, lat) : LAND_COVER.noData;
+      const rgb = surfaceColour(h, cls, paintAsSea(h, cls, openSea(lon, lat)));
       r.data[c] = rgb[0];
       g.data[c] = rgb[1];
       b.data[c] = rgb[2];
@@ -333,7 +334,13 @@ function colourGrids(dem: GeoGrid, cover: GeoGrid<Uint8Array> | null): [GeoGrid<
   return [r, g, b];
 }
 
-const isSea = (metres: number, cover: number) => metres <= SEA_LEVEL && (cover === LAND_COVER.noData || cover === LAND_COVER.water);
+/**
+ * Paint open-sea colour only where the data says water at sea level AND the whole-map ocean mask says
+ * it is connected to the sea. A dry basin below sea level is land and is painted as land; the same
+ * test decides which tiles are stored (findings register CR67, CR101).
+ */
+const paintAsSea = (metres: number, cover: number, connected: boolean) =>
+  connected && metres <= SEA_LEVEL && (cover === LAND_COVER.noData || cover === LAND_COVER.water);
 
 function coverAt(cover: GeoGrid<Uint8Array>, lon: number, lat: number): number {
   const [i, j] = cellOf(cover, [lon, lat]);
@@ -395,6 +402,7 @@ function bakeTextures(
   cover: GeoGrid<Uint8Array> | null,
   metresPerPixel: number,
   zFactor: number,
+  openSea: (lon: number, lat: number) => boolean,
 ) {
   const full = ts + 2 * SHADE_MARGIN;
   const detail = new Float32Array(full * full);
@@ -406,7 +414,7 @@ function bakeTextures(
       detail[(r + SHADE_MARGIN) * full + (c + SHADE_MARGIN)] = h;
       if (r >= 0 && c >= 0 && r < ts && c < ts) {
         const cls = cover ? coverAt(cover, lon, lat) : LAND_COVER.noData;
-        const rgb = surfaceColour(h, cls, isSea(h, cls));
+        const rgb = surfaceColour(h, cls, paintAsSea(h, cls, openSea(lon, lat)));
         const k = (r * ts + c) * 3;
         albedo[k] = rgb[0];
         albedo[k + 1] = rgb[1];
@@ -417,7 +425,7 @@ function bakeTextures(
   return { albedo, shade: bakeShade(detail, ts, ts, SHADE_MARGIN, { metresPerPixel, zFactor }) };
 }
 
-function renderPatch(p: PatchPlan, params: GeoParams, dem: GeoGrid, cover: GeoGrid<Uint8Array> | null, metresPerPixel: number) {
+function renderPatch(p: PatchPlan, params: GeoParams, dem: GeoGrid, cover: GeoGrid<Uint8Array> | null, metresPerPixel: number, openSea: (lon: number, lat: number) => boolean) {
   const hs = params.patchHeightSize;
   const ts = params.patchTextureSize;
   const [[w, s], [e, n]] = p.bounds;
@@ -434,7 +442,7 @@ function renderPatch(p: PatchPlan, params: GeoParams, dem: GeoGrid, cover: GeoGr
       high = Math.max(high, h);
     }
   }
-  const tex = bakeTextures(ts, (px, py) => [w + (px / ts) * (e - w), n - (py / ts) * (n - s)], dem, cover, metresPerPixel, params.shadeZFactor.patch);
+  const tex = bakeTextures(ts, (px, py) => [w + (px / ts) * (e - w), n - (py / ts) * (n - s)], dem, cover, metresPerPixel, params.shadeZFactor.patch, openSea);
   return { heights, ...tex, range: [Math.round(low * 10) / 10, Math.round(high * 10) / 10] as [number, number] };
 }
 

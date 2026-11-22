@@ -9,6 +9,12 @@ const Env = z.object({
   /** If absent, explanation checks use the offline rubric checker only. */
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("claude-opus-5-5"),
+  /**
+   * The founder's approval to send children's answers to the external AI provider (decision D3).
+   * Until it is "true", the explanation check never calls the provider, even with a key set
+   * (findings register CR96): a name typed into an answer is not removed by the redaction.
+   */
+  EXTERNAL_AI_APPROVED: z.enum(["true", "false"]).optional(),
   AI_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.75),
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
   CONSENT_POLICY_VERSION: z.string().default("2026-11"),
@@ -60,6 +66,8 @@ export interface AppConfig {
   databaseUrl?: string;
   jwtSecret: string;
   aiEnabled: boolean;
+  /** Decision D3 approved: only then may a child's answer go to the external provider (CR96). */
+  externalAiApproved: boolean;
   aiModel: string;
   aiConfidenceThreshold: number;
   aiTimeoutMs: number;
@@ -80,6 +88,7 @@ export const CONFIG_DEFAULTS: AppConfig = {
   port: 3000,
   jwtSecret: DEV_JWT_SECRET,
   aiEnabled: false,
+  externalAiApproved: false,
   aiModel: "claude-opus-5-5",
   aiConfidenceThreshold: 0.75,
   aiTimeoutMs: 8000,
@@ -103,6 +112,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     ...(e.DATABASE_URL ? { databaseUrl: e.DATABASE_URL } : {}),
     jwtSecret: e.JWT_SECRET ?? DEV_JWT_SECRET,
     aiEnabled: Boolean(e.ANTHROPIC_API_KEY),
+    externalAiApproved: e.EXTERNAL_AI_APPROVED === "true",
     aiModel: e.AI_MODEL,
     aiConfidenceThreshold: e.AI_CONFIDENCE_THRESHOLD,
     aiTimeoutMs: e.AI_TIMEOUT_MS,

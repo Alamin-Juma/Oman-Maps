@@ -8,5 +8,6 @@
 import type { ContentPack } from "@dunialab/content";
 
 export function isHomeBoundary(boundaryId: string | number | undefined, pack: Pick<ContentPack, "countryIsoNumeric">): boolean {
-  return pack.countryIsoNumeric !== undefined && boundaryId !== undefined && String(boundaryId) === pack.countryIsoNumeric;
+  // ISO numeric codes have three digits; a number loses its leading zeros (40 is "040"), so pad (CR93).
+  return pack.countryIsoNumeric !== undefined && boundaryId !== undefined && String(boundaryId).padStart(3, "0") === pack.countryIsoNumeric;
 }

@@ -90,7 +90,7 @@ These are unfinished, not defects. Several are already acknowledged in our docs.
 | P6 | **No school or class model exists,** though a basic teacher class report is in the MVP. | `apps/api/src/db/schema.ts` (parents and profiles only) | Decide school/class membership, parental authority and teacher access first (D7); not "tenant ids everywhere" | Needs decision (D7) |
 | P7 | **Payments.** In-app payment is outside the MVP. Pilot payments are manual (invoice or M-Pesa request). | Product definition, MVP scope | Before any payment gateway: pending state, idempotency, verified callbacks, daily reconciliation. Now: a written manual reconciliation process | Deferred (trigger: a gateway integration is planned) |
 | P8 | **Two documents disagreed about scope.** The fixed MVP includes Tiers A/B/C and a basic teacher report, but the proposed roadmap listed AR and the teacher view as "after the pilot". | `docs/product/product-definition.md` | Roadmap corrected to agree with the fixed MVP; whether the MVP itself changes is D2 | Fixed (19 Nov 2026, roadmap wording) |
-| P9 | **A new country still needs code.** The 2D map highlights the home country from a hard-coded table of three countries. | `apps/web/src/components/KenyaMap.tsx:21` (`NUMERIC`) | Move the country code into the pack (schema + validator), keeping "a new country is a content drop" true | Open |
+| P9 | **A new country still needs code.** The 2D map highlights the home country from a hard-coded table of three countries. | `apps/web/src/components/KenyaMap.tsx:21` (`NUMERIC`) | Move the country code into the pack (schema + validator), keeping "a new country is a content drop" true | **Fixed** 22 Nov 2026 as CR36: the pack's `countryIsoNumeric`; no country table in the app |
 
 ### 5. How we work (practices adopted from our own earlier project)
 
@@ -100,7 +100,7 @@ These are unfinished, not defects. Several are already acknowledged in our docs.
 | E2 | **Every review finding gets a status** (this register), and declines are answered on the review thread itself. | Adopted with this file |
 | E3 | **Prove each new check can fail.** Break it on purpose, watch the test fail, restore it, then `git diff`. Every "X is hidden" test first asserts X is visible to someone allowed to see it. | Adopted as a rule (`CLAUDE.md` §5, testing workflow); applied to T1 and T4 |
 | E4 | **Every screen tells the truth.** Loading, failed, refused, empty, partial, truncated and "not saved" must not look alike, each with a component test. | Rule adopted (`CLAUDE.md` §5, testing workflow); component tests per state still Open, with S8 and R1 |
-| E5 | **Manual test guides, written after review,** plus one standing whole-product walkthrough that extends the existing automated journey. | In progress: `docs/manual-tests/README.md` and `_template.md` done; `00-walkthrough.md` to be written from the running app |
+| E5 | **Manual test guides, written after review,** plus one standing whole-product walkthrough that extends the existing automated journey. | **Fixed** 22 Nov 2026 as CR85: `docs/manual-tests/00-walkthrough.md` |
 | E6 | **Git and release rules:** stage files by name (never `git add -A`); a human pushes after reviewing and running the code; "main is stable" (shipped behaviour changes only by product decision). | Adopted (19 Nov 2026): `CLAUDE.md` §5 |
 | E7 | **Process hygiene:** stop only the processes a task started; leave no server running; suspect a stale process as one possible cause, not an automatic diagnosis. | Adopted (19 Nov 2026): `CLAUDE.md` §5 and `docs/manual-tests/README.md` |
 | E8 | **Operational readiness evidence:** a rehearsed restore and rollback, a release check that only approved content ships, and diagnostics that are safe for children's privacy. | Open |
@@ -162,7 +162,7 @@ Building waits on the confirmation for each row.
 3. **Sessions on the client** (done): S9, S7, S8.
 4. **Storage you can trust** (done): R2, R3 (residual window deferred). Also T8 (first-load budget).
 5. **After the founder's decisions:** S2, S5 (D1); S4 (D4); S6 (D5); S3 (D3); then genuine offline reopening (P2), device recovery (R5), the real offline test (T2) and R6 (D6).
-6. **Deliver the learning promise:** P1, P3, P5, P9, P6 (D7), the device tiers after the D2 spike, and T5, T6, E8 before the pilot.
+6. **Deliver the learning promise:** P1, P3, P5, P6 (D7), the device tiers after the D2 spike, and T6, E8 before the pilot. (P9 and E5 were done in the first CodeRabbit round, §8; T5 on 19 November.)
 
 ## 8. First CodeRabbit review of the whole codebase (PR on the review mirror, revision `63c681a`)
 
@@ -292,3 +292,28 @@ Statuses: **Fixed** (with the test that fails without the fix), **Declined** (wi
 | CR87 | `docs/technical-guide.md:75`, `README.md:22` | Chromium is installed after (or never before) the first E2E run | **Fixed (docs).** Chromium is installed before the first E2E run in the README and the technical guide |
 | CR88 | `docs/adr/0008-3d-rendering-stack.md:38` | ADR-0008 and ADR-0010 do not link to each other | **Fixed (docs).** ADR-0008 and ADR-0010 link both ways |
 | CR89 | `docs/architecture/README.md:32` | Diagram shows Unity Tiers A and B as working apps | **Fixed (docs).** The diagram labels the Unity learner app as planned scaffolding (P4) |
+
+## 9. Second CodeRabbit review (PR #2 on the review mirror, revision `16a86f7`)
+
+The re-review of the first round's fixes. Of the first round's inline comments, CodeRabbit marked 11 as
+addressed. Four stay open by design (founder decisions: CR1, CR3 as D8; CR5 in D3; CR25 as D9); the others
+(CR17, CR24, CR59, CR70, CR78) are fixed with tests, and two of them gained follow-up comments below
+(CR91 for CR17, CR101 for CR59/CR67). New comments:
+
+| Id | Where | Finding | Status |
+|---|---|---|---|
+| CR90 | `.github/workflows/ci.yml` | The health poll's `curl` has no per-request time limit | **Fixed.** `curl --max-time 2` in the health poll. A CI file: proven on the next CI run, not locally |
+| CR91 | `explanations.controller.ts` | A consent lookup that hangs (database stall) holds the request; only a rejection falls back | **Fixed.** The consent lookup has the same time limit as the AI check; a timeout falls back locally before any provider call. Feature `ai-explanation-check.feature.test.ts` (a lookup that never answers); it hung before the fix |
+| CR92 | `apps/web/src/lib/api.ts` | An empty 200 is accepted as success; sync then marks events synced with no acknowledgement | **Fixed.** An empty successful answer is an `ApiError` (every endpoint returns a body), and `syncInBatches` marks events only on a well-formed acknowledgement. Feature `progress-is-kept-and-synced.feature.test.ts` (2 scenarios), unit `queue-and-api.test.ts`; red before |
+| CR93 | `apps/web/src/lib/map-home.ts` | A numeric boundary id 40 does not match the code "040" | **Fixed.** The boundary id is padded to three digits. Unit `map-home.test.ts`; red before |
+| CR94 | `apps/web/src/three/plan.ts` | A patch view also finds nearby water from outlines, but they are not fetched for it | **Fixed.** Patch views fetch the outline files too. Unit `three.test.ts`; red before. My CR39 unit test had asserted the opposite: ledger TC10 |
+| CR95 | `apps/web/vite.config.ts` | A readable but invalid `3d/manifest.json` still stops the build for every pack | **Fixed.** Reading, parsing and checking the manifest all sit inside the per-pack recovery. E2E `approved-content.e2e.test.ts` (a truncated manifest); the build failed before |
+| CR96 | `explanations.controller.ts` (register CR5) | The "external AI stays off until D3" hold is not enforced in code: setting the key turns it on | **Fixed (the hold, not D3).** `EXTERNAL_AI_APPROVED` (default off): until it is "true", the controller never calls the provider, whatever the key or the consent. Feature `ai-explanation-check.feature.test.ts` (with a positive control), unit `password-and-config.test.ts`; red before. D3 itself stays the founder's decision |
+| CR97 | Findings register | P9 still says Open and is still scheduled in §7, though CR36 fixed it | **Fixed (docs).** P9 and E5 marked fixed; §7 updated |
+| CR98 | `tests/e2e/web/session-boundary.e2e.test.ts` | The late-report test does not check the late reply before asking for the next report | **Fixed (test).** Waits until Amani's request is held, observes its late reply, checks the report stays hidden, then asks for Baraka's. Sabotage (no scope check) fails it |
+| CR99 | `tests/e2e/web/session-boundary.e2e.test.ts` | The late-explanation test waits a fixed 1.5 s instead of for the reply | **Fixed (test).** Waits for the held check's reply and two animation frames, not 1.5 s. Sabotage (no late-result guard) fails it |
+| CR100 | `tests/features/api/ai-explanation-check.feature.test.ts` | The concurrency scenario depends on a 100 ms timer | **Fixed (test).** The first grader call is held open by a promise until the other three have answered |
+| CR101 | `tools/geo/src/generate.ts` | Colours still treat any land at or below sea level as sea; a kept depression is painted as ocean | **Fixed.** Colours use the same whole-map ocean test as tile storage (`paintAsSea`), in the overview, regional tiles and HD patches. Unit `plan-verify-remote.test.ts` (a stored depression tile has no sea-coloured pixels; 256 before). Kenya regenerated: 8 coastal colour tiles changed |
+| CR102 | `tools/geo/src/lakes.ts` | Lake distance is measured from the containing cell, not from the point | **Fixed.** Distance from the point to each candidate's cell centre, for filtering and sorting. Unit `hydro-and-lakes.test.ts` (the reviewer's example, with a positive control); red before |
+| CR103 | `tools/geo/src/lakes.ts` | A rejected region also rules out seeds at other levels, whose regions differ | **Fixed.** A refused region rules out only seeds at its own level. Same test file (the reviewer's 6 x 5 example); red before |
+| CR104 | `tools/geo/src/plan.ts` | A huge `regionalZoomOffset` makes the tile count NaN, which slips past the guard into an endless loop | **Fixed.** A non-finite tile count is refused. Unit `plan-verify-remote.test.ts` (offset 1024); it hung before the fix |
